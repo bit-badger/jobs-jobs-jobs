@@ -1,16 +1,22 @@
 <template>
   <div id="app">
-    <Home msg="this message is not displayed"/>
+    <div id="nav">
+      <router-link to="/">Home</router-link> |
+      <router-link to="/about">About</router-link> |
+      <a href="#" @click.stop="authorize">Log On</a>
+    </div>
+    <router-view/>
   </div>
 </template>
 
 <script lang="ts">
-import Home from './components/Home.vue'
-
+import { authorize } from '@/auth'
 export default {
-  components: {
-    Home,
-  },
+  setup() {
+    return {
+      authorize
+    }
+  }
 }
 </script>
 
@@ -21,6 +27,18 @@ export default {
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
-  margin-top: 60px;
+}
+
+#nav {
+  padding: 30px;
+}
+
+#nav a {
+  font-weight: bold;
+  color: #2c3e50;
+}
+
+#nav a.router-link-exact-active {
+  color: #42b983;
 }
 </style>
