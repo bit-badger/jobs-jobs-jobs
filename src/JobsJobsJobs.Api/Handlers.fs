@@ -18,26 +18,6 @@ module private Internal =
     >=> setMimeType "application/json; charset=utf-8"
 
 
-module Auth =
-  
-  open System.Net.Http
-  open System.Net.Http.Headers
-
-  /// Verify a user's credentials with No Agenda Social
-  let verifyWithMastodon accessToken = async {
-    use client = new HttpClient ()
-    use req    = new HttpRequestMessage (HttpMethod.Get, (sprintf "%saccounts/verify_credentials" config.auth.apiUrl))
-    req.Headers.Authorization <- AuthenticationHeaderValue <| sprintf "Bearer %s" accessToken
-    match! client.SendAsync req |> Async.AwaitTask with
-    | res when res.IsSuccessStatusCode ->
-        let! body = res.Content.ReadAsStringAsync ()
-        return
-          match Json.deserialize<ViewModels.Citizen.MastodonAccount> body with
-          | profile when profile.username = profile.acct -> Ok profile
-          | profile -> Error (sprintf "Profiles must be from noagendasocial.com; yours is %s" profile.acct)
-    | res -> return Error (sprintf "Could not retrieve credentials: %d ~ %s" (int res.StatusCode) res.ReasonPhrase)
-    }
-
 /// Handler to return the Vue application
 module Vue =
   
@@ -113,11 +93,9 @@ module Citizen =
               | Ok idResult ->
                   match! establishCitizen idResult profile with
                   | Ok citizenId ->
-                      // TODO: replace this with a JWT issued by the server user
-                      match! Citizens.tryFind citizenId with
-                      | Ok (Some citizen) -> return! json citizen ctx
-                      | Ok None -> return! Error.error (exn ()) "Citizen record not found" ctx
-                      | Error exn -> return! Error.error exn "Could not retrieve user from database" ctx
+                      match! Auth.createJwt citizenId with
+                      | Ok jwt -> return! json {| accessToken = jwt |} ctx
+                      | Error exn -> return! Error.error exn "Could not issue access token" ctx
                   | Error exn -> return! Error.error exn "Could not update Jobs, Jobs, Jobs database" ctx
               | Error exn -> return! Error.error exn "Token not received" ctx
           | Error msg ->

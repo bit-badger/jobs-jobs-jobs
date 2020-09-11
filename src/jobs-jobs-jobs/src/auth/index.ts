@@ -7,15 +7,13 @@
  * @version 1
  */
 import { CLIENT_SECRET } from './config'
+import { doRequest, jjjAuthorize } from '../api'
 
 /** Client ID for Jobs, Jobs, Jobs */
 const CLIENT_ID = '6Ook3LBff00dOhyBgbf4eXSqIpAroK72aioIdGaDqxs'
 
 /** No Agenda Social's base URL */
 const NAS_URL = 'https://noagendasocial.com/'
-
-/** No Agenda Social's base API URL */
-const API_URL = `${NAS_URL}api/v1/`
 
 /** The base URL for Jobs, Jobs, Jobs */
 const JJJ_URL = `${location.protocol}//${location.host}/`
@@ -37,27 +35,29 @@ export function authorize() {
   location.assign(`${NAS_URL}oauth/authorize?${params}`)
 }
 
+/**
+ * Log on a user with an authorzation code.
+ * 
+ * @param authCode The authorization code obtained from No Agenda Social
+ */
 export async function logOn(authCode: string) {
-  const options: RequestInit = {
-    method: 'POST',
-    body: JSON.stringify({
-      client_id:     CLIENT_ID,
-      client_secret: CLIENT_SECRET,
-      redirect_uri:  `${JJJ_URL}user/authorized`,
-      grant_type:    'authorization_code',
-      code:          authCode,
-      scope:         'read'
-    }),
-    headers: { 'Content-Type': 'application/json' }
-  }
-  const resp = await fetch(`${NAS_URL}oauth/token`, options)
-  if (resp.ok) {
+  try {
+    const resp = await doRequest(`${NAS_URL}oauth/token`, 'POST',
+      JSON.stringify({
+        client_id:     CLIENT_ID,
+        client_secret: CLIENT_SECRET,
+        redirect_uri:  `${JJJ_URL}user/authorized`,
+        grant_type:    'authorization_code',
+        code:          authCode,
+        scope:         'read'
+      })
+    )
     const token = await resp.json()
-    // TODO: submit token to server, let server obtain profile from NA Social
+    await jjjAuthorize(token.access_code)
+    // TODO: navigate to user welcome page
     console.info(`Success - response ${JSON.stringify(token)}`)
-  } else {
+  } catch (e) {
     // TODO: notify the user
-    const err = await resp.text()
-    console.error(`Failure - ${err}`)
+    console.error(`Failure - ${e}`)
   }
 }
