@@ -12,10 +12,28 @@ module private Internal =
   
   open Suave.Writers
 
+  /// Read the JWT and get the authorized user ID
+  let authorizedUser : WebPart =
+    fun ctx ->
+      match ctx.request.header "Authorization" with
+      | Choice1Of2 bearer ->
+          let token = (bearer.Split " ").[1]
+          match Auth.validateJwt token with
+          | Ok citizenId ->
+              setUserData "citizenId" citizenId ctx
+          | Error err ->
+              RequestErrors.BAD_REQUEST err ctx
+      | Choice2Of2 _ ->
+          RequestErrors.BAD_REQUEST "Authorization header must be specified" ctx
+
   /// Send a JSON response
   let json x =
     Successful.OK (Json.serialize x)
     >=> setMimeType "application/json; charset=utf-8"
+  
+  /// Get the current citizen ID from the context
+  let currentCitizenId ctx =
+    ctx.userState.["citizenId"] :?> CitizenId
 
 
 /// Handler to return the Vue application

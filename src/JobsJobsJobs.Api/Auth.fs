@@ -12,13 +12,14 @@ type FSharpJsonSerializer () =
       Json.deserialize<'T> json
 
 
+open Data
+open Domain
+open JWT.Algorithms
+open JWT.Builder
+open System
 open System.Net.Http
 open System.Net.Http.Headers
-open Data
-open JWT.Builder
-open JobsJobsJobs.Api.Domain
-open JWT.Algorithms
-open System
+open JWT.Exceptions
 
 /// Verify a user's credentials with No Agenda Social
 let verifyWithMastodon accessToken = async {
@@ -53,3 +54,18 @@ let createJwt citizenId = async {
   | Ok None -> return Error (exn "Citizen record not found")
   | Error exn -> return Error exn
   }
+
+/// Validate the given token
+let validateJwt token =
+  try
+    let paylod =
+      JwtBuilder()
+        .WithAlgorithm(HMACSHA256Algorithm ())
+        // TODO: generate separate secret for server
+        .WithSecret(config.auth.secret)
+        .MustVerifySignature()
+        .Decode<Map<string, obj>> token
+    CitizenId.tryParse (paylod.["sub"] :?> string)
+  with
+  | :? TokenExpiredException          -> Error "Token is expired"
+  | :? SignatureVerificationException -> Error "Invalid token signature"
