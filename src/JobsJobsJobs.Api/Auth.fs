@@ -24,16 +24,16 @@ open JWT.Exceptions
 /// Verify a user's credentials with No Agenda Social
 let verifyWithMastodon accessToken = async {
   use client = new HttpClient ()
-  use req    = new HttpRequestMessage (HttpMethod.Get, (sprintf "%saccounts/verify_credentials" config.auth.apiUrl))
-  req.Headers.Authorization <- AuthenticationHeaderValue <| sprintf "Bearer %s" accessToken
+  use req    = new HttpRequestMessage (HttpMethod.Get, $"{config.auth.apiUrl}accounts/verify_credentials")
+  req.Headers.Authorization <- AuthenticationHeaderValue $"Bearer {accessToken}"
   match! client.SendAsync req |> Async.AwaitTask with
   | res when res.IsSuccessStatusCode ->
       let! body = res.Content.ReadAsStringAsync ()
       return
         match Json.deserialize<ViewModels.Citizen.MastodonAccount> body with
         | profile when profile.username = profile.acct -> Ok profile
-        | profile -> Error (sprintf "Profiles must be from noagendasocial.com; yours is %s" profile.acct)
-  | res -> return Error (sprintf "Could not retrieve credentials: %d ~ %s" (int res.StatusCode) res.ReasonPhrase)
+        | profile -> Error $"Profiles must be from noagendasocial.com; yours is {profile.acct}"
+  | res -> return Error $"Could not retrieve credentials: %d{int res.StatusCode} ~ {res.ReasonPhrase}"
   }
 
 /// Create a JWT for the given user

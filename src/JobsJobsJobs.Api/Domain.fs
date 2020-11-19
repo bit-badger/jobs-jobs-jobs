@@ -29,7 +29,7 @@ module ShortId =
     match text.Length with
     | 12 when validShortId.IsMatch text -> (ShortId >> Ok) text
     | 12 -> Error "ShortId must be 12 characters [a-z,0-9,-, or _]"
-    | x -> Error (sprintf "ShortId must be 12 characters; %d provided" x)
+    | x -> Error $"ShortId must be 12 characters; %d{x} provided"
 
 
 /// The ID for a citizen (user) record
