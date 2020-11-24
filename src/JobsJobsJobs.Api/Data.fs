@@ -96,3 +96,39 @@ module Citizens =
     |> Sql.parameters [ "@id", (CitizenId.toString >> Sql.string) citizenId ]
     |> Sql.executeRowAsync fromReader
     |> noneIfNotFound
+
+
+/// Functions for manipulating employment profiles
+module Profiles =
+
+  /// Create a Profile from a row of data
+  let private fromReader (read: RowReader) =
+    match (read.string >> CitizenId.tryParse) "citizen_id" with
+    | Ok citizenId ->
+        match (read.string >> ContinentId.tryParse) "continent_id" with
+        | Ok continentId -> {
+              citizenId         = citizenId
+              seekingEmployment = read.bool   "seeking_employment"
+              isPublic          = read.bool   "is_public"
+              continent         = { id = continentId; name = read.string "continent_name" }
+              region            = read.string "region"
+              remoteWork        = read.bool   "remote_work"
+              fullTime          = read.bool   "full_time"
+              biography         = (read.string >> MarkdownString) "biography"
+              lastUpdatedOn     = (read.int64  >> Millis)         "last_updated_on"
+              experience        = (read.stringOrNone >> Option.map MarkdownString) "experience" 
+              }
+        | Error err -> failwith err
+    | Error err -> failwith err
+
+  /// Try to find an employment profile for the given citizen ID
+  let tryFind citizenId =
+    db ()
+    |> Sql.query
+        """SELECT p.*, c.name AS continent_name
+             FROM profile p
+               INNER JOIN continent c ON p.continent_id = c.id
+            WHERE citizen_id = @id"""
+    |> Sql.parameters [ "@id", (CitizenId.toString >> Sql.string) citizenId ]
+    |> Sql.executeRowAsync fromReader
+    |> noneIfNotFound

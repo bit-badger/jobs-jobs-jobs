@@ -185,7 +185,7 @@ type Profile = {
   /// Whether information from this profile should appear in the public anonymous list of available skills
   isPublic          : bool
   /// The continent on which the user is seeking employment
-  continentId       : Continent
+  continent         : Continent
   /// The region within that continent where the user would prefer to work
   region            : string
   /// Whether the user is looking for remote work

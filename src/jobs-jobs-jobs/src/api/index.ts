@@ -1,5 +1,11 @@
+import { ref } from 'vue'
+import { Profile } from './types'
+
 /**
  * Jobs, Jobs, Jobs API interface
+ * 
+ * @author Daniel J. Summers <daniel@bitbadger.solutions>
+ * @version 1
  */
 
 /** The base URL for the Jobs, Jobs, Jobs API */
@@ -59,7 +65,7 @@ export async function doRequest(url: string, method?: string, payload?: string) 
   if (method === 'POST' && payload) options.body = payload
   const actualUrl = (options.method === 'GET' && payload) ? `url?${payload}` : url
   const resp = await fetch(actualUrl, options)
-  if (resp.ok) return resp
+  if (resp.ok || resp.status === 404) return resp
   throw new Error(`Error executing API request: ${resp.status} ~ ${resp.statusText}`)
 }
 
@@ -74,4 +80,18 @@ export async function jjjAuthorize(nasToken: string): Promise<boolean> {
   const jjjToken = await resp.json()
   jwt.token = jjjToken.accessToken
   return true
+}
+
+/**
+ * Retrieve the employment profile for the current user.
+ * 
+ * @returns The profile if it is found; undefined otherwise
+ */
+export async function userProfile(): Promise<Profile | undefined> {
+  const resp = await doRequest(`${API_URL}/profile`)
+  if (resp.status === 404) {
+    return undefined
+  }
+  const profile = await resp.json()
+  return profile as Profile
 }

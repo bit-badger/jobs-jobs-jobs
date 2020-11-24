@@ -121,7 +121,24 @@ module Citizen =
           | Error msg -> return! Error.error (exn msg) "Could not authenticate with NAS" ctx
       | Error exn -> return! Error.error exn "Token not received" ctx
       }
-      
+
+
+/// /api/profile route handlers      
+module Profile =
+
+  /// GET: /api/profile
+  let get citizenId : WebPart =
+    authorizedUser
+    >=> fun ctx -> async {
+      match (match citizenId with "" -> Ok (currentCitizenId ctx) | _ -> CitizenId.tryParse citizenId) with
+      | Ok citId ->
+          match! Profiles.tryFind citId with
+          | Ok (Some profile) -> return! json profile ctx
+          | Ok None -> return! Error.notFound ctx
+          | Error exn -> return! Error.error exn "Cannot retrieve profile" ctx
+      | Error _ -> return! Error.notFound ctx
+      }
+
 
 open Suave.Filters
 
@@ -129,7 +146,9 @@ open Suave.Filters
 let webApp =
   choose
     [ GET >=> choose
-        [ path "/" >=> Vue.app
+        [ pathScan "/api/profile/%s"     Profile.get
+          path     "/api/profile"    >=> Profile.get ""
+          path "/"                   >=> Vue.app
           Files.browse "wwwroot/"
           ]
       // PUT >=> choose
