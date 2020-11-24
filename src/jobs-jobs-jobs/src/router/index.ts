@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
 
 import Home from '../views/Home.vue'
+import Welcome from '../views/citizen/Welcome.vue'
 import Authorized from '../views/user/Authorized.vue'
 
 const routes: Array<RouteRecordRaw> = [
@@ -22,6 +23,11 @@ const routes: Array<RouteRecordRaw> = [
     name: 'Authorized',
     component: Authorized,
     props: (route) => ({ code: route.query.code })
+  },
+  {
+    path: '/citizen/welcome',
+    name: 'Welcome',
+    component: Welcome
   }
 ]
 

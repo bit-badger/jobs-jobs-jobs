@@ -40,7 +40,7 @@ export function authorize() {
  * 
  * @param authCode The authorization code obtained from No Agenda Social
  */
-export async function logOn(authCode: string) {
+export async function logOn(authCode: string): Promise<string> {
   try {
     const resp = await doRequest(`${NAS_URL}oauth/token`, 'POST',
       JSON.stringify({
@@ -54,10 +54,8 @@ export async function logOn(authCode: string) {
     )
     const token = await resp.json()
     await jjjAuthorize(token.access_token)
-    // TODO: navigate to user welcome page
-    console.info(`Success - response ${JSON.stringify(token)}`)
+    return ''
   } catch (e) {
-    // TODO: notify the user
-    console.error(`Failure - ${e}`)
+    return `${e}`
   }
 }
