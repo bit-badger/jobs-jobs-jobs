@@ -53,7 +53,7 @@ export async function logOn(authCode: string) {
       })
     )
     const token = await resp.json()
-    await jjjAuthorize(token.access_code)
+    await jjjAuthorize(token.access_token)
     // TODO: navigate to user welcome page
     console.info(`Success - response ${JSON.stringify(token)}`)
   } catch (e) {

@@ -53,10 +53,12 @@ module Error =
   let error (ex : Exception) msg =
     fun ctx ->
       seq {
-        string ctx.request.url
-        match msg with "" -> () | _ -> " ~ "; msg
-        "\n"; (ex.GetType().Name); ": "; ex.Message; "\n"
-        ex.StackTrace
+        yield string ctx.request.url
+        match msg with
+        | "" -> ()
+        | _  -> yield " ~ "; yield msg
+        yield "\n"; yield (ex.GetType().Name); yield ": "; yield ex.Message; yield "\n"
+        yield ex.StackTrace
         }
       |> Seq.reduce (+)
       |> (eventX >> ctx.runtime.logger.error)
@@ -116,9 +118,7 @@ module Citizen =
                       | Error exn -> return! Error.error exn "Could not issue access token" ctx
                   | Error exn -> return! Error.error exn "Could not update Jobs, Jobs, Jobs database" ctx
               | Error exn -> return! Error.error exn "Token not received" ctx
-          | Error msg ->
-              // Error message regarding exclusivity to No Agenda Social members
-              return Some ctx
+          | Error msg -> return! Error.error (exn msg) "Could not authenticate with NAS" ctx
       | Error exn -> return! Error.error exn "Token not received" ctx
       }
       

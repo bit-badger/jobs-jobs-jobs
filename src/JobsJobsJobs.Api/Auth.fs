@@ -1,31 +1,20 @@
 module JobsJobsJobs.Api.Auth
 
-open FSharp.Json
-open JWT
-
-/// A JWT (de)serializer utilizing FSharp.Json
-type FSharpJsonSerializer () =
-  interface IJsonSerializer with
-    member __.Serialize (any : obj) =
-      Json.serialize any
-    member __.Deserialize<'T> json =
-      Json.deserialize<'T> json
-
-
 open Data
 open Domain
+open FSharp.Json
 open JWT.Algorithms
 open JWT.Builder
+open JWT.Exceptions
 open System
 open System.Net.Http
 open System.Net.Http.Headers
-open JWT.Exceptions
 
 /// Verify a user's credentials with No Agenda Social
 let verifyWithMastodon accessToken = async {
   use client = new HttpClient ()
   use req    = new HttpRequestMessage (HttpMethod.Get, $"{config.auth.apiUrl}accounts/verify_credentials")
-  req.Headers.Authorization <- AuthenticationHeaderValue $"Bearer {accessToken}"
+  req.Headers.Authorization <- AuthenticationHeaderValue ("Bearer", accessToken)
   match! client.SendAsync req |> Async.AwaitTask with
   | res when res.IsSuccessStatusCode ->
       let! body = res.Content.ReadAsStringAsync ()
@@ -45,7 +34,6 @@ let createJwt citizenId = async {
           .WithAlgorithm(HMACSHA256Algorithm ())
           // TODO: generate separate secret for server
           .WithSecret(config.auth.secret)
-          .WithSerializer(FSharpJsonSerializer ())
           .AddClaim("sub", CitizenId.toString citizen.id)
           .AddClaim("exp", DateTimeOffset.UtcNow.AddHours(1.).ToUnixTimeSeconds ())
           .AddClaim("nam", citizen.displayName)
