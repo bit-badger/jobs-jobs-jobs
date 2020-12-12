@@ -20,8 +20,7 @@ namespace JobsJobsJobs.Server.Data
         /// <returns>A populated citizen</returns>
         private static Citizen ToCitizen(NpgsqlDataReader rdr) =>
             new Citizen(CitizenId.Parse(rdr.GetString("id")), rdr.GetString("na_user"), rdr.GetString("display_name"),
-                rdr.GetString("profile_url"), new Milliseconds(rdr.GetInt64("joined_on")),
-                new Milliseconds(rdr.GetInt64("last_seen_on")));
+                rdr.GetString("profile_url"), rdr.GetMilliseconds("joined_on"), rdr.GetMilliseconds("last_seen_on"));
 
         /// <summary>
         /// Retrieve a citizen by their No Agenda Social user name

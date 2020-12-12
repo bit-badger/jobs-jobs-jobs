@@ -1,4 +1,5 @@
-﻿using Npgsql;
+﻿using JobsJobsJobs.Shared;
+using Npgsql;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,5 +25,13 @@ namespace JobsJobsJobs.Server.Data
         /// <param name="name">The name of the field to be retrieved as a 64-bit integer</param>
         /// <returns>The specified field as a 64-bit integer</returns>
         public static long GetInt64(this NpgsqlDataReader rdr, string name) => rdr.GetInt64(rdr.GetOrdinal(name));
+
+        /// <summary>
+        /// Get milliseconds by its name
+        /// </summary>
+        /// <param name="name">The name of the field to be retrieved as milliseconds</param>
+        /// <returns>The specified field as milliseconds</returns>
+        public static Milliseconds GetMilliseconds(this NpgsqlDataReader rdr, string name) =>
+            new Milliseconds(rdr.GetInt64(name));
     }
 }
