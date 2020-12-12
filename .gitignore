@@ -1,2 +1,5 @@
 .ionide
 .fake
+src/**/bin
+src/**/obj
+src/**/appsettings.*.json
