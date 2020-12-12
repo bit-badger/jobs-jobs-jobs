@@ -134,7 +134,7 @@ module Profile =
       | Ok citId ->
           match! Profiles.tryFind citId with
           | Ok (Some profile) -> return! json profile ctx
-          | Ok None -> return! Error.notFound ctx
+          | Ok None -> return! Successful.NO_CONTENT ctx
           | Error exn -> return! Error.error exn "Cannot retrieve profile" ctx
       | Error _ -> return! Error.notFound ctx
       }

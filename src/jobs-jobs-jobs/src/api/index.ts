@@ -14,6 +14,9 @@ const API_URL = `${location.protocol}//${location.host}/api`
 /** Local storage key for the Jobs, Jobs, Jobs access token */
 const JJJ_TOKEN = 'jjj-token'
 
+/** HTTP status for "No Content"; used by the API to indicate a valid query with no results vs. 404 (invalid URL) */
+const NO_CONTENT = 204
+
 /**
  * A holder for the JSON Web Token (JWT) returned from Jobs, Jobs, Jobs
  */
@@ -65,7 +68,7 @@ export async function doRequest(url: string, method?: string, payload?: string) 
   if (method === 'POST' && payload) options.body = payload
   const actualUrl = (options.method === 'GET' && payload) ? `url?${payload}` : url
   const resp = await fetch(actualUrl, options)
-  if (resp.ok || resp.status === 404) return resp
+  if (resp.ok) return resp
   throw new Error(`Error executing API request: ${resp.status} ~ ${resp.statusText}`)
 }
 
@@ -89,7 +92,7 @@ export async function jjjAuthorize(nasToken: string): Promise<boolean> {
  */
 export async function userProfile(): Promise<Profile | undefined> {
   const resp = await doRequest(`${API_URL}/profile`)
-  if (resp.status === 404) {
+  if (resp.status === NO_CONTENT) {
     return undefined
   }
   const profile = await resp.json()
