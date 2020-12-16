@@ -1,9 +1,38 @@
 ﻿@page "/citizen/dashboard"
+@inject HttpClient http
+@inject AppState state
 
 <h3>Dashboard</h3>
 
 <p>Here's the dashboard, homie...</p>
 
+@if (hasProfile != null)
+{
+  <p>Has profile? @hasProfile</p>
+}
+
+@if (errorMessage != null)
+{
+  <p>@errorMessage</p>
+}
 @code {
 
+    bool? hasProfile = null;
+    string? errorMessage = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+      if (state.User != null)
+      {
+        var profile = await ServerApi.RetrieveProfile(http, state);
+        if (profile.IsOk)
+        {
+          hasProfile = profile.Ok != null;
+        }
+        else
+        {
+          errorMessage = profile.Error;
+        }
+      }
+    }
 }

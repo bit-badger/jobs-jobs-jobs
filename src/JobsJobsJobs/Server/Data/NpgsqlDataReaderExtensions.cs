@@ -13,11 +13,11 @@ namespace JobsJobsJobs.Server.Data
     public static class NpgsqlDataReaderExtensions
     {
         /// <summary>
-        /// Get a string by its name
+        /// Get a boolean by its name
         /// </summary>
-        /// <param name="name">The name of the field to be retrieved as a string</param>
-        /// <returns>The specified field as a string</returns>
-        public static string GetString(this NpgsqlDataReader rdr, string name) => rdr.GetString(rdr.GetOrdinal(name));
+        /// <param name="name">The name of the field to be retrieved as a boolean</param>
+        /// <returns>The specified field as a boolean</returns>
+        public static bool GetBoolean(this NpgsqlDataReader rdr, string name) => rdr.GetBoolean(rdr.GetOrdinal(name));
 
         /// <summary>
         /// Get a 64-bit integer by its name
@@ -33,5 +33,19 @@ namespace JobsJobsJobs.Server.Data
         /// <returns>The specified field as milliseconds</returns>
         public static Milliseconds GetMilliseconds(this NpgsqlDataReader rdr, string name) =>
             new Milliseconds(rdr.GetInt64(name));
+
+        /// <summary>
+        /// Get a string by its name
+        /// </summary>
+        /// <param name="name">The name of the field to be retrieved as a string</param>
+        /// <returns>The specified field as a string</returns>
+        public static string GetString(this NpgsqlDataReader rdr, string name) => rdr.GetString(rdr.GetOrdinal(name));
+
+        /// <summary>
+        /// Determine if a column is null
+        /// </summary>
+        /// <param name="name">The name of the column to check</param>
+        /// <returns>True if the column is null, false if not</returns>
+        public static bool IsDBNull(this NpgsqlDataReader rdr, string name) => rdr.IsDBNull(rdr.GetOrdinal(name));
     }
 }
