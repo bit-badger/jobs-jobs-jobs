@@ -1,4 +1,3 @@
-                                                                                                                                using JobsJobsJobs.Server.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -8,8 +7,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
+using NodaTime;
 using Npgsql;
-using System.Linq;
 using System.Text;
 
 namespace JobsJobsJobs.Server
@@ -28,6 +27,7 @@ namespace JobsJobsJobs.Server
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddScoped(_ => new NpgsqlConnection(Configuration.GetConnectionString("JobsDb")));
+            services.AddSingleton<IClock>(SystemClock.Instance);
             services.AddLogging();
             services.AddControllersWithViews();
             services.AddRazorPages();
@@ -54,6 +54,8 @@ namespace JobsJobsJobs.Server
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            NpgsqlConnection.GlobalTypeMapper.UseNodaTime();
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -69,10 +71,6 @@ namespace JobsJobsJobs.Server
             app.UseHttpsRedirection();
             app.UseBlazorFrameworkFiles();
             app.UseStaticFiles();
-
-            // TODO: middleware to extract user info from our custom JWT, and see if it will fill the standard stuff.
-            //       Alternately, maybe we can even configure the default services and middleware so that it will work
-            //       to give us the currently-logged-on user.
             app.UseRouting();
             app.UseAuthentication();
             app.UseAuthorization();

@@ -23,7 +23,7 @@ namespace JobsJobsJobs.Server.Data
             return new Profile(CitizenId.Parse(rdr.GetString("id")), rdr.GetBoolean("seeking_employment"),
                 rdr.GetBoolean("is_public"), continentId, rdr.GetString("region"), rdr.GetBoolean("remote_work"),
                 rdr.GetBoolean("full_time"), new MarkdownString(rdr.GetString("biography")),
-                rdr.GetMilliseconds("last_updated_on"),
+                rdr.GetInstant("last_updated_on"),
                 rdr.IsDBNull("experience") ? null : new MarkdownString(rdr.GetString("experience")))
             {
                 Continent = new Continent(continentId, rdr.GetString("continent_name"))

@@ -20,7 +20,7 @@ namespace JobsJobsJobs.Server.Data
         /// <returns>A populated citizen</returns>
         private static Citizen ToCitizen(NpgsqlDataReader rdr) =>
             new Citizen(CitizenId.Parse(rdr.GetString("id")), rdr.GetString("na_user"), rdr.GetString("display_name"),
-                rdr.GetString("profile_url"), rdr.GetMilliseconds("joined_on"), rdr.GetMilliseconds("last_seen_on"));
+                rdr.GetString("profile_url"), rdr.GetInstant("joined_on"), rdr.GetInstant("last_seen_on"));
 
         /// <summary>
         /// Retrieve a citizen by their No Agenda Social user name
@@ -58,8 +58,8 @@ namespace JobsJobsJobs.Server.Data
             cmd.Parameters.Add(new NpgsqlParameter("@na_user", citizen.NaUser));
             cmd.Parameters.Add(new NpgsqlParameter("@display_name", citizen.DisplayName));
             cmd.Parameters.Add(new NpgsqlParameter("@profile_url", citizen.ProfileUrl));
-            cmd.Parameters.Add(new NpgsqlParameter("@joined_on", citizen.JoinedOn.Millis));
-            cmd.Parameters.Add(new NpgsqlParameter("@last_seen_on", citizen.LastSeenOn.Millis));
+            cmd.Parameters.Add(new NpgsqlParameter("@joined_on", citizen.JoinedOn));
+            cmd.Parameters.Add(new NpgsqlParameter("@last_seen_on", citizen.LastSeenOn));
 
             await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
         }
@@ -78,7 +78,7 @@ namespace JobsJobsJobs.Server.Data
                    WHERE id = @id";
             cmd.Parameters.Add(new NpgsqlParameter("@id", citizen.Id.ToString()));
             cmd.Parameters.Add(new NpgsqlParameter("@display_name", citizen.DisplayName));
-            cmd.Parameters.Add(new NpgsqlParameter("@last_seen_on", citizen.LastSeenOn.Millis));
+            cmd.Parameters.Add(new NpgsqlParameter("@last_seen_on", citizen.LastSeenOn));
 
             await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
         }

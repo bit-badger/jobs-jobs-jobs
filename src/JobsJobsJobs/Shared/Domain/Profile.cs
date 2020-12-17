@@ -1,4 +1,6 @@
-﻿namespace JobsJobsJobs.Shared
+﻿using NodaTime;
+
+namespace JobsJobsJobs.Shared
 {
     /// <summary>
     /// A job seeker profile
@@ -12,7 +14,7 @@
         bool RemoteWork,
         bool FullTime,
         MarkdownString Biography,
-        Milliseconds LastUpdatedOn,
+        Instant LastUpdatedOn,
         MarkdownString? Experience)
     {
         /// <summary>

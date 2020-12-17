@@ -26,8 +26,13 @@
     else
     {
       <li class="nav-item px-3">
-        <NavLink class="nav-link" href="dashboard">
+        <NavLink class="nav-link" href="/citizen/dashboard">
           <span class="oi oi-dashboard" aria-hidden="true"></span> Dashboard
+        </NavLink>
+      </li>
+      <li class="nav-item px-3">
+        <NavLink class="nav-link" href="/citizen/profile">
+          <span class="oi oi-spreadsheet" aria-hidden="true"></span> Profile
         </NavLink>
       </li>
       <li class="nav-item px-3">
@@ -36,15 +41,16 @@
         </NavLink>
       </li>
     }
-    <li class="nav-item px-3">
-      <NavLink class="nav-link" href="fetchdata">
-        <span class="oi oi-list-rich" aria-hidden="true"></span> Fetch data
-      </NavLink>
-    </li>
   </ul>
 </div>
 
 @code {
+
+    protected override void OnInitialized()
+    {
+      base.OnInitialized();
+      state.OnChange += StateHasChanged;
+    }
 
     /// <summary>
     /// The client ID for Jobs, Jobs, Jobs at No Agenda Social

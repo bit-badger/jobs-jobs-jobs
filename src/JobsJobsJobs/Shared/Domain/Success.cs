@@ -1,4 +1,6 @@
-﻿namespace JobsJobsJobs.Shared
+﻿using NodaTime;
+
+namespace JobsJobsJobs.Shared
 {
     /// <summary>
     /// A record of success finding employment
@@ -6,7 +8,7 @@
     public record Success(
         SuccessId Id,
         CitizenId CitizenId,
-        Milliseconds RecordedOn,
+        Instant RecordedOn,
         bool FromHere,
         MarkdownString? Story);
 }

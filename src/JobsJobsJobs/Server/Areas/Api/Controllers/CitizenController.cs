@@ -3,6 +3,7 @@ using JobsJobsJobs.Shared;
 using JobsJobsJobs.Shared.Api;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using NodaTime;
 using Npgsql;
 using System.Threading.Tasks;
 
@@ -14,11 +15,14 @@ namespace JobsJobsJobs.Server.Areas.Api.Controllers
     {
         private readonly IConfigurationSection _config;
 
+        private readonly IClock _clock;
+
         private readonly NpgsqlConnection _db;
 
-        public CitizenController(IConfiguration config, NpgsqlConnection db)
+        public CitizenController(IConfiguration config, IClock clock, NpgsqlConnection db)
         {
             _config = config.GetSection("Auth");
+            _clock = clock;
             _db = db;
         }
 
@@ -32,7 +36,7 @@ namespace JobsJobsJobs.Server.Areas.Api.Controllers
 
             // Step 2 - Find / establish Jobs, Jobs, Jobs account
             var account = accountResult.Ok;
-            var now = Milliseconds.Now();
+            var now = _clock.GetCurrentInstant();
 
             await _db.OpenAsync();
             var citizen = await _db.FindCitizenByNAUser(account.Username);
@@ -47,7 +51,7 @@ namespace JobsJobsJobs.Server.Areas.Api.Controllers
                 citizen = citizen with
                 {
                     DisplayName = account.DisplayName,
-                    LastSeenOn = Milliseconds.Now()
+                    LastSeenOn = now
                 };
                 await _db.UpdateCitizenOnLogOn(citizen);
             }

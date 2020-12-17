@@ -1,4 +1,6 @@
-﻿namespace JobsJobsJobs.Shared
+﻿using NodaTime;
+
+namespace JobsJobsJobs.Shared
 {
     /// <summary>
     /// A user of Jobs, Jobs, Jobs
@@ -8,6 +10,6 @@
         string NaUser,
         string DisplayName,
         string ProfileUrl,
-        Milliseconds JoinedOn,
-        Milliseconds LastSeenOn);
+        Instant JoinedOn,
+        Instant LastSeenOn);
 }

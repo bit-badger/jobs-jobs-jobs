@@ -2,13 +2,20 @@
 @inject HttpClient http
 @inject AppState state
 
-<h3>Dashboard</h3>
+<h3>Welcome, @state.User!.Name!</h3>
 
-<p>Here's the dashboard, homie...</p>
-
-@if (hasProfile != null)
+@if (retrievingProfile)
 {
-  <p>Has profile? @hasProfile</p>
+  <p>Retrieving your employment profile...</p>
+}
+else if (profile != null)
+{
+  <p>Your employment profile was last updated @profile.LastUpdatedOn</p>
+}
+else
+{
+  <p>You do not have an employment profile established; click &ldquo;Profile&rdquo;* in the menu to get started!</p>
+  <p><em>* Once it's there...</em></p>
 }
 
 @if (errorMessage != null)
@@ -17,21 +24,22 @@
 }
 @code {
 
-    bool? hasProfile = null;
+    bool retrievingProfile = true;
+    Profile? profile = null;
     string? errorMessage = null;
 
     protected override async Task OnInitializedAsync()
     {
       if (state.User != null)
       {
-        var profile = await ServerApi.RetrieveProfile(http, state);
-        if (profile.IsOk)
+        var profileResult = await ServerApi.RetrieveProfile(http, state);
+        if (profileResult.IsOk)
         {
-          hasProfile = profile.Ok != null;
+          profile = profileResult.Ok;
         }
         else
         {
-          errorMessage = profile.Error;
+          errorMessage = profileResult.Error;
         }
       }
     }
