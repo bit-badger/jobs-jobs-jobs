@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Markdig" Version="0.22.0" />
+    <PackageReference Include="Markdig" Version="0.22.1" />
     <PackageReference Include="Nanoid" Version="2.1.0" />
     <PackageReference Include="NodaTime" Version="3.0.3" />
   </ItemGroup>

@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using NodaTime;
+using NodaTime.Serialization.SystemTextJson;
 using Npgsql;
 using System.Text;
 
@@ -26,11 +27,14 @@ namespace JobsJobsJobs.Server
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
+            // TODO: configure JSON serialization for NodaTime
             services.AddScoped(_ => new NpgsqlConnection(Configuration.GetConnectionString("JobsDb")));
             services.AddSingleton<IClock>(SystemClock.Instance);
             services.AddLogging();
             services.AddControllersWithViews();
-            services.AddRazorPages();
+            services.AddRazorPages()
+                .AddJsonOptions(options =>
+                    options.JsonSerializerOptions.ConfigureForNodaTime(DateTimeZoneProviders.Tzdb));
             services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;

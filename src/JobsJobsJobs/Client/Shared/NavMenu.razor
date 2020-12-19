@@ -1,5 +1,6 @@
 ﻿@inject AppState state
 @inject NavigationManager nav
+@implements IDisposable
  
 <div class="top-row pl-4 navbar navbar-dark">
   <a class="navbar-brand" href="">Jobs, Jobs, Jobs</a>
@@ -81,5 +82,10 @@
     private void ToggleNavMenu()
     {
       collapseNavMenu = !collapseNavMenu;
+    }
+
+    public void Dispose()
+    {
+      state.OnChange -= StateHasChanged;
     }
 }
