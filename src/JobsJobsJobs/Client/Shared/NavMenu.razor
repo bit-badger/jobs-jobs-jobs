@@ -1,0 +1,91 @@
+﻿@inject AppState state
+@inject NavigationManager nav
+@implements IDisposable
+ 
+<div class="top-row pl-4 navbar navbar-dark">
+  <a class="navbar-brand" href="">Jobs, Jobs, Jobs</a>
+  <button class="navbar-toggler" @onclick="ToggleNavMenu">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+</div>
+
+<div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
+  <ul class="nav flex-column">
+    <li class="nav-item px-3">
+      <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+        <span class="oi oi-home" aria-hidden="true"></span> Home
+      </NavLink>
+    </li>
+    @if (state.User == null)
+    {
+      <li class="nav-item px-3">
+        <a class="nav-link" href="@AuthUrl">
+          <span class="oi oi-account-login" aria-hidden="true"></span> Log On
+        </a>
+      </li>
+    }
+    else
+    {
+      <li class="nav-item px-3">
+        <NavLink class="nav-link" href="/citizen/dashboard">
+          <span class="oi oi-dashboard" aria-hidden="true"></span> Dashboard
+        </NavLink>
+      </li>
+      <li class="nav-item px-3">
+        <NavLink class="nav-link" href="/citizen/profile">
+          <span class="oi oi-spreadsheet" aria-hidden="true"></span> Profile
+        </NavLink>
+      </li>
+      <li class="nav-item px-3">
+        <NavLink class="nav-link" href="counter">
+          <span class="oi oi-plus" aria-hidden="true"></span> Log Off
+        </NavLink>
+      </li>
+    }
+  </ul>
+</div>
+
+@code {
+
+    protected override void OnInitialized()
+    {
+      base.OnInitialized();
+      state.OnChange += StateHasChanged;
+    }
+
+    /// <summary>
+    /// The client ID for Jobs, Jobs, Jobs at No Agenda Social
+    /// </summary>
+    // TODO: move to config
+    private readonly string _clientId = "k_06zlMy0N451meL4AqlwMQzs5PYr6g3d2Q_dCT-OjU";
+
+    /// <summary>
+    /// The authorization URL to which the user should be directed
+    /// </summary>
+    private string AuthUrl
+    {
+      get
+      {
+        var client = $"client_id={_clientId}";
+        var scope = "scope=read:accounts";
+        var redirect = $"redirect_uri=https://{new Uri(nav.Uri).Authority}/citizen/authorized";
+        var respType = "response_type=code";
+        // TODO: move NAS base URL to config
+        return $"https://noagendasocial.com/oauth/authorize?{client}&{scope}&{redirect}&{respType}";
+      }
+    }
+
+    private bool collapseNavMenu = true;
+
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private void ToggleNavMenu()
+    {
+      collapseNavMenu = !collapseNavMenu;
+    }
+
+    public void Dispose()
+    {
+      state.OnChange -= StateHasChanged;
+    }
+}
