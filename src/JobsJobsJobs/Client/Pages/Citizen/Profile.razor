@@ -1,0 +1,81 @@
+﻿@page "/citizen/profile"
+@using JobsJobsJobs.Client.ViewModels
+@inject HttpClient http
+@inject AppState state
+
+<h3>Employment Profile</h3>
+
+@if (errorMessage != "")
+{
+  <p>@errorMessage</p>
+}
+else if (profileForm != null)
+{
+<EditForm Model="@profileForm" OnValidSubmit="@SaveProfile">
+  <DataAnnotationsValidator />
+  <ValidationSummary />
+  <label>
+    <InputCheckbox @bind-Value="@profileForm.IsSeekingEmployment" />
+    I am currently seeking employment
+  </label>
+  <label>
+    <InputCheckbox @bind-Value="@profileForm.IsPublic" />
+    Allow my profile to be searched publicly (outside NA Social)
+  </label><br>
+  <label>
+    Continent
+    <InputSelect @bind-Value="@profileForm.ContinentId" />
+  </label>
+  <label>
+    Region
+    <InputText @bind-Value="@profileForm.Region" />
+  </label><br>
+  <label>
+    <InputCheckbox @bind-Value="@profileForm.RemoteWork" />
+    I am looking for remote work
+  </label>
+  <label>
+    <InputCheckbox @bind-Value="@profileForm.FullTime" />
+    I am looking for full-time work
+  </label><br>
+  <label>
+    Professional Biography
+    <InputTextArea @bind-Value="@profileForm.Biography" />
+  </label><br>
+  <label>
+    Experience
+    <InputTextArea @bind-Value="@profileForm.Experience" />
+  </label>
+  <p>
+    <button type="submit">Save</button>
+  </p>
+</EditForm>
+}
+
+@code {
+
+    public JobsJobsJobs.Shared.Profile? profile = null;
+
+    public ProfileForm? profileForm = null;
+
+    public string errorMessage = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+      var result = await ServerApi.RetrieveProfile(http, state);
+      if (result.IsOk)
+      {
+        profile = result.Ok;
+        profileForm = (profile == null) ? new ProfileForm() : ProfileForm.FromProfile(profile);
+      }
+      else
+      {
+        errorMessage = result.Error;
+      }
+    }
+
+    public void SaveProfile()
+    {
+      // TODO: save profile
+    }
+}

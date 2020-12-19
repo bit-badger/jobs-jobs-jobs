@@ -20,5 +20,7 @@ namespace JobsJobsJobs.Shared
         /// <returns>The continent ID</returns>
         /// <exception cref="System.FormatException">If the string is not a valid continent ID</exception>
         public static ContinentId Parse(string id) => new ContinentId(ShortId.Parse(id));
+
+        public override string ToString() => Id.ToString();
     }
 }
