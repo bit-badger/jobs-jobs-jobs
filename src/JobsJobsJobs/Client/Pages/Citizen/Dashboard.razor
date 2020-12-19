@@ -1,0 +1,47 @@
+﻿@page "/citizen/dashboard"
+@inject HttpClient http
+@inject AppState state
+
+<h3>Welcome, @state.User!.Name!</h3>
+
+@if (retrievingProfile)
+{
+  <p>Retrieving your employment profile...</p>
+}
+else if (profile != null)
+{
+  <p>Your employment profile was last updated @profile.LastUpdatedOn</p>
+}
+else
+{
+  <p>You do not have an employment profile established; click &ldquo;Profile&rdquo;* in the menu to get started!</p>
+  <p><em>* Once it's there...</em></p>
+}
+
+@if (errorMessage != null)
+{
+  <p>@errorMessage</p>
+}
+@code {
+
+    bool retrievingProfile = true;
+    Profile? profile = null;
+    string? errorMessage = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+      if (state.User != null)
+      {
+        var profileResult = await ServerApi.RetrieveProfile(http, state);
+        if (profileResult.IsOk)
+        {
+          profile = profileResult.Ok;
+        }
+        else
+        {
+          errorMessage = profileResult.Error;
+        }
+        retrievingProfile = false;
+      }
+    }
+}

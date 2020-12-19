@@ -6,8 +6,8 @@ CREATE TABLE jjj.citizen (
   na_user      VARCHAR(50)   NOT NULL,
   display_name VARCHAR(255)  NOT NULL,
   profile_url  VARCHAR(1024) NOT NULL,
-  joined_on    BIGINT        NOT NULL,
-  last_seen_on BIGINT        NOT NULL,
+  joined_on    TIMESTAMP     NOT NULL,
+  last_seen_on TIMESTAMP     NOT NULL,
   CONSTRAINT pk_citizen PRIMARY KEY (id),
   CONSTRAINT uk_na_user UNIQUE (na_user)
 );
@@ -45,7 +45,7 @@ CREATE TABLE jjj.profile (
   remote_work        BOOLEAN      NOT NULL,
   full_time          BOOLEAN      NOT NULL,
   biography          TEXT         NOT NULL,
-  last_updated_on    BIGINT       NOT NULL,
+  last_updated_on    TIMESTAMP    NOT NULL,
   experience         TEXT,
   CONSTRAINT pk_profile           PRIMARY KEY (citizen_id),
   CONSTRAINT fk_profile_citizen   FOREIGN KEY (citizen_id)   REFERENCES jjj.citizen   (id),
@@ -100,7 +100,7 @@ COMMENT ON INDEX jjj.idx_skill_citizen IS 'FK index';
 CREATE TABLE jjj.success (
   id          VARCHAR(12) NOT NULL,
   citizen_id  VARCHAR(12) NOT NULL,
-  recorded_on BIGINT      NOT NULL,
+  recorded_on TIMESTAMP   NOT NULL,
   from_here   BOOLEAN     NOT NULL,
   story       TEXT,
   CONSTRAINT pk_success         PRIMARY KEY (id),

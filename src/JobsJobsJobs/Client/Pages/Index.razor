@@ -1,0 +1,21 @@
+﻿@page "/"
+@inject IJSRuntime js
+
+<p>
+  Future home of No Agenda Jobs, where citizens of Gitmo Nation can assist one another in finding or enhancing their
+  employment. This will enable them to continue providing value for value to Adam and John, as they continue their work
+  deconstructing the misinformation that passes for news on a day-to-day basis.
+</p>
+<p>
+  Do you not understand the terms in the paragraph above? No worries; just head over to
+  <a href="https://noagendashow.net">
+    The Best Podcast in the Universe
+  </a> <em><a class="audio" @onclick="PlayTrue">(it&rsquo;s true!)</a></em> and find out what you&rsquo;re missing.
+</p>
+<audio id="itstrue">
+  <source src="/audio/thats-true.mp3">
+</audio>
+
+@code {
+    async void PlayTrue() => await js.InvokeVoidAsync("Audio.play", "itstrue");
+}

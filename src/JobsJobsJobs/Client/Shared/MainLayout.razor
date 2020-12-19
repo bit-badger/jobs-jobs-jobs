@@ -1,0 +1,26 @@
+﻿@inherits LayoutComponentBase
+@inject IJSRuntime js
+
+<div class="page">
+  <div class="sidebar">
+    <NavMenu />
+  </div>
+
+  <div class="main">
+    <div class="top-row px-4">
+      <em>(...and Jobs - <a class="audio" @onclick="PlayJobs">Let's Vote for Jobs!</a>)</em>
+    </div>
+
+    <div class="content px-4">
+      @Body
+    </div>
+    <audio id="pelosijobs">
+      <source src="/audio/pelosi-jobs.mp3">
+    </audio>
+
+  </div>
+</div>
+
+@code {
+    async void PlayJobs() => await js.InvokeVoidAsync("Audio.play", "pelosijobs");
+}
