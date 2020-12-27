@@ -9,16 +9,34 @@ using System.Threading.Tasks;
 
 namespace JobsJobsJobs.Server.Areas.Api.Controllers
 {
+    /// <summary>
+    /// API controller for citizen information
+    /// </summary>
     [Route("api/[controller]")]
     [ApiController]
     public class CitizenController : ControllerBase
     {
+        /// <summary>
+        /// Authorization configuration section
+        /// </summary>
         private readonly IConfigurationSection _config;
 
+        /// <summary>
+        /// NodaTime clock
+        /// </summary>
         private readonly IClock _clock;
 
+        /// <summary>
+        /// The data connection to use for this request
+        /// </summary>
         private readonly NpgsqlConnection _db;
 
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="config">The authorization configuration section</param>
+        /// <param name="clock">The NodaTime clock instance</param>
+        /// <param name="db">The data connection to use for this request</param>
         public CitizenController(IConfiguration config, IClock clock, NpgsqlConnection db)
         {
             _config = config.GetSection("Auth");

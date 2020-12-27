@@ -13,6 +13,9 @@ using System.Threading.Tasks;
 
 namespace JobsJobsJobs.Server.Areas.Api.Controllers
 {
+    /// <summary>
+    /// API controller for employment profile information
+    /// </summary>
     [Route("api/[controller]")]
     [ApiController]
     public class ProfileController : ControllerBase
@@ -20,19 +23,23 @@ namespace JobsJobsJobs.Server.Areas.Api.Controllers
         /// <summary>
         /// The database connection
         /// </summary>
-        private readonly NpgsqlConnection db;
+        private readonly NpgsqlConnection _db;
 
-        public ProfileController(NpgsqlConnection dbConn)
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="db">The database connection to use for this request</param>
+        public ProfileController(NpgsqlConnection db)
         {
-            db = dbConn;
+            _db = db;
         }
 
         [Authorize]
         [HttpGet("")]
         public async Task<IActionResult> Get()
         {
-            await db.OpenAsync();
-            var profile = await db.FindProfileByCitizen(
+            await _db.OpenAsync();
+            var profile = await _db.FindProfileByCitizen(
                 CitizenId.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value));
             return profile == null ? NoContent() : Ok(profile);
         }

@@ -13,42 +13,78 @@ else if (profileForm != null)
 {
 <EditForm Model="@profileForm" OnValidSubmit="@SaveProfile">
   <DataAnnotationsValidator />
-  <ValidationSummary />
-  <label>
-    <InputCheckbox @bind-Value="@profileForm.IsSeekingEmployment" />
-    I am currently seeking employment
-  </label>
-  <label>
-    <InputCheckbox @bind-Value="@profileForm.IsPublic" />
-    Allow my profile to be searched publicly (outside NA Social)
-  </label><br>
-  <label>
-    Continent
-    <InputSelect @bind-Value="@profileForm.ContinentId" />
-  </label>
-  <label>
-    Region
-    <InputText @bind-Value="@profileForm.Region" />
-  </label><br>
-  <label>
-    <InputCheckbox @bind-Value="@profileForm.RemoteWork" />
-    I am looking for remote work
-  </label>
-  <label>
-    <InputCheckbox @bind-Value="@profileForm.FullTime" />
-    I am looking for full-time work
-  </label><br>
-  <label>
-    Professional Biography
-    <InputTextArea @bind-Value="@profileForm.Biography" />
-  </label><br>
-  <label>
-    Experience
-    <InputTextArea @bind-Value="@profileForm.Experience" />
-  </label>
-  <p>
-    <button type="submit">Save</button>
-  </p>
+  <div class="form-row">
+    <div class="col col-xs-12 col-sm-12 col-md-4">
+      <div class="form-check">
+        <InputCheckbox id="seeking" class="form-check-input" @bind-Value="@profileForm.IsSeekingEmployment" />
+        <label for="seeking" class="form-check-label">I am currently seeking employment</label>
+      </div>
+    </div>
+    <div class="col col-xs-12 col-sm-12 col-md-8">
+      <div class="form-check">
+        <InputCheckbox id="isPublic" class="form-check-input" @bind-Value="@profileForm.IsPublic" />
+        <label for="isPublic" class="form-check-label">
+          Allow my profile to be searched publicly (outside NA Social)
+        </label>
+      </div>
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="col col-xs-12 col-sm-12 col-md-4">
+      <div class="form-check">
+        <InputCheckbox id="isRemote" class="form-check-input" @bind-Value="@profileForm.RemoteWork" />
+        <label for="isRemote" class="form-check-label">I am looking for remote work</label>
+      </div>
+    </div>
+    <div class="col col-xs-12 col-sm-12 col-md-8">
+      <div class="form-check">
+        <InputCheckbox id="isFull" class="form-check-input" @bind-Value="@profileForm.FullTime" />
+        <label for="isFull" class="form-check-label">I am looking for full-time work</label>
+      </div>
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="col col-xs-12 col-sm-6 col-md-4">
+      <div class="form-group">
+        <label for="continentId">Continent</label>
+        <InputSelect id="continentId" @bind-Value="@profileForm.ContinentId" class="form-control">
+          <option>&ndash; Select &ndash;</option>
+          @foreach (var (id, name) in continents)
+          {
+            <option value="@id">@name</option>
+          }
+        </InputSelect>
+        <ValidationMessage For="@(() => profileForm.ContinentId)" />
+      </div>
+    </div>
+    <div class="col col-xs-12 col-sm-6 col-md-8">
+      <div class="form-group">
+        <label for="region">Region</label>
+        <InputText id="region" @bind-Value="@profileForm.Region" class="form-control" />
+        <ValidationMessage For="@(() => profileForm.Region)" />
+      </div>
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="col">
+      <div class="form-group">
+        <label for="bio">Professional Biography</label>
+        <InputTextArea id="bio" @bind-Value="@profileForm.Biography" class="form-control" />
+        <ValidationMessage For="@(() => profileForm.Biography)" />
+      </div>
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="col">
+      <label for="experience">Experience</label>
+      <InputTextArea id="experience" @bind-Value="@profileForm.Experience" class="form-control" />
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="col">
+      <button type="submit">Save</button>
+    </div>
+  </div>
 </EditForm>
 }
 
@@ -58,10 +94,22 @@ else if (profileForm != null)
 
     public ProfileForm? profileForm = null;
 
+    private IEnumerable<Continent> continents = Enumerable.Empty<Continent>();
+
     public string errorMessage = "";
 
     protected override async Task OnInitializedAsync()
     {
+      var continentResult = await ServerApi.AllContinents(http, state);
+      if (continentResult.IsOk)
+      {
+        continents = continentResult.Ok;
+      }
+      else
+      {
+        errorMessage = continentResult.Error;
+      }
+
       var result = await ServerApi.RetrieveProfile(http, state);
       if (result.IsOk)
       {

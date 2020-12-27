@@ -77,5 +77,22 @@ namespace JobsJobsJobs.Client
                 _ => Result<Profile?>.AsError(await res.Content.ReadAsStringAsync()),
             };
         }
+
+        /// <summary>
+        /// Retrieve all continents
+        /// </summary>
+        /// <param name="http">The HTTP client to use for server communication</param>
+        /// <param name="state">The current application state</param>
+        /// <returns>The continents, or an error message if one occurs</returns>
+        public static async Task<Result<IEnumerable<Continent>>> AllContinents(HttpClient http, AppState state)
+        {
+            var req = WithHeader(state, "continent/all");
+            var res = await http.SendAsync(req);
+            if (res.IsSuccessStatusCode) {
+                var continents = await res.Content.ReadFromJsonAsync<IEnumerable<Continent>>();
+                return Result<IEnumerable<Continent>>.AsOk(continents ?? Enumerable.Empty<Continent>());
+            }
+            return Result<IEnumerable<Continent>>.AsError(await res.Content.ReadAsStringAsync());
+        }
     }
 }

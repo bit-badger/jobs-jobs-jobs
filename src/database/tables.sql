@@ -36,6 +36,14 @@ COMMENT ON COLUMN jjj.continent.id
 COMMENT ON COLUMN jjj.continent.name
   IS 'The name of the continent';
 
+INSERT INTO jjj.continent VALUES ('QbpCTd3mDbTU', 'Africa');
+INSERT INTO jjj.continent VALUES ('yHGzQvD80uS9', 'Antarctica');
+INSERT INTO jjj.continent VALUES ('jEvaGTKwnDB8', 'Asia');
+INSERT INTO jjj.continent VALUES ('mUN8AOddmx2i', 'Australia');
+INSERT INTO jjj.continent VALUES ('-TXN-0Cvn_RT', 'Europe');
+INSERT INTO jjj.continent VALUES ('2ELDbrTvVSPO', 'North America');
+INSERT INTO jjj.continent VALUES ('XxnCcCHu8wqL', 'South America');
+
 CREATE TABLE jjj.profile (
   citizen_id         VARCHAR(12)  NOT NULL,
   seeking_employment BOOLEAN      NOT NULL,
