@@ -69,7 +69,7 @@ else if (profileForm != null)
     <div class="col">
       <div class="form-group">
         <label for="bio">Professional Biography</label>
-        <InputTextArea id="bio" @bind-Value="@profileForm.Biography" class="form-control" />
+        <MarkdownEditor Id="bio" @bind-Text="@profileForm.Biography" />
         <ValidationMessage For="@(() => profileForm.Biography)" />
       </div>
     </div>
@@ -77,12 +77,13 @@ else if (profileForm != null)
   <div class="form-row">
     <div class="col">
       <label for="experience">Experience</label>
-      <InputTextArea id="experience" @bind-Value="@profileForm.Experience" class="form-control" />
+      <MarkdownEditor Id="experience" @bind-Text="@profileForm.Experience" />
     </div>
   </div>
   <div class="form-row">
     <div class="col">
-      <button type="submit">Save</button>
+      <br>
+      <button type="submit" class="btn btn-outline-primary">Save</button>
     </div>
   </div>
 </EditForm>
