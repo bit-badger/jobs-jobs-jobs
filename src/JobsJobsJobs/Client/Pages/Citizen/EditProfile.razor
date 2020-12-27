@@ -1,0 +1,89 @@
+﻿@page "/citizen/profile"
+
+<h3>Employment Profile</h3>
+
+@if (ErrorMessage != "")
+{
+  <p>@ErrorMessage</p>
+}
+else
+{
+<EditForm Model="@ProfileForm" OnValidSubmit="@SaveProfile">
+  <DataAnnotationsValidator />
+  <div class="form-row">
+    <div class="col">
+      <div class="form-check">
+        <InputCheckbox id="seeking" class="form-check-input" @bind-Value="@ProfileForm.IsSeekingEmployment" />
+        <label for="seeking" class="form-check-label">I am currently seeking employment</label>
+      </div>
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="col col-xs-12 col-sm-6 col-md-4">
+      <div class="form-group">
+        <label for="continentId" class="jjj-required">Continent</label>
+        <InputSelect id="continentId" @bind-Value="@ProfileForm.ContinentId" class="form-control">
+          <option>&ndash; Select &ndash;</option>
+          @foreach (var (id, name) in Continents)
+    {
+    <option value="@id">@name</option>
+}
+        </InputSelect>
+        <ValidationMessage For="@(() => ProfileForm.ContinentId)" />
+      </div>
+    </div>
+    <div class="col col-xs-12 col-sm-6 col-md-8">
+      <div class="form-group">
+        <label for="region" class="jjj-required">Region</label>
+        <InputText id="region" @bind-Value="@ProfileForm.Region" class="form-control" />
+        <ValidationMessage For="@(() => ProfileForm.Region)" />
+      </div>
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="col">
+      <div class="form-group">
+        <label for="bio" class="jjj-required">Professional Biography</label>
+        <MarkdownEditor Id="bio" @bind-Text="@ProfileForm.Biography" />
+        <ValidationMessage For="@(() => ProfileForm.Biography)" />
+      </div>
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="col col-xs-12 col-sm-12 offset-md-2 col-md-4">
+      <div class="form-check">
+        <InputCheckbox id="isRemote" class="form-check-input" @bind-Value="@ProfileForm.RemoteWork" />
+        <label for="isRemote" class="form-check-label">I am looking for remote work</label>
+      </div>
+    </div>
+    <div class="col col-xs-12 col-sm-12 col-md-4">
+      <div class="form-check">
+        <InputCheckbox id="isFull" class="form-check-input" @bind-Value="@ProfileForm.FullTime" />
+        <label for="isFull" class="form-check-label">I am looking for full-time work</label>
+      </div>
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="col">
+      <label for="experience">Experience</label>
+      <MarkdownEditor Id="experience" @bind-Text="@ProfileForm.Experience" />
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="col">
+      <div class="form-check">
+        <InputCheckbox id="isPublic" class="form-check-input" @bind-Value="@ProfileForm.IsPublic" />
+        <label for="isPublic" class="form-check-label">
+          Allow my profile to be searched publicly (outside NA Social)
+        </label>
+      </div>
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="col">
+      <br>
+      <button type="submit" class="btn btn-outline-primary">Save</button>
+    </div>
+  </div>
+</EditForm>
+}

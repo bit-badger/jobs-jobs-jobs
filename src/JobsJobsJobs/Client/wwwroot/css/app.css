@@ -56,3 +56,12 @@ a.audio {
 a.audio:hover {
   cursor: pointer;
 }
+
+label.jjj-required {
+  font-weight:bold;
+}
+
+label.jjj-required::after {
+  color: red;
+  content: ' *';
+}

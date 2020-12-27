@@ -1,5 +1,7 @@
 ﻿using JobsJobsJobs.Shared;
 using JobsJobsJobs.Shared.Api;
+using NodaTime;
+using NodaTime.Serialization.SystemTextJson;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,6 +9,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace JobsJobsJobs.Client
@@ -16,6 +19,25 @@ namespace JobsJobsJobs.Client
     /// </summary>
     public static class ServerApi
     {
+        /// <summary>
+        /// System.Text.Json options configured for NodaTime
+        /// </summary>
+        private static readonly JsonSerializerOptions _serializerOptions;
+
+        /// <summary>
+        /// Static constructor
+        /// </summary>
+        static ServerApi()
+        {
+
+            var options = new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            };
+            options.ConfigureForNodaTime(DateTimeZoneProviders.Tzdb);
+            _serializerOptions = options;
+        }
+
         /// <summary>
         /// Create an API URL
         /// </summary>
@@ -36,6 +58,14 @@ namespace JobsJobsJobs.Client
             req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", state.Jwt);
             return req;
         }
+
+        /// <summary>
+        /// Set the JSON Web Token (JWT) bearer header for the given HTTP client
+        /// </summary>
+        /// <param name="http">The HTTP client whose authentication header should be set</param>
+        /// <param name="state">The current application state</param>
+        public static void SetJwt(HttpClient http, AppState state) =>
+            http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", state.Jwt);
 
         /// <summary>
         /// Log on a user with the authorization code received from No Agenda Social
@@ -73,7 +103,8 @@ namespace JobsJobsJobs.Client
             return true switch
             {
                 _ when res.StatusCode == HttpStatusCode.NoContent => Result<Profile?>.AsOk(null),
-                _ when res.IsSuccessStatusCode => Result<Profile?>.AsOk(await res.Content.ReadFromJsonAsync<Profile>()),
+                _ when res.IsSuccessStatusCode => Result<Profile?>.AsOk(
+                    await res.Content.ReadFromJsonAsync<Profile>(_serializerOptions)),
                 _ => Result<Profile?>.AsError(await res.Content.ReadAsStringAsync()),
             };
         }

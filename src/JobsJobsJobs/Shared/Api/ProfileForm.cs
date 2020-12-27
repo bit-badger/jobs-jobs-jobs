@@ -1,7 +1,6 @@
-﻿using JobsJobsJobs.Shared;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
-namespace JobsJobsJobs.Client.ViewModels
+namespace JobsJobsJobs.Shared.Api
 {
     /// <summary>
     /// The data required to update a profile
