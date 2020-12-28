@@ -15,6 +15,16 @@ namespace JobsJobsJobs.Client.Pages.Citizen
     public partial class EditProfile : ComponentBase
     {
         /// <summary>
+        /// Counter for IDs when "Add a Skill" button is clicked
+        /// </summary>
+        private int _newSkillCounter = 0;
+
+        /// <summary>
+        /// A flag that indicates all the required API calls have completed, and the form is ready to be displayed
+        /// </summary>
+        private bool AllLoaded { get; set; } = false;
+
+        /// <summary>
         /// The form for this page
         /// </summary>
         private ProfileForm ProfileForm { get; set; } = new ProfileForm();
@@ -25,9 +35,9 @@ namespace JobsJobsJobs.Client.Pages.Citizen
         private IEnumerable<Continent> Continents { get; set; } = Enumerable.Empty<Continent>();
 
         /// <summary>
-        /// Error message from API access
+        /// Error messages from API access
         /// </summary>
-        private string ErrorMessage { get; set; } = "";
+        private IList<string> ErrorMessages { get; } = new List<string>();
 
         /// <summary>
         /// HTTP client instance to use for API access
@@ -44,30 +54,77 @@ namespace JobsJobsJobs.Client.Pages.Citizen
         protected override async Task OnInitializedAsync()
         {
             ServerApi.SetJwt(Http, State);
-            var continentResult = await ServerApi.AllContinents(Http, State);
-            if (continentResult.IsOk)
+            var continentTask = ServerApi.RetrieveMany<Continent>(Http, "continent/all");
+            var profileTask = ServerApi.RetrieveProfile(Http, State);
+            var skillTask = ServerApi.RetrieveMany<Skill>(Http, "profile/skills");
+
+            await Task.WhenAll(continentTask, profileTask, skillTask);
+
+            if (continentTask.Result.IsOk)
             {
-                Continents = continentResult.Ok;
+                Continents = continentTask.Result.Ok;
             }
             else
             {
-                ErrorMessage = continentResult.Error;
+                ErrorMessages.Add(continentTask.Result.Error);
             }
 
-            var result = await ServerApi.RetrieveProfile(Http, State);
-            if (result.IsOk)
+            if (profileTask.Result.IsOk)
             {
-                System.Console.WriteLine($"Result is null? {result.Ok == null}");
-                ProfileForm = (result.Ok == null) ? new ProfileForm() : ProfileForm.FromProfile(result.Ok);
+                ProfileForm = (profileTask.Result.Ok == null)
+                    ? new ProfileForm()
+                    : ProfileForm.FromProfile(profileTask.Result.Ok);
             }
             else
             {
-                ErrorMessage = result.Error;
+                ErrorMessages.Add(profileTask.Result.Error);
             }
+
+            if (skillTask.Result.IsOk)
+            {
+                foreach (var skill in skillTask.Result.Ok)
+                {
+                    ProfileForm.Skills.Add(new SkillForm
+                    {
+                        Id = skill.Id.ToString(),
+                        Description = skill.Description,
+                        Notes = skill.Notes ?? ""
+                    });
+                }
+                if (ProfileForm.Skills.Count == 0) AddNewSkill();
+            }
+            else
+            {
+                ErrorMessages.Add(skillTask.Result.Error);
+            }
+
+            AllLoaded = true;
         }
 
+        /// <summary>
+        /// Add a new skill to the form
+        /// </summary>
+        private void AddNewSkill() =>
+            ProfileForm.Skills.Add(new SkillForm { Id = $"new{_newSkillCounter++}" });
+
+        /// <summary>
+        /// Remove the skill for the given ID
+        /// </summary>
+        /// <param name="skillId">The ID of the skill to remove</param>
+        private void RemoveSkill(string skillId) =>
+            ProfileForm.Skills.Remove(ProfileForm.Skills.First(s => s.Id == skillId));
+
+        /// <summary>
+        /// Save changes to the current profile
+        /// </summary>
         public async Task SaveProfile()
         {
+            // Remove any skills left blank
+            var blankSkills = ProfileForm.Skills
+                .Where(s => string.IsNullOrEmpty(s.Description) && string.IsNullOrEmpty(s.Notes))
+                .ToList();
+            foreach (var blankSkill in blankSkills) ProfileForm.Skills.Remove(blankSkill);
+
             var res = await Http.PostAsJsonAsync("/api/profile/save", ProfileForm);
             if (res.IsSuccessStatusCode)
             {
@@ -76,7 +133,7 @@ namespace JobsJobsJobs.Client.Pages.Citizen
             else
             {
                 // TODO: probably not the best way to handle this...
-                ErrorMessage = await res.Content.ReadAsStringAsync();
+                ErrorMessages.Add(await res.Content.ReadAsStringAsync());
             }
         }
 

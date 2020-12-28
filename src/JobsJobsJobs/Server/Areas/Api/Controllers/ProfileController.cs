@@ -43,25 +43,31 @@ namespace JobsJobsJobs.Server.Areas.Api.Controllers
             _clock = clock;
         }
 
+        /// <summary>
+        /// The current citizen ID
+        /// </summary>
+        private CitizenId CurrentCitizenId => CitizenId.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+
         [HttpGet("")]
         public async Task<IActionResult> Get()
         {
             await _db.OpenAsync();
-            var profile = await _db.FindProfileByCitizen(
-                CitizenId.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value));
+            var profile = await _db.FindProfileByCitizen(CurrentCitizenId);
             return profile == null ? NoContent() : Ok(profile);
         }
 
         [HttpPost("save")]
-        public async Task<IActionResult> Save([FromBody] ProfileForm form)
+        public async Task<IActionResult> Save(ProfileForm form)
         {
-            var citizenId = CitizenId.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
             await _db.OpenAsync();
-            var existing = await _db.FindProfileByCitizen(citizenId);
+            var txn = await _db.BeginTransactionAsync();
+
+            // Profile
+            var existing = await _db.FindProfileByCitizen(CurrentCitizenId);
             var profile = existing == null
-                ? new Profile(citizenId, form.IsSeekingEmployment, form.IsPublic, ContinentId.Parse(form.ContinentId),
-                    form.Region, form.RemoteWork, form.FullTime, new MarkdownString(form.Biography),
-                    _clock.GetCurrentInstant(),
+                ? new Profile(CurrentCitizenId, form.IsSeekingEmployment, form.IsPublic,
+                    ContinentId.Parse(form.ContinentId), form.Region, form.RemoteWork, form.FullTime,
+                    new MarkdownString(form.Biography), _clock.GetCurrentInstant(),
                     string.IsNullOrEmpty(form.Experience) ? null : new MarkdownString(form.Experience))
                 : existing with
                 {
@@ -76,7 +82,26 @@ namespace JobsJobsJobs.Server.Areas.Api.Controllers
                     Experience = string.IsNullOrEmpty(form.Experience) ? null : new MarkdownString(form.Experience)
                 };
             await _db.SaveProfile(profile);
+
+            // Skills
+            var skills = new List<Skill>();
+            foreach (var skill in form.Skills) {
+                skills.Add(new Skill(skill.Id.StartsWith("new") ? await SkillId.Create() : SkillId.Parse(skill.Id),
+                    CurrentCitizenId, skill.Description, string.IsNullOrEmpty(skill.Notes) ? null : skill.Notes));
+            }
+            
+            foreach (var skill in skills) await _db.SaveSkill(skill);
+            await _db.DeleteMissingSkills(CurrentCitizenId, skills.Select(s => s.Id));
+
+            await txn.CommitAsync();
             return Ok();
+        }
+
+        [HttpGet("skills")]
+        public async Task<IActionResult> GetSkills()
+        {
+            await _db.OpenAsync();
+            return Ok(await _db.FindSkillsByCitizen(CurrentCitizenId));
         }
     }
 }

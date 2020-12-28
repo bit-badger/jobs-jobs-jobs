@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Extensions.Configuration;
@@ -11,6 +12,7 @@ using NodaTime;
 using NodaTime.Serialization.SystemTextJson;
 using Npgsql;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace JobsJobsJobs.Server
 {
@@ -79,11 +81,18 @@ namespace JobsJobsJobs.Server
             app.UseAuthentication();
             app.UseAuthorization();
 
+            static Task send404(HttpContext context)
+            {
+                context.Response.StatusCode = StatusCodes.Status404NotFound;
+                return Task.FromResult(0);
+            }
+
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapRazorPages();
                 endpoints.MapControllers();
-                endpoints.MapFallbackToFile("index.html");
+                endpoints.MapFallback("api/{**slug}", send404);
+                endpoints.MapFallbackToFile("{**slug}", "index.html");
             });
         }
     }

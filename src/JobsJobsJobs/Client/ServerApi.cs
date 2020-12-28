@@ -125,5 +125,30 @@ namespace JobsJobsJobs.Client
             }
             return Result<IEnumerable<Continent>>.AsError(await res.Content.ReadAsStringAsync());
         }
+
+        /// <summary>
+        /// Retrieve many items from the given URL
+        /// </summary>
+        /// <typeparam name="T">The type of item expected</typeparam>
+        /// <param name="http">The HTTP client to use for server communication</param>
+        /// <param name="url">The API URL to use call</param>
+        /// <returns>A result with the items, or an error if one occurs</returns>
+        /// <remarks>The caller is responsible for setting the JWT on the HTTP client</remarks>
+        public static async Task<Result<IEnumerable<T>>> RetrieveMany<T>(HttpClient http, string url)
+        {
+            try
+            {
+                var results = await http.GetFromJsonAsync<IEnumerable<T>>($"/api/{url}", _serializerOptions);
+                return Result<IEnumerable<T>>.AsOk(results ?? Enumerable.Empty<T>());
+            }
+            catch (HttpRequestException ex)
+            {
+                return Result<IEnumerable<T>>.AsError(ex.Message);
+            }
+            catch (JsonException ex)
+            {
+                return Result<IEnumerable<T>>.AsError($"Unable to parse result: {ex.Message}");
+            }
+        }
     }
 }

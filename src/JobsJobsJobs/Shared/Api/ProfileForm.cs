@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace JobsJobsJobs.Shared.Api
 {
@@ -52,7 +53,17 @@ namespace JobsJobsJobs.Shared.Api
         /// The user's past experience
         /// </summary>
         public string Experience { get; set; } = "";
+        
+        /// <summary>
+        /// The skills for the user
+        /// </summary>
+        public ICollection<SkillForm> Skills { get; set; } = new List<SkillForm>();
 
+        /// <summary>
+        /// Create an instance of this form from the given profile
+        /// </summary>
+        /// <param name="profile">The profile off which this form will be based</param>
+        /// <returns>The profile form, popluated with values from the given profile</returns>
         public static ProfileForm FromProfile(Profile profile) =>
             new ProfileForm
             {
