@@ -131,7 +131,7 @@ namespace JobsJobsJobs.Client
         /// </summary>
         /// <typeparam name="T">The type of item expected</typeparam>
         /// <param name="http">The HTTP client to use for server communication</param>
-        /// <param name="url">The API URL to use call</param>
+        /// <param name="url">The API URL to call</param>
         /// <returns>A result with the items, or an error if one occurs</returns>
         /// <remarks>The caller is responsible for setting the JWT on the HTTP client</remarks>
         public static async Task<Result<IEnumerable<T>>> RetrieveMany<T>(HttpClient http, string url)
@@ -148,6 +148,30 @@ namespace JobsJobsJobs.Client
             catch (JsonException ex)
             {
                 return Result<IEnumerable<T>>.AsError($"Unable to parse result: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Retrieve one item from the given URL
+        /// </summary>
+        /// <typeparam name="T">The type of item expected</typeparam>
+        /// <param name="http">The HTTP client to use for server communication</param>
+        /// <param name="url">The API URL to call</param>
+        /// <returns>A result with the item (possibly null), or an error if one occurs</returns>
+        /// <remarks>The caller is responsible for setting the JWT on the HTTP client</remarks>
+        public static async Task<Result<T?>> RetrieveOne<T>(HttpClient http, string url)
+        {
+            try
+            {
+                return Result<T?>.AsOk(await http.GetFromJsonAsync<T>($"/api/{url}", _serializerOptions));
+            }
+            catch (HttpRequestException ex)
+            {
+                return Result<T?>.AsError(ex.Message);
+            }
+            catch (JsonException ex)
+            {
+                return Result<T?>.AsError($"Unable to parse result: {ex.Message}");
             }
         }
     }

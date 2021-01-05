@@ -1,9 +1,5 @@
 ﻿using JobsJobsJobs.Shared;
 using Npgsql;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace JobsJobsJobs.Server.Data
@@ -31,13 +27,11 @@ namespace JobsJobsJobs.Server.Data
         {
             using var cmd = conn.CreateCommand();
             cmd.CommandText = "SELECT * FROM citizen WHERE na_user = @na_user";
-            cmd.Parameters.Add(new NpgsqlParameter("@na_user", naUser));
+            cmd.AddString("na_user", naUser);
 
             using NpgsqlDataReader rdr = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
-            if (await rdr.ReadAsync().ConfigureAwait(false))
-            {
-                return ToCitizen(rdr);
-            }
+            if (await rdr.ReadAsync().ConfigureAwait(false)) return ToCitizen(rdr);
+            
             return null;
         }
 
@@ -54,12 +48,12 @@ namespace JobsJobsJobs.Server.Data
                 ) VALUES(
                     @na_user, @display_name, @profile_url, @joined_on, @last_seen_on, @id
                 )";
-            cmd.Parameters.Add(new NpgsqlParameter("@id", citizen.Id.ToString()));
-            cmd.Parameters.Add(new NpgsqlParameter("@na_user", citizen.NaUser));
-            cmd.Parameters.Add(new NpgsqlParameter("@display_name", citizen.DisplayName));
-            cmd.Parameters.Add(new NpgsqlParameter("@profile_url", citizen.ProfileUrl));
-            cmd.Parameters.Add(new NpgsqlParameter("@joined_on", citizen.JoinedOn));
-            cmd.Parameters.Add(new NpgsqlParameter("@last_seen_on", citizen.LastSeenOn));
+            cmd.AddString("id", citizen.Id);
+            cmd.AddString("na_user", citizen.NaUser);
+            cmd.AddString("display_name", citizen.DisplayName);
+            cmd.AddString("profile_url", citizen.ProfileUrl);
+            cmd.AddInstant("joined_on", citizen.JoinedOn);
+            cmd.AddInstant("last_seen_on", citizen.LastSeenOn);
 
             await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
         }
@@ -76,9 +70,9 @@ namespace JobsJobsJobs.Server.Data
                      SET display_name = @display_name,
                          last_seen_on = @last_seen_on
                    WHERE id = @id";
-            cmd.Parameters.Add(new NpgsqlParameter("@id", citizen.Id.ToString()));
-            cmd.Parameters.Add(new NpgsqlParameter("@display_name", citizen.DisplayName));
-            cmd.Parameters.Add(new NpgsqlParameter("@last_seen_on", citizen.LastSeenOn));
+            cmd.AddString("id", citizen.Id);
+            cmd.AddString("display_name", citizen.DisplayName);
+            cmd.AddInstant("last_seen_on", citizen.LastSeenOn);
 
             await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
         }

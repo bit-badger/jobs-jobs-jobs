@@ -1,4 +1,5 @@
-﻿using JobsJobsJobs.Shared;
+﻿using Blazored.Toast.Services;
+using JobsJobsJobs.Shared;
 using JobsJobsJobs.Shared.Api;
 using Microsoft.AspNetCore.Components;
 using System.Collections.Generic;
@@ -50,6 +51,12 @@ namespace JobsJobsJobs.Client.Pages.Citizen
         /// </summary>
         [Inject]
         private AppState State { get; set; } = default!;
+
+        /// <summary>
+        /// Toast service
+        /// </summary>
+        [Inject]
+        private IToastService Toasts { get; set; } = default!;
 
         protected override async Task OnInitializedAsync()
         {
@@ -128,12 +135,13 @@ namespace JobsJobsJobs.Client.Pages.Citizen
             var res = await Http.PostAsJsonAsync("/api/profile/save", ProfileForm);
             if (res.IsSuccessStatusCode)
             {
-                // TODO: success notification
+                Toasts.ShowSuccess("Profile Saved Successfully");
             }
             else
             {
-                // TODO: probably not the best way to handle this...
-                ErrorMessages.Add(await res.Content.ReadAsStringAsync());
+                var error = await res.Content.ReadAsStringAsync();
+                if (!string.IsNullOrEmpty(error)) error = $"- {error}";
+                Toasts.ShowError($"{(int)res.StatusCode} {error}");
             }
         }
 

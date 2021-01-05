@@ -1,47 +1,41 @@
 ﻿@page "/citizen/dashboard"
-@inject HttpClient http
-@inject AppState state
 
-<h3>Welcome, @state.User!.Name!</h3>
+<h3>Welcome, @State.User!.Name!</h3>
 
-@if (retrievingProfile)
+@if (RetrievingData)
 {
   <p>Retrieving your employment profile...</p>
 }
-else if (profile != null)
-{
-  <p>Your employment profile was last updated @profile.LastUpdatedOn</p>
-}
 else
 {
-  <p>You do not have an employment profile established; click &ldquo;Profile&rdquo;* in the menu to get started!</p>
-  <p><em>* Once it's there...</em></p>
-}
-
-@if (errorMessage != null)
-{
-  <p>@errorMessage</p>
-}
-@code {
-
-    bool retrievingProfile = true;
-    Profile? profile = null;
-    string? errorMessage = null;
-
-    protected override async Task OnInitializedAsync()
+  if (Profile != null)
+  {
+    <p>
+      Your employment profile was last updated <FullDateTime TheDate="@Profile.LastUpdatedOn" />. Your profile currently
+      lists @SkillCount skill@(SkillCount != 1 ? "s" : "").
+    </p>
+  }
+  else
+  {
+    <p>You do not have an employment profile established; click &ldquo;Profile&rdquo;* in the menu to get started!</p>
+  }
+  <p>
+    There @(ProfileCount == 1 ? "is" : "are") @(ProfileCount == 0 ? "no" : ProfileCount) employment
+    profile@(ProfileCount != 1 ? "s" : "") from citizens of Gitmo Nation.
+    @if (ProfileCount > 0)
     {
-      if (state.User != null)
-      {
-        var profileResult = await ServerApi.RetrieveProfile(http, state);
-        if (profileResult.IsOk)
-        {
-          profile = profileResult.Ok;
-        }
-        else
-        {
-          errorMessage = profileResult.Error;
-        }
-        retrievingProfile = false;
-      }
+      <text>Take a look around and see if you can help them find work!</text>
     }
+  </p>
+}
+
+@if (ErrorMessages.Count > 0)
+{
+  <p><strong>The following error(s) occurred:</strong></p>
+  <p>
+    @foreach (var msg in ErrorMessages)
+    {
+      @msg<br>
+    }
+  </p>
 }

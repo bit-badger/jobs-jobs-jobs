@@ -1,6 +1,5 @@
 ﻿using JobsJobsJobs.Shared;
 using Npgsql;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,7 +8,7 @@ using System.Threading.Tasks;
 namespace JobsJobsJobs.Server.Data
 {
     /// <summary>
-    /// Extensions to the NpgsqlConnection type to support manipulation of profiles
+    /// Extensions to the Connection type to support manipulation of profiles
     /// </summary>
     public static class ProfileExtensions
     {
@@ -53,7 +52,7 @@ namespace JobsJobsJobs.Server.Data
                     FROM profile p
                         INNER JOIN continent c ON p.continent_id = c.id
                     WHERE citizen_id = @id";
-            cmd.Parameters.Add(new NpgsqlParameter("@id", citizen.Id.ToString()));
+            cmd.AddString("id", citizen.Id);
 
             using var rdr = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
             return await rdr.ReadAsync().ConfigureAwait(false) ? ToProfile(rdr) : null;
@@ -84,17 +83,16 @@ namespace JobsJobsJobs.Server.Data
                         last_updated_on    = @last_updated_on,
                         experience         = @experience
                     WHERE profile.citizen_id = excluded.citizen_id";
-            cmd.Parameters.Add(new NpgsqlParameter("@citizen_id", profile.Id.ToString()));
-            cmd.Parameters.Add(new NpgsqlParameter("@seeking_employment", profile.SeekingEmployment));
-            cmd.Parameters.Add(new NpgsqlParameter("@is_public", profile.IsPublic));
-            cmd.Parameters.Add(new NpgsqlParameter("@continent_id", profile.ContinentId.ToString()));
-            cmd.Parameters.Add(new NpgsqlParameter("@region", profile.Region));
-            cmd.Parameters.Add(new NpgsqlParameter("@remote_work", profile.RemoteWork));
-            cmd.Parameters.Add(new NpgsqlParameter("@full_time", profile.FullTime));
-            cmd.Parameters.Add(new NpgsqlParameter("@biography", profile.Biography.Text));
-            cmd.Parameters.Add(new NpgsqlParameter("@last_updated_on", profile.LastUpdatedOn));
-            cmd.Parameters.Add(new NpgsqlParameter("@experience", 
-                profile.Experience == null ? DBNull.Value : profile.Experience.Text));
+            cmd.AddString("citizen_id", profile.Id);
+            cmd.AddBool("seeking_employment", profile.SeekingEmployment);
+            cmd.AddBool("is_public", profile.IsPublic);
+            cmd.AddString("continent_id", profile.ContinentId);
+            cmd.AddString("region", profile.Region);
+            cmd.AddBool("remote_work", profile.RemoteWork);
+            cmd.AddBool("full_time", profile.FullTime);
+            cmd.AddString("biography", profile.Biography.Text);
+            cmd.AddInstant("last_updated_on", profile.LastUpdatedOn);
+            cmd.AddMaybeNull("experience", profile.Experience);
 
             await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
         }
@@ -109,7 +107,7 @@ namespace JobsJobsJobs.Server.Data
         {
             using var cmd = conn.CreateCommand();
             cmd.CommandText = "SELECT * FROM skill WHERE citizen_id = @citizen_id";
-            cmd.Parameters.Add(new NpgsqlParameter("citizen_id", citizenId.ToString()));
+            cmd.AddString("citizen_id", citizenId);
 
             var result = new List<Skill>();
             using var rdr = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
@@ -137,10 +135,10 @@ namespace JobsJobsJobs.Server.Data
                     SET skill = @skill,
                         notes = @notes
                     WHERE skill.id = excluded.id";
-            cmd.Parameters.Add(new NpgsqlParameter("id", skill.Id.ToString()));
-            cmd.Parameters.Add(new NpgsqlParameter("citizen_id", skill.CitizenId.ToString()));
-            cmd.Parameters.Add(new NpgsqlParameter("skill", skill.Description));
-            cmd.Parameters.Add(new NpgsqlParameter("notes", skill.Notes == null ? DBNull.Value : skill.Notes));
+            cmd.AddString("id", skill.Id);
+            cmd.AddString("citizen_id", skill.CitizenId);
+            cmd.AddString("skill", skill.Description);
+            cmd.AddMaybeNull("notes", skill.Notes);
 
             await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
         }
@@ -161,11 +159,39 @@ namespace JobsJobsJobs.Server.Data
                 .Append(string.Join(", ", ids.Select(_ => $"@id{count++}").ToArray()))
                 .Append(')')
                 .ToString();
-            cmd.Parameters.Add(new NpgsqlParameter("citizen_id", citizenId.ToString()));
+            cmd.AddString("citizen_id", citizenId);
             count = 0;
-            foreach (var id in ids) cmd.Parameters.Add(new NpgsqlParameter($"id{count++}", id.ToString()));
+            foreach (var id in ids) cmd.AddString($"id{count++}", id);
 
             await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Get a count of the citizens with profiles
+        /// </summary>
+        /// <returns>The number of citizens with profiles</returns>
+        public static async Task<long> CountProfiles(this NpgsqlConnection conn)
+        {
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "SELECT COUNT(citizen_id) FROM profile";
+
+            var result = await cmd.ExecuteScalarAsync().ConfigureAwait(false);
+            return result == null ? 0L : (long)result;
+        }
+
+        /// <summary>
+        /// Count the skills for the given citizen
+        /// </summary>
+        /// <param name="citizenId">The ID of the citizen whose skills should be counted</param>
+        /// <returns>The count of skills for the given citizen</returns>
+        public static async Task<long> CountSkills(this NpgsqlConnection conn, CitizenId citizenId)
+        {
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "SELECT COUNT(id) FROM skill WHERE citizen_id = @citizen_id";
+            cmd.AddString("citizen_id", citizenId);
+
+            var result = await cmd.ExecuteScalarAsync().ConfigureAwait(false);
+            return result == null ? 0L : (long)result;
         }
     }
 }

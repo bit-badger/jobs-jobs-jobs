@@ -103,5 +103,19 @@ namespace JobsJobsJobs.Server.Areas.Api.Controllers
             await _db.OpenAsync();
             return Ok(await _db.FindSkillsByCitizen(CurrentCitizenId));
         }
+
+        [HttpGet("count")]
+        public async Task<IActionResult> GetProfileCount()
+        {
+            await _db.OpenAsync();
+            return Ok(new Count(await _db.CountProfiles()));
+        }
+
+        [HttpGet("skill-count")]
+        public async Task<IActionResult> GetSkillCount()
+        {
+            await _db.OpenAsync();
+            return Ok(new Count(await _db.CountSkills(CurrentCitizenId)));
+        }
     }
 }

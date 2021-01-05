@@ -1,5 +1,6 @@
 ﻿@inherits LayoutComponentBase
 @inject IJSRuntime js
+@using Blazored.Toast.Configuration
 
 <div class="page">
   <div class="sidebar">
@@ -20,6 +21,8 @@
 
   </div>
 </div>
+<BlazoredToasts Position="ToastPosition.BottomRight"
+                ShowProgressBar="true" />
 
 @code {
     async void PlayJobs() => await js.InvokeVoidAsync("Audio.play", "pelosijobs");

@@ -11,8 +11,10 @@ namespace JobsJobsJobs.Server.Data
     /// <summary>
     /// Extensions to the Npgsql data reader
     /// </summary>
-    public static class NpgsqlDataReaderExtensions
+    public static class NpgsqlExtensions
     {
+        #region Data Reader
+
         /// <summary>
         /// Get a boolean by its name
         /// </summary>
@@ -48,5 +50,44 @@ namespace JobsJobsJobs.Server.Data
         /// <param name="name">The name of the column to check</param>
         /// <returns>True if the column is null, false if not</returns>
         public static bool IsDBNull(this NpgsqlDataReader rdr, string name) => rdr.IsDBNull(rdr.GetOrdinal(name));
+
+        #endregion
+
+        #region Command
+
+        /// <summary>
+        /// Add a string parameter
+        /// </summary>
+        /// <param name="name">The name of the parameter</param>
+        /// <param name="value">The value of the parameter</param>
+        public static void AddString(this NpgsqlCommand cmd, string name, object value) =>
+            cmd.Parameters.Add(
+                new NpgsqlParameter<string>($"@{name}", value is string @val ? @val : value.ToString()!));
+
+        /// <summary>
+        /// Add a boolean parameter
+        /// </summary>
+        /// <param name="name">The name of the parameter</param>
+        /// <param name="value">The value of the parameter</param>
+        public static void AddBool(this NpgsqlCommand cmd, string name, bool value) =>
+            cmd.Parameters.Add(new NpgsqlParameter<bool>($"@{name}", value));
+
+        /// <summary>
+        /// Add an Instant parameter
+        /// </summary>
+        /// <param name="name">The name of the parameter</param>
+        /// <param name="value">The value of the parameter</param>
+        public static void AddInstant(this NpgsqlCommand cmd, string name, Instant value) =>
+            cmd.Parameters.Add(new NpgsqlParameter<Instant>($"@{name}", value));
+
+        /// <summary>
+        /// Add a parameter that may be null
+        /// </summary>
+        /// <param name="name">The name of the parameter</param>
+        /// <param name="value">The value of the parameter</param>
+        public static void AddMaybeNull(this NpgsqlCommand cmd, string name, object? value) =>
+            cmd.Parameters.Add(new NpgsqlParameter($"@{name}", value == null ? DBNull.Value : value));
+
+        #endregion
     }
 }
