@@ -1,0 +1,15 @@
+﻿@page "/profile/view/{Id}"
+@inject HttpClient http
+@inject AppState state
+
+@if (IsLoading)
+{
+  <p>Loading profile...</p>
+}
+else
+{
+  <ErrorList Errors=@ErrorMessages>
+    <h3>View Profile</h3>
+
+  </ErrorList>
+}

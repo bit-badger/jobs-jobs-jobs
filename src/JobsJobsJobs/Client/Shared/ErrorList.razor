@@ -1,0 +1,22 @@
+﻿@if (Errors.Count == 0)
+{
+  @ChildContent
+}
+else
+{
+  <p>The following error@(Errors.Count == 1 ? "" : "s") occurred:</p>
+  <ul>
+    @foreach (var msg in Errors)
+    {
+      <li>@msg</li>
+    }
+  </ul>
+}
+
+@code {
+    [Parameter]
+    public IList<string> Errors { get; set; } = default!;
+
+    [Parameter]
+    public RenderFragment ChildContent { get; set; } = default!;
+}

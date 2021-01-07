@@ -2,12 +2,8 @@
 using JobsJobsJobs.Shared;
 using JobsJobsJobs.Shared.Api;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using NodaTime;
-using Npgsql;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
@@ -24,9 +20,9 @@ namespace JobsJobsJobs.Server.Areas.Api.Controllers
     public class ProfileController : ControllerBase
     {
         /// <summary>
-        /// The database connection
+        /// The data context
         /// </summary>
-        private readonly NpgsqlConnection _db;
+        private readonly JobsDbContext _db;
 
         /// <summary>
         /// The NodaTime clock instance
@@ -36,8 +32,8 @@ namespace JobsJobsJobs.Server.Areas.Api.Controllers
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="db">The database connection to use for this request</param>
-        public ProfileController(NpgsqlConnection db, IClock clock)
+        /// <param name="db">The data context to use for this request</param>
+        public ProfileController(JobsDbContext db, IClock clock)
         {
             _db = db;
             _clock = clock;
@@ -48,10 +44,12 @@ namespace JobsJobsJobs.Server.Areas.Api.Controllers
         /// </summary>
         private CitizenId CurrentCitizenId => CitizenId.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
 
+        // This returns 204 to indicate that there is no profile data for the current citizen (if, of course, that is
+        // the case. The version where an ID is specified returns 404, which is an error condition, as it should not
+        // occur unless someone is messing with a URL.
         [HttpGet("")]
         public async Task<IActionResult> Get()
         {
-            await _db.OpenAsync();
             var profile = await _db.FindProfileByCitizen(CurrentCitizenId);
             return profile == null ? NoContent() : Ok(profile);
         }
@@ -59,9 +57,6 @@ namespace JobsJobsJobs.Server.Areas.Api.Controllers
         [HttpPost("save")]
         public async Task<IActionResult> Save(ProfileForm form)
         {
-            await _db.OpenAsync();
-            var txn = await _db.BeginTransactionAsync();
-
             // Profile
             var existing = await _db.FindProfileByCitizen(CurrentCitizenId);
             var profile = existing == null
@@ -93,29 +88,27 @@ namespace JobsJobsJobs.Server.Areas.Api.Controllers
             foreach (var skill in skills) await _db.SaveSkill(skill);
             await _db.DeleteMissingSkills(CurrentCitizenId, skills.Select(s => s.Id));
 
-            await txn.CommitAsync();
+            await _db.SaveChangesAsync();
             return Ok();
         }
 
         [HttpGet("skills")]
-        public async Task<IActionResult> GetSkills()
-        {
-            await _db.OpenAsync();
-            return Ok(await _db.FindSkillsByCitizen(CurrentCitizenId));
-        }
+        public async Task<IActionResult> GetSkills() =>
+            Ok(await _db.FindSkillsByCitizen(CurrentCitizenId));
 
         [HttpGet("count")]
-        public async Task<IActionResult> GetProfileCount()
-        {
-            await _db.OpenAsync();
-            return Ok(new Count(await _db.CountProfiles()));
-        }
+        public async Task<IActionResult> GetProfileCount() =>
+            Ok(new Count(await _db.CountProfiles()));
 
         [HttpGet("skill-count")]
-        public async Task<IActionResult> GetSkillCount()
+        public async Task<IActionResult> GetSkillCount() =>
+            Ok(new Count(await _db.CountSkillsByCitizen(CurrentCitizenId)));
+
+        [HttpGet("get/{id}")]
+        public async Task<IActionResult> GetProfileForCitizen([FromRoute] string id)
         {
-            await _db.OpenAsync();
-            return Ok(new Count(await _db.CountSkills(CurrentCitizenId)));
+            var profile = await _db.FindProfileByCitizen(CitizenId.Parse(id));
+            return profile == null ? NotFound() : Ok(profile);
         }
     }
 }

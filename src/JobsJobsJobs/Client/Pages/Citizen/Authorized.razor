@@ -3,34 +3,4 @@
 @inject NavigationManager nav
 @inject AppState state
 
-<p>@message</p>
-
-@code {
-    string message = "Logging you on with No Agenda Social...";
-
-    protected override async Task OnInitializedAsync()
-    {
-      // Exchange authorization code for a JWT
-      var query = QueryHelpers.ParseQuery(nav.ToAbsoluteUri(nav.Uri).Query);
-      if (query.TryGetValue("code", out var authCode))
-      {
-        var logOnResult = await ServerApi.LogOn(http, authCode);
-
-        if (logOnResult.IsOk)
-        {
-          var logOn = logOnResult.Ok;
-          state.User = new UserInfo(logOn.CitizenId, logOn.Name);
-          state.Jwt = logOn.Jwt;
-          nav.NavigateTo("/citizen/dashboard");
-        }
-        else
-        {
-          message = logOnResult.Error;
-        }
-      }
-      else
-      {
-        message = "Did not receive a token from No Agenda Social (perhaps you clicked \"Cancel\"?)";
-      }
-    }
-}
+<p>@Message</p>

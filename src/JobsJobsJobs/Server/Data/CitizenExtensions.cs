@@ -1,80 +1,46 @@
 ﻿using JobsJobsJobs.Shared;
-using Npgsql;
+using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 
 namespace JobsJobsJobs.Server.Data
 {
     /// <summary>
-    /// Extensions to the NpgslConnection type supporting the manipulation of citizens
+    /// Extensions to JobsDbContext supporting the manipulation of citizens
     /// </summary>
     public static class CitizenExtensions
     {
         /// <summary>
-        /// Populate a citizen object from the given data reader
+        /// Retrieve a citizen by their Jobs, Jobs, Jobs ID
         /// </summary>
-        /// <param name="rdr">The data reader from which the values should be obtained</param>
-        /// <returns>A populated citizen</returns>
-        private static Citizen ToCitizen(NpgsqlDataReader rdr) =>
-            new Citizen(CitizenId.Parse(rdr.GetString("id")), rdr.GetString("na_user"), rdr.GetString("display_name"),
-                rdr.GetString("profile_url"), rdr.GetInstant("joined_on"), rdr.GetInstant("last_seen_on"));
+        /// <param name="citizenId">The ID of the citizen to retrieve</param>
+        /// <returns>The citizen, or null if not found</returns>
+        public static async Task<Citizen?> FindCitizenById(this JobsDbContext db, CitizenId citizenId) =>
+            await db.Citizens.AsNoTracking()
+                .SingleOrDefaultAsync(c => c.Id == citizenId)
+                .ConfigureAwait(false);
 
         /// <summary>
         /// Retrieve a citizen by their No Agenda Social user name
         /// </summary>
         /// <param name="naUser">The NAS user name</param>
         /// <returns>The citizen, or null if not found</returns>
-        public static async Task<Citizen?> FindCitizenByNAUser(this NpgsqlConnection conn, string naUser)
-        {
-            using var cmd = conn.CreateCommand();
-            cmd.CommandText = "SELECT * FROM citizen WHERE na_user = @na_user";
-            cmd.AddString("na_user", naUser);
-
-            using NpgsqlDataReader rdr = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
-            if (await rdr.ReadAsync().ConfigureAwait(false)) return ToCitizen(rdr);
-            
-            return null;
-        }
+        public static async Task<Citizen?> FindCitizenByNAUser(this JobsDbContext db, string naUser) =>
+            await db.Citizens.AsNoTracking()
+                .SingleOrDefaultAsync(c => c.NaUser == naUser)
+                .ConfigureAwait(false);
 
         /// <summary>
         /// Add a citizen
         /// </summary>
         /// <param name="citizen">The citizen to be added</param>
-        public static async Task AddCitizen(this NpgsqlConnection conn, Citizen citizen)
-        {
-            using var cmd = conn.CreateCommand();
-            cmd.CommandText =
-                @"INSERT INTO citizen (
-                    na_user, display_name, profile_url, joined_on, last_seen_on, id
-                ) VALUES(
-                    @na_user, @display_name, @profile_url, @joined_on, @last_seen_on, @id
-                )";
-            cmd.AddString("id", citizen.Id);
-            cmd.AddString("na_user", citizen.NaUser);
-            cmd.AddString("display_name", citizen.DisplayName);
-            cmd.AddString("profile_url", citizen.ProfileUrl);
-            cmd.AddInstant("joined_on", citizen.JoinedOn);
-            cmd.AddInstant("last_seen_on", citizen.LastSeenOn);
-
-            await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
-        }
+        public static async Task AddCitizen(this JobsDbContext db, Citizen citizen) =>
+            await db.Citizens.AddAsync(citizen);
 
         /// <summary>
         /// Update a citizen after they have logged on (update last seen, sync display name)
         /// </summary>
         /// <param name="citizen">The updated citizen</param>
-        public static async Task UpdateCitizenOnLogOn(this NpgsqlConnection conn, Citizen citizen)
-        {
-            using var cmd = conn.CreateCommand();
-            cmd.CommandText =
-                @"UPDATE citizen
-                     SET display_name = @display_name,
-                         last_seen_on = @last_seen_on
-                   WHERE id = @id";
-            cmd.AddString("id", citizen.Id);
-            cmd.AddString("display_name", citizen.DisplayName);
-            cmd.AddInstant("last_seen_on", citizen.LastSeenOn);
-
-            await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
-        }
+        public static void UpdateCitizen(this JobsDbContext db, Citizen citizen) =>
+            db.Entry(citizen).State = EntityState.Modified;
     }
 }

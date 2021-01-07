@@ -1,6 +1,8 @@
 ﻿@page "/citizen/dashboard"
+@inject HttpClient http
+@inject AppState state
 
-<h3>Welcome, @State.User!.Name!</h3>
+<h3>Welcome, @state.User!.Name!</h3>
 
 @if (RetrievingData)
 {
@@ -8,34 +10,25 @@
 }
 else
 {
-  if (Profile != null)
-  {
+  <ErrorList Errors=@ErrorMessages>
+    @if (Profile != null)
+    {
+      <p>
+        Your employment profile was last updated <FullDateTime TheDate=@Profile.LastUpdatedOn />. Your profile currently
+        lists @Profile.Skills.Length skill@(Profile.Skills.Length != 1 ? "s" : "").
+      </p>
+    }
+    else
+    {
+      <p>You do not have an employment profile established; click &ldquo;Profile&rdquo;* in the menu to get started!</p>
+    }
     <p>
-      Your employment profile was last updated <FullDateTime TheDate="@Profile.LastUpdatedOn" />. Your profile currently
-      lists @SkillCount skill@(SkillCount != 1 ? "s" : "").
+      There @(ProfileCount == 1 ? "is" : "are") @(ProfileCount == 0 ? "no" : ProfileCount) employment
+      profile@(ProfileCount != 1 ? "s" : "") from citizens of Gitmo Nation.
+      @if (ProfileCount > 0)
+      {
+        <text>Take a look around and see if you can help them find work!</text>
+      }
     </p>
-  }
-  else
-  {
-    <p>You do not have an employment profile established; click &ldquo;Profile&rdquo;* in the menu to get started!</p>
-  }
-  <p>
-    There @(ProfileCount == 1 ? "is" : "are") @(ProfileCount == 0 ? "no" : ProfileCount) employment
-    profile@(ProfileCount != 1 ? "s" : "") from citizens of Gitmo Nation.
-    @if (ProfileCount > 0)
-    {
-      <text>Take a look around and see if you can help them find work!</text>
-    }
-  </p>
-}
-
-@if (ErrorMessages.Count > 0)
-{
-  <p><strong>The following error(s) occurred:</strong></p>
-  <p>
-    @foreach (var msg in ErrorMessages)
-    {
-      @msg<br>
-    }
-  </p>
+  </ErrorList>
 }

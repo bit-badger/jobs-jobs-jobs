@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 
 namespace JobsJobsJobs.Shared.Api
 {
@@ -74,7 +75,13 @@ namespace JobsJobsJobs.Shared.Api
                 RemoteWork = profile.RemoteWork,
                 FullTime = profile.FullTime,
                 Biography = profile.Biography.Text,
-                Experience = profile.Experience?.Text ?? ""
+                Experience = profile.Experience?.Text ?? "",
+                Skills = profile.Skills.Select(s => new SkillForm
+                {
+                    Id = s.Id.ToString(),
+                    Description = s.Description,
+                    Notes = s.Notes
+                }).ToList()
             };
     }
 }

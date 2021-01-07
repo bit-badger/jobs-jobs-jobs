@@ -1,4 +1,5 @@
 ﻿using NodaTime;
+using System;
 
 namespace JobsJobsJobs.Shared
 {
@@ -21,5 +22,10 @@ namespace JobsJobsJobs.Shared
         /// Navigation property for continent
         /// </summary>
         public Continent? Continent { get; set; }
+
+        /// <summary>
+        /// Convenience property for skills associated with a profile
+        /// </summary>
+        public Skill[] Skills { get; set; } = Array.Empty<Skill>();
     }
 }

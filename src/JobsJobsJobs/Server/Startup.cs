@@ -1,9 +1,11 @@
+using JobsJobsJobs.Server.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.ResponseCompression;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -30,7 +32,11 @@ namespace JobsJobsJobs.Server
         public void ConfigureServices(IServiceCollection services)
         {
             // TODO: configure JSON serialization for NodaTime
-            services.AddScoped(_ => new NpgsqlConnection(Configuration.GetConnectionString("JobsDb")));
+            services.AddDbContext<JobsDbContext>(options =>
+            {
+                options.UseNpgsql(Configuration.GetConnectionString("JobsDb"), o => o.UseNodaTime());
+                options.LogTo(System.Console.WriteLine, Microsoft.Extensions.Logging.LogLevel.Information);
+            });
             services.AddSingleton<IClock>(SystemClock.Instance);
             services.AddLogging();
             services.AddControllersWithViews();

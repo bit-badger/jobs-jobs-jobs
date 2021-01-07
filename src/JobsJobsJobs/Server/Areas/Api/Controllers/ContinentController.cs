@@ -1,7 +1,6 @@
 ﻿using JobsJobsJobs.Server.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Npgsql;
 using System.Threading.Tasks;
 
 namespace JobsJobsJobs.Server.Areas.Api.Controllers
@@ -15,24 +14,21 @@ namespace JobsJobsJobs.Server.Areas.Api.Controllers
     public class ContinentController : ControllerBase
     {
         /// <summary>
-        /// The database connection to use for this request
+        /// The data context to use for this request
         /// </summary>
-        private readonly NpgsqlConnection _db;
+        private readonly JobsDbContext _db;
 
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="db">The database connection to use for this request</param>
-        public ContinentController(NpgsqlConnection db)
+        /// <param name="db">The data context to use for this request</param>
+        public ContinentController(JobsDbContext db)
         {
             _db = db;
         }
 
         [HttpGet("all")]
-        public async Task<IActionResult> All()
-        {
-            await _db.OpenAsync();
-            return Ok(await _db.AllContinents());
-        }
+        public async Task<IActionResult> All() =>
+            Ok(await _db.AllContinents());
     }
 }

@@ -1,6 +1,7 @@
 ﻿using JobsJobsJobs.Shared;
-using Npgsql;
+using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace JobsJobsJobs.Server.Data
@@ -11,30 +12,20 @@ namespace JobsJobsJobs.Server.Data
     public static class ContinentExtensions
     {
         /// <summary>
-        /// Create a continent from the current row in the data reader
-        /// </summary>
-        /// <param name="rdr">The data reader</param>
-        /// <returns>The current row's values as a continent object</returns>
-        private static Continent ToContinent(NpgsqlDataReader rdr) =>
-            new Continent(ContinentId.Parse(rdr.GetString("id")), rdr.GetString("name"));
-
-        /// <summary>
         /// Retrieve all continents
         /// </summary>
         /// <returns>All continents</returns>
-        public static async Task<IEnumerable<Continent>> AllContinents(this NpgsqlConnection conn)
-        {
-            using var cmd = conn.CreateCommand();
-            cmd.CommandText = "SELECT * FROM continent ORDER BY name";
+        public static async Task<IEnumerable<Continent>> AllContinents(this JobsDbContext db) =>
+            await db.Continents.AsNoTracking().OrderBy(c => c.Name).ToListAsync().ConfigureAwait(false);
 
-            using var rdr = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
-            var continents = new List<Continent>();
-            while (await rdr.ReadAsync())
-            {
-                continents.Add(ToContinent(rdr));
-            }
-
-            return continents;
-        }
+        /// <summary>
+        /// Retrieve a continent by its ID
+        /// </summary>
+        /// <param name="continentId">The ID of the continent to retrieve</param>
+        /// <returns>The continent matching the ID</returns>
+        public static async Task<Continent> FindContinentById(this JobsDbContext db, ContinentId continentId) =>
+            await db.Continents.AsNoTracking()
+                .SingleAsync(c => c.Id == continentId)
+                .ConfigureAwait(false);
     }
 }

@@ -4,7 +4,6 @@ using JobsJobsJobs.Shared.Api;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using NodaTime;
-using Npgsql;
 using System.Threading.Tasks;
 
 namespace JobsJobsJobs.Server.Areas.Api.Controllers
@@ -27,17 +26,17 @@ namespace JobsJobsJobs.Server.Areas.Api.Controllers
         private readonly IClock _clock;
 
         /// <summary>
-        /// The data connection to use for this request
+        /// The data context to use for this request
         /// </summary>
-        private readonly NpgsqlConnection _db;
+        private readonly JobsDbContext _db;
 
         /// <summary>
         /// Constructor
         /// </summary>
         /// <param name="config">The authorization configuration section</param>
         /// <param name="clock">The NodaTime clock instance</param>
-        /// <param name="db">The data connection to use for this request</param>
-        public CitizenController(IConfiguration config, IClock clock, NpgsqlConnection db)
+        /// <param name="db">The data context to use for this request</param>
+        public CitizenController(IConfiguration config, IClock clock, JobsDbContext db)
         {
             _config = config.GetSection("Auth");
             _clock = clock;
@@ -56,7 +55,6 @@ namespace JobsJobsJobs.Server.Areas.Api.Controllers
             var account = accountResult.Ok;
             var now = _clock.GetCurrentInstant();
 
-            await _db.OpenAsync();
             var citizen = await _db.FindCitizenByNAUser(account.Username);
             if (citizen == null)
             {
@@ -71,13 +69,21 @@ namespace JobsJobsJobs.Server.Areas.Api.Controllers
                     DisplayName = account.DisplayName,
                     LastSeenOn = now
                 };
-                await _db.UpdateCitizenOnLogOn(citizen);
+                _db.UpdateCitizen(citizen);
             }
+            await _db.SaveChangesAsync();
 
             // Step 3 - Generate JWT
             var jwt = Auth.CreateJwt(citizen, _config);
 
             return new JsonResult(new LogOnSuccess(jwt, citizen.Id.ToString(), citizen.DisplayName));
+        }
+
+        [HttpGet("get/{id}")]
+        public async Task<IActionResult> GetCitizenById([FromRoute] string id)
+        {
+            var citizen = await _db.FindCitizenById(CitizenId.Parse(id));
+            return citizen == null ? NotFound() : Ok(citizen);
         }
     }
 }

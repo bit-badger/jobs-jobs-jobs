@@ -1,10 +1,8 @@
-﻿using Blazored.Toast.Services;
-using JobsJobsJobs.Shared;
+﻿using JobsJobsJobs.Shared;
 using JobsJobsJobs.Shared.Api;
 using Microsoft.AspNetCore.Components;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
 
@@ -40,32 +38,13 @@ namespace JobsJobsJobs.Client.Pages.Citizen
         /// </summary>
         private IList<string> ErrorMessages { get; } = new List<string>();
 
-        /// <summary>
-        /// HTTP client instance to use for API access
-        /// </summary>
-        [Inject]
-        private HttpClient Http { get; set; } = default!;
-
-        /// <summary>
-        /// Application state
-        /// </summary>
-        [Inject]
-        private AppState State { get; set; } = default!;
-
-        /// <summary>
-        /// Toast service
-        /// </summary>
-        [Inject]
-        private IToastService Toasts { get; set; } = default!;
-
         protected override async Task OnInitializedAsync()
         {
-            ServerApi.SetJwt(Http, State);
-            var continentTask = ServerApi.RetrieveMany<Continent>(Http, "continent/all");
-            var profileTask = ServerApi.RetrieveProfile(Http, State);
-            var skillTask = ServerApi.RetrieveMany<Skill>(Http, "profile/skills");
+            ServerApi.SetJwt(http, state);
+            var continentTask = ServerApi.RetrieveMany<Continent>(http, "continent/all");
+            var profileTask = ServerApi.RetrieveProfile(http, state);
 
-            await Task.WhenAll(continentTask, profileTask, skillTask);
+            await Task.WhenAll(continentTask, profileTask);
 
             if (continentTask.Result.IsOk)
             {
@@ -81,28 +60,11 @@ namespace JobsJobsJobs.Client.Pages.Citizen
                 ProfileForm = (profileTask.Result.Ok == null)
                     ? new ProfileForm()
                     : ProfileForm.FromProfile(profileTask.Result.Ok);
-            }
-            else
-            {
-                ErrorMessages.Add(profileTask.Result.Error);
-            }
-
-            if (skillTask.Result.IsOk)
-            {
-                foreach (var skill in skillTask.Result.Ok)
-                {
-                    ProfileForm.Skills.Add(new SkillForm
-                    {
-                        Id = skill.Id.ToString(),
-                        Description = skill.Description,
-                        Notes = skill.Notes ?? ""
-                    });
-                }
                 if (ProfileForm.Skills.Count == 0) AddNewSkill();
             }
             else
             {
-                ErrorMessages.Add(skillTask.Result.Error);
+                ErrorMessages.Add(profileTask.Result.Error);
             }
 
             AllLoaded = true;
@@ -132,16 +94,16 @@ namespace JobsJobsJobs.Client.Pages.Citizen
                 .ToList();
             foreach (var blankSkill in blankSkills) ProfileForm.Skills.Remove(blankSkill);
 
-            var res = await Http.PostAsJsonAsync("/api/profile/save", ProfileForm);
+            var res = await http.PostAsJsonAsync("/api/profile/save", ProfileForm);
             if (res.IsSuccessStatusCode)
             {
-                Toasts.ShowSuccess("Profile Saved Successfully");
+                toast.ShowSuccess("Profile Saved Successfully");
             }
             else
             {
                 var error = await res.Content.ReadAsStringAsync();
                 if (!string.IsNullOrEmpty(error)) error = $"- {error}";
-                Toasts.ShowError($"{(int)res.StatusCode} {error}");
+                toast.ShowError($"{(int)res.StatusCode} {error}");
             }
         }
 

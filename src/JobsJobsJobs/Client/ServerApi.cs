@@ -64,8 +64,13 @@ namespace JobsJobsJobs.Client
         /// </summary>
         /// <param name="http">The HTTP client whose authentication header should be set</param>
         /// <param name="state">The current application state</param>
-        public static void SetJwt(HttpClient http, AppState state) =>
-            http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", state.Jwt);
+        public static void SetJwt(HttpClient http, AppState state)
+        {
+            if (state.User != null)
+            {
+                http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", state.Jwt);
+            }
+        }
 
         /// <summary>
         /// Log on a user with the authorization code received from No Agenda Social
