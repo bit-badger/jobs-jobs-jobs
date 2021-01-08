@@ -34,6 +34,11 @@ namespace JobsJobsJobs.Client.Pages.Citizen
         private IEnumerable<Continent> Continents { get; set; } = Enumerable.Empty<Continent>();
 
         /// <summary>
+        /// Whether this is a new profile or not
+        /// </summary>
+        private bool IsNew { get; set; } = false;
+
+        /// <summary>
         /// Error messages from API access
         /// </summary>
         private IList<string> ErrorMessages { get; } = new List<string>();
@@ -57,9 +62,15 @@ namespace JobsJobsJobs.Client.Pages.Citizen
 
             if (profileTask.Result.IsOk)
             {
-                ProfileForm = (profileTask.Result.Ok == null)
-                    ? new ProfileForm()
-                    : ProfileForm.FromProfile(profileTask.Result.Ok);
+                if (profileTask.Result.Ok == null)
+                {
+                    ProfileForm = new ProfileForm();
+                    IsNew = true;
+                }
+                else
+                {
+                    ProfileForm = ProfileForm.FromProfile(profileTask.Result.Ok);
+                }
                 if (ProfileForm.Skills.Count == 0) AddNewSkill();
             }
             else
@@ -98,6 +109,7 @@ namespace JobsJobsJobs.Client.Pages.Citizen
             if (res.IsSuccessStatusCode)
             {
                 toast.ShowSuccess("Profile Saved Successfully");
+                nav.NavigateTo($"/profile/view/{state.User!.Id}");
             }
             else
             {

@@ -1,22 +1,16 @@
 ﻿@page "/citizen/profile"
 @inject HttpClient http
 @inject AppState state
+@inject NavigationManager nav
 @inject IToastService toast
+
+<PageTitle Title="Edit Profile" />
 
 <h3>Employment Profile</h3>
 
 @if (AllLoaded)
 {
-  @if (ErrorMessages.Count > 0)
-  {
-    <p><strong>Error</strong></p>
-    @foreach (var msg in ErrorMessages)
-    {
-      <p>@msg</p>
-    }
-  }
-  else
-  {
+  <ErrorList Errors=@ErrorMessages>
     <EditForm Model=@ProfileForm OnValidSubmit=@SaveProfile>
       <DataAnnotationsValidator />
       <div class="form-row">
@@ -111,7 +105,13 @@
         </div>
       </div>
     </EditForm>
-  }
+    @if (!IsNew)
+    {
+      <p>
+        <br><a href="/profile/view/@state.User!.Id"><span class="oi oi-file"></span> View Your User Profile</a>
+      </p>
+    }
+  </ErrorList>
 }
 else
 {
