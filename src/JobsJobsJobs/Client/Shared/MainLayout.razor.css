@@ -69,3 +69,11 @@
         padding-right: 1.5rem !important;
     }
 }
+
+.app-version {
+  padding-top: 2rem;
+  text-align: right;
+  color: rgba(0, 0, 0, .25);
+  font-style: italic;
+  font-size: .8rem;
+}

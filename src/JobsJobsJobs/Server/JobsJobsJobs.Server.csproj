@@ -4,6 +4,8 @@
     <TargetFramework>net5.0</TargetFramework>
     <Nullable>enable</Nullable>
     <UserSecretsId>553960ef-0c79-47d4-98d8-9ca1708e558f</UserSecretsId>
+    <AssemblyVersion>0.7.0.0</AssemblyVersion>
+    <FileVersion>0.7.0.0</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

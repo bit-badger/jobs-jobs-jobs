@@ -1,6 +1,7 @@
 ﻿using JobsJobsJobs.Server.Data;
 using JobsJobsJobs.Shared;
 using JobsJobsJobs.Shared.Api;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using NodaTime;
@@ -79,6 +80,7 @@ namespace JobsJobsJobs.Server.Areas.Api.Controllers
             return new JsonResult(new LogOnSuccess(jwt, citizen.Id.ToString(), citizen.DisplayName));
         }
 
+        [Authorize]
         [HttpGet("get/{id}")]
         public async Task<IActionResult> GetCitizenById([FromRoute] string id)
         {

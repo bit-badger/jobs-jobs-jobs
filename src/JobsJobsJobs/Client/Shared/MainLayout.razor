@@ -1,4 +1,5 @@
 ﻿@inherits LayoutComponentBase
+@using System.Reflection
 @inject IJSRuntime js
 @using Blazored.Toast.Configuration
 
@@ -19,6 +20,7 @@
       <source src="/audio/pelosi-jobs.mp3">
     </audio>
 
+    <div class="app-version">Jobs, Jobs, Jobs @Version</div>
   </div>
 </div>
 <BlazoredToasts Position="ToastPosition.BottomRight"
@@ -26,4 +28,14 @@
 
 @code {
     async void PlayJobs() => await js.InvokeVoidAsync("Audio.play", "pelosijobs");
+
+    private string Version { get; set; } = "";
+
+    protected override void OnInitialized()
+    {
+      var version = Assembly.GetExecutingAssembly().GetName().Version!;
+      Version = $"v{version.Major}.{version.Minor}";
+      if (version.Revision > 0) Version += $".{version.Revision}";
+      base.OnInitialized();
+    }
 }

@@ -55,8 +55,8 @@ namespace JobsJobsJobs.Server
                 {
                     ValidateIssuer = true,
                     ValidateAudience = true,
-                    ValidAudience = "https://jobsjobs.jobs",
-                    ValidIssuer = "https://jobsjobs.jobs",
+                    ValidAudience = "https://noagendacareers.com",
+                    ValidIssuer = "https://noagendacareers.com",
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
                         Configuration.GetSection("Auth")["ServerSecret"]))
                 };
