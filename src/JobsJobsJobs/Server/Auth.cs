@@ -35,7 +35,7 @@ namespace JobsJobsJobs.Server
             {
                 client_id = config["ClientId"],
                 client_secret = config["Secret"],
-                redirect_uri = "https://localhost:3005/citizen/authorized",
+                redirect_uri = $"{config["ReturnHost"]}/citizen/authorized",
                 grant_type = "authorization_code",
                 code = authCode,
                 scope = "read"
@@ -100,8 +100,8 @@ namespace JobsJobsJobs.Server
                     new Claim(ClaimTypes.Name, citizen.DisplayName),
                 }),
                 Expires = DateTime.UtcNow.AddHours(2),
-                Issuer = "https://jobsjobs.jobs",
-                Audience = "https://jobsjobs.jobs",
+                Issuer = "https://noagendacareers.com",
+                Audience = "https://noagendacareers.com",
                 SigningCredentials = new SigningCredentials(
                     new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["ServerSecret"])),
                     SecurityAlgorithms.HmacSha256Signature)
