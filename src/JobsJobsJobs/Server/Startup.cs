@@ -35,7 +35,7 @@ namespace JobsJobsJobs.Server
             services.AddDbContext<JobsDbContext>(options =>
             {
                 options.UseNpgsql(Configuration.GetConnectionString("JobsDb"), o => o.UseNodaTime());
-                options.LogTo(System.Console.WriteLine, Microsoft.Extensions.Logging.LogLevel.Information);
+                // options.LogTo(System.Console.WriteLine, Microsoft.Extensions.Logging.LogLevel.Information);
             });
             services.AddSingleton<IClock>(SystemClock.Instance);
             services.AddLogging();
