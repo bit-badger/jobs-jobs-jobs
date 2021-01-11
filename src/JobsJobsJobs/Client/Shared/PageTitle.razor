@@ -3,9 +3,9 @@
     [Parameter]
     public string Title { get; set; } = default!;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-      await base.OnInitializedAsync();
+      await base.OnAfterRenderAsync(firstRender);
       await js.InvokeVoidAsync("setPageTitle", $"{Title} ~ Jobs, Jobs, Jobs");
     }
 }

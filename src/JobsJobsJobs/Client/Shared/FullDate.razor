@@ -1,0 +1,23 @@
+﻿@using NodaTime
+@using NodaTime.Text
+@using System.Globalization
+
+@Translated
+
+@code {
+  /// <summary>
+  /// The pattern with which dates will be formatted
+  /// </summary>
+  private static InstantPattern pattern = InstantPattern.Create("ld<MMMM d, yyyy>", CultureInfo.CurrentCulture);
+
+  /// <summary>
+  /// The date to be formatted
+  /// </summary>
+  [Parameter]
+  public Instant TheDate { get; set; }
+
+  /// <summary>
+  /// The formatted date
+  /// </summary>
+  private string Translated => pattern.Format(TheDate);
+}

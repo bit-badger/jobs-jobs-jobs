@@ -3,8 +3,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -35,7 +33,9 @@ namespace JobsJobsJobs.Server
             services.AddDbContext<JobsDbContext>(options =>
             {
                 options.UseNpgsql(Configuration.GetConnectionString("JobsDb"), o => o.UseNodaTime());
-                // options.LogTo(System.Console.WriteLine, Microsoft.Extensions.Logging.LogLevel.Information);
+#if DEBUG
+                options.LogTo(System.Console.WriteLine, Microsoft.Extensions.Logging.LogLevel.Information);
+#endif
             });
             services.AddSingleton<IClock>(SystemClock.Instance);
             services.AddLogging();
@@ -98,7 +98,7 @@ namespace JobsJobsJobs.Server
                 endpoints.MapRazorPages();
                 endpoints.MapControllers();
                 endpoints.MapFallback("api/{**slug}", send404);
-                endpoints.MapFallbackToFile("{**slug}", "index.html");
+                endpoints.MapFallbackToPage("{**slug}", "/_Host");
             });
         }
     }

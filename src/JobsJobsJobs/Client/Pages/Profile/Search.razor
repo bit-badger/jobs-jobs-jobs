@@ -1,0 +1,44 @@
+﻿@page "/profile/search"
+@inject HttpClient http
+@inject AppState state
+
+<PageTitle Title="Search Profiles" />
+<h3>Search Profiles</h3>
+
+<ErrorList Errors=@ErrorMessages>
+  @if (Searching)
+  {
+    <p>Searching profiles...</p>
+  }
+  else
+  {
+    @if (SearchResults.Any())
+    {
+      <table class="table table-sm table-hover">
+        <thead>
+          <tr>
+            <th scope="col">Profile</th>
+            <th scope="col">Name</th>
+            <th scope="col" class="text-center">Seeking?</th>
+            <th scope="col" class="text-center">Remote?</th>
+            <th scope="col" class="text-center">Full-Time?</th>
+            <th scope="col">Last Updated</th>
+          </tr>
+        </thead>
+        <tbody>
+          @foreach (var profile in SearchResults)
+          {
+            <tr>
+              <td><a href="/profile/view/@profile.CitizenId">View</a></td>
+              <td class=@IsSeeking(profile)>@profile.DisplayName</td>
+              <td class="text-center">@YesOrNo(profile.SeekingEmployment)</td>
+              <td class="text-center">@YesOrNo(profile.RemoteWork)</td>
+              <td class="text-center">@YesOrNo(profile.FullTime)</td>
+              <td><FullDate TheDate=@profile.LastUpdated /></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  }
+</ErrorList>

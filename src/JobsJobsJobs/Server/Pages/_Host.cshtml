@@ -16,14 +16,26 @@
 </head>
 
 <body>
+  <div id="app">
     <component type="typeof(JobsJobsJobs.Client.App)" render-mode="WebAssemblyPrerendered" />
+  </div>
 
-    <div id="blazor-error-ui">
-        An unhandled error has occurred.
-        <a href="" class="reload">Reload</a>
-        <a class="dismiss">🗙</a>
-    </div>
-    <script src="_framework/blazor.webassembly.js"></script>
+  <div id="blazor-error-ui">
+    An unhandled error has occurred.
+    <a href="" class="reload">Reload</a>
+    <a class="dismiss">🗙</a>
+  </div>
+  <script src="_framework/blazor.webassembly.js"></script>
+  <script>
+    var Audio = {
+      play(audio) {
+        document.getElementById(audio).play()
+      }
+    }
+    function setPageTitle(theTitle) {
+      document.title = theTitle
+    }
+  </script>
 </body>
 
 </html>

@@ -110,5 +110,11 @@ namespace JobsJobsJobs.Server.Areas.Api.Controllers
             var profile = await _db.FindProfileByCitizen(CitizenId.Parse(id));
             return profile == null ? NotFound() : Ok(profile);
         }
+
+        [HttpGet("search")]
+        public async Task<IActionResult> Search()
+        {
+            return Ok(await _db.SearchProfiles());
+        }
     }
 }

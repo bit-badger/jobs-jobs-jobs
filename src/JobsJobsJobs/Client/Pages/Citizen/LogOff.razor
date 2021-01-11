@@ -1,0 +1,13 @@
+﻿@page "/citizen/log-off"
+@inject NavigationManager nav
+@inject AppState state
+@inject IToastService toast
+@code {
+    protected override void OnInitialized()
+    {
+      state.Jwt = "";
+      state.User = null;
+      toast.ShowSuccess("Have a Nice Day!", "Log Off Successful");
+      nav.NavigateTo("/");
+    }
+}

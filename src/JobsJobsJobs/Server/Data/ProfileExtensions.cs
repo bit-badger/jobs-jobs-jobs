@@ -1,4 +1,5 @@
 ﻿using JobsJobsJobs.Shared;
+using JobsJobsJobs.Shared.Api;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using System;
@@ -108,5 +109,19 @@ namespace JobsJobsJobs.Server.Data
         /// <returns>The count of skills for the given citizen</returns>
         public static async Task<int> CountSkillsByCitizen(this JobsDbContext db, CitizenId citizenId) =>
             await db.Skills.CountAsync(s => s.CitizenId == citizenId).ConfigureAwait(false);
+
+        /// <summary>
+        /// Search profiles by the given criteria
+        /// </summary>
+        //  TODO: A criteria parameter!
+        /// <returns>The information for profiles matching the criteria</returns>
+        public static async Task<IEnumerable<ProfileSearchResult>> SearchProfiles(this JobsDbContext db)
+        {
+            return await db.Profiles
+                .Join(db.Citizens, p => p.Id, c => c.Id, (p, c) => new { Profile = p, Citizen = c })
+                .Select(x => new ProfileSearchResult(x.Citizen.Id, x.Citizen.DisplayName, x.Profile.SeekingEmployment,
+                    x.Profile.RemoteWork, x.Profile.FullTime, x.Profile.LastUpdatedOn))
+                .ToListAsync().ConfigureAwait(false);
+        }
     }
 }
