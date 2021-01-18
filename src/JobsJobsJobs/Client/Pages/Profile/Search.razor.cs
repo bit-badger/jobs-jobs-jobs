@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Components;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace JobsJobsJobs.Client.Pages.Profile
@@ -19,6 +20,11 @@ namespace JobsJobsJobs.Client.Pages.Profile
         /// Indicates whether a request for matching profiles is in progress
         /// </summary>
         private bool Searching { get; set; } = false;
+
+        /// <summary>
+        /// The search criteria
+        /// </summary>
+        private ProfileSearch Criteria { get; set; } = new ProfileSearch();
 
         /// <summary>
         /// Error messages encountered while searching for profiles
@@ -60,8 +66,8 @@ namespace JobsJobsJobs.Client.Pages.Profile
         {
             Searching = true;
 
-            // TODO: send a filter with this request
-            var searchResult = await ServerApi.RetrieveMany<ProfileSearchResult>(http, "profile/search");
+            var searchResult = await ServerApi.RetrieveMany<ProfileSearchResult>(http,
+                $"profile/search{SearchQuery()}");
 
             if (searchResult.IsOk)
             {
@@ -85,5 +91,27 @@ namespace JobsJobsJobs.Client.Pages.Profile
         /// <param name="condition">The condition in question</param>
         /// <returns>"Yes" for true, "No" for false</returns>
         private static string YesOrNo(bool condition) => condition ? "Yes" : "No";
+
+        /// <summary>
+        /// Create a search query string from the currently-entered criteria
+        /// </summary>
+        /// <returns>The query string for the currently-entered criteria</returns>
+        private string SearchQuery()
+        {
+            if (Criteria.IsEmptySearch) return "";
+
+            string part(string name, Func<ProfileSearch, string?> func) =>
+                string.IsNullOrEmpty(func(Criteria)) ? "" : $"{name}={WebUtility.UrlEncode(func(Criteria))}";
+
+            IEnumerable<string> parts()
+            {
+                yield return part("ContinentId", it => it.ContinentId);
+                yield return part("Skill", it => it.Skill);
+                yield return part("BioExperience", it => it.BioExperience);
+                yield return part("RemoteWork", it => it.RemoteWork);
+            }
+
+            return $"?{string.Join("&", parts().Where(it => !string.IsNullOrEmpty(it)).ToArray())}";
+        }
     }
 }

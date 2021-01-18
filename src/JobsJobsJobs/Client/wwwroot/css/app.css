@@ -65,3 +65,7 @@ label.jjj-required::after {
   color: red;
   content: ' *';
 }
+
+label.jjj-label {
+  font-style: italic;
+}

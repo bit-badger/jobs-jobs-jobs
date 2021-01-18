@@ -1,4 +1,6 @@
-﻿namespace JobsJobsJobs.Shared
+﻿using System;
+
+namespace JobsJobsJobs.Shared
 {
     /// <summary>
     /// A result with two different possibilities
@@ -60,5 +62,24 @@
         /// <param name="error">The error message</param>
         /// <returns>The Error result</returns>
         public static Result<TOk> AsError(string error) => new Result<TOk>(false) { Error = error };
+
+        /// <summary>
+        /// Transform a result if it is OK, passing the error along if it is an error
+        /// </summary>
+        /// <param name="f">The transforming function</param>
+        /// <param name="result">The existing result</param>
+        /// <returns>The resultant result</returns>
+        public static Result<TOk> Bind(Func<TOk, Result<TOk>> f, Result<TOk> result) =>
+            result.IsOk ? f(result.Ok) : result;
+
+        /// <summary>
+        /// Transform a result to a different type if it is OK, passing the error along if it is an error
+        /// </summary>
+        /// <typeparam name="TOther">The type to which the result is transformed</typeparam>
+        /// <param name="f">The transforming function</param>
+        /// <param name="result">The existing result</param>
+        /// <returns>The resultant result</returns>
+        public static Result<TOther> Map<TOther>(Func<TOk, Result<TOther>> f, Result<TOk> result) =>
+            result.IsOk ? f(result.Ok) : Result<TOther>.AsError(result.Error);
     }
 }

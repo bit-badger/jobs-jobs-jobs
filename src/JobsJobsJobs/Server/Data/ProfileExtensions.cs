@@ -115,12 +115,51 @@ namespace JobsJobsJobs.Server.Data
         /// </summary>
         //  TODO: A criteria parameter!
         /// <returns>The information for profiles matching the criteria</returns>
-        public static async Task<IEnumerable<ProfileSearchResult>> SearchProfiles(this JobsDbContext db)
+        public static async Task<IEnumerable<ProfileSearchResult>> SearchProfiles(this JobsDbContext db,
+            ProfileSearch search)
         {
-            return await db.Profiles
-                .Join(db.Citizens, p => p.Id, c => c.Id, (p, c) => new { Profile = p, Citizen = c })
-                .Select(x => new ProfileSearchResult(x.Citizen.Id, x.Citizen.DisplayName, x.Profile.SeekingEmployment,
-                    x.Profile.RemoteWork, x.Profile.FullTime, x.Profile.LastUpdatedOn))
+            var query = db.Profiles
+                .Join(db.Citizens, p => p.Id, c => c.Id, (p, c) => new { Profile = p, Citizen = c });
+
+            var useIds = false;
+            var citizenIds = new List<CitizenId>();
+
+            if (!string.IsNullOrEmpty(search.ContinentId))
+            {
+                query = query.Where(it => it.Profile.ContinentId == ContinentId.Parse(search.ContinentId));
+            }
+
+            if (!string.IsNullOrEmpty(search.RemoteWork))
+            {
+                query = query.Where(it => it.Profile.RemoteWork == (search.RemoteWork == "yes"));
+            }
+
+            if (!string.IsNullOrEmpty(search.Skill))
+            {
+                useIds = true;
+                citizenIds.AddRange(await db.Skills
+                    .Where(s => s.Description.ToLower().Contains(search.Skill.ToLower()))
+                    .Select(s => s.CitizenId)
+                    .ToListAsync().ConfigureAwait(false));
+            }
+
+            if (!string.IsNullOrEmpty(search.BioExperience))
+            {
+                useIds = true;
+                citizenIds.AddRange(await db.Profiles
+                    .FromSqlRaw("SELECT citizen_id FROM profile WHERE biography ILIKE {0} OR experience ILIKE {0}",
+                        $"%{search.BioExperience}%")
+                    .Select(p => p.Id)
+                    .ToListAsync().ConfigureAwait(false));
+            }
+
+            if (useIds)
+            {
+                query = query.Where(it => citizenIds.Contains(it.Citizen.Id));
+            }
+
+            return await query.Select(x => new ProfileSearchResult(x.Citizen.Id, x.Citizen.DisplayName,
+                x.Profile.SeekingEmployment, x.Profile.RemoteWork, x.Profile.FullTime, x.Profile.LastUpdatedOn))
                 .ToListAsync().ConfigureAwait(false);
         }
     }

@@ -112,9 +112,7 @@ namespace JobsJobsJobs.Server.Areas.Api.Controllers
         }
 
         [HttpGet("search")]
-        public async Task<IActionResult> Search()
-        {
-            return Ok(await _db.SearchProfiles());
-        }
+        public async Task<IActionResult> Search([FromQuery] ProfileSearch search) =>
+            Ok(await _db.SearchProfiles(search));
     }
 }
