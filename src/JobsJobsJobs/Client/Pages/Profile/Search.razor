@@ -14,9 +14,9 @@
   {
     if (!Searched)
     {
-      <p>Instructions go here</p>
+      <p>Enter one or more criteria to filter results, or just click &ldquo;Search&rdquo; to list all profiles.</p>
     }
-    <section>
+    <Collapsible HeaderText="Search Criteria" Collapsed=@(Searched && SearchResults.Any())>
       <EditForm Model=@Criteria OnValidSubmit=@RetrieveProfiles>
         <div class="form-row">
           <div class="col col-12 col-sm-6 col-md-4 col-lg-3">
@@ -64,7 +64,8 @@
           </div>
         </div>
       </EditForm>
-    </section>
+    </Collapsible>
+    <br>
     @if (SearchResults.Any())
     {
       <table class="table table-sm table-hover">
@@ -92,6 +93,10 @@
           }
         </tbody>
       </table>
+    }
+    else if (Searched)
+    {
+      <p>No results found for the specified criteria</p>
     }
   }
 </ErrorList>

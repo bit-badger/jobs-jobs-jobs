@@ -1,0 +1,25 @@
+﻿<div class="card">
+  <div class="card-header">
+    <a href="#" class="@(Collapsed ? "jjj-c-collapsed" : "jjj-c-open")"
+       @onclick=@Toggle @onclick:preventDefault>
+      @HeaderText
+    </a>
+  </div>
+  @if (!Collapsed)
+  {
+    <div class="card-body">@ChildContent</div>
+  }
+</div>
+
+@code {
+    [Parameter]
+    public RenderFragment ChildContent { get; set; } = default!;
+
+    [Parameter]
+    public bool Collapsed { get; set; } = false;
+
+    [Parameter]
+    public string HeaderText { get; set; } = "Toggle";
+
+    private void Toggle() => Collapsed = !Collapsed;
+}

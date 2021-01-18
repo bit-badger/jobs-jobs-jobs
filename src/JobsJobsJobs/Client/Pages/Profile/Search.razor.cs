@@ -54,9 +54,6 @@ namespace JobsJobsJobs.Client.Pages.Profile
             {
                 ErrorMessages.Add(continentResult.Error);
             }
-
-            // TODO: remove this call once the filter is ready
-            await RetrieveProfiles();
         }
 
         /// <summary>
