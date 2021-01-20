@@ -1,6 +1,7 @@
 ﻿using JobsJobsJobs.Shared;
 using JobsJobsJobs.Shared.Api;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.WebUtilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -43,17 +44,37 @@ namespace JobsJobsJobs.Client.Pages.Profile
 
         protected override async Task OnInitializedAsync()
         {
-            ServerApi.SetJwt(http, state);
-            var continentResult = await ServerApi.RetrieveMany<Continent>(http, "continent/all");
+            Continents = await state.GetContinents(http);
 
-            if (continentResult.IsOk)
+            // Determine if we have searched before
+            var query = QueryHelpers.ParseQuery(nav.ToAbsoluteUri(nav.Uri).Query);
+
+            if (query.TryGetValue("Searched", out var searched))
             {
-                Continents = continentResult.Ok;
+                Searched = Convert.ToBoolean(searched);
+                void setPart(string part, Action<string> func)
+                {
+                    if (query.TryGetValue(part, out var partValue)) func(partValue);
+                }
+                setPart("ContinentId", x => Criteria.ContinentId = x);
+                setPart("Skill", x => Criteria.Skill = x);
+                setPart("BioExperience", x => Criteria.BioExperience = x);
+                setPart("RemoteWork", x => Criteria.RemoteWork = x);
+
+                await RetrieveProfiles();
             }
-            else
-            {
-                ErrorMessages.Add(continentResult.Error);
-            }
+        }
+
+        /// <summary>
+        /// Do a search
+        /// </summary>
+        /// <remarks>This navigates with the parameters in the URL; this should trigger a search</remarks>
+        private async Task DoSearch()
+        {
+            var query = SearchQuery();
+            query.Add("Searched", "True");
+            nav.NavigateTo(QueryHelpers.AddQueryString("/profile/search", query));
+            await RetrieveProfiles();
         }
 
         /// <summary>
@@ -64,7 +85,7 @@ namespace JobsJobsJobs.Client.Pages.Profile
             Searching = true;
 
             var searchResult = await ServerApi.RetrieveMany<ProfileSearchResult>(http,
-                $"profile/search{SearchQuery()}");
+                QueryHelpers.AddQueryString("profile/search", SearchQuery()));
 
             if (searchResult.IsOk)
             {
@@ -93,22 +114,22 @@ namespace JobsJobsJobs.Client.Pages.Profile
         /// Create a search query string from the currently-entered criteria
         /// </summary>
         /// <returns>The query string for the currently-entered criteria</returns>
-        private string SearchQuery()
+        private IDictionary<string, string?> SearchQuery()
         {
-            if (Criteria.IsEmptySearch) return "";
+            var dict = new Dictionary<string, string?>();
+            if (Criteria.IsEmptySearch) return dict;
 
-            string part(string name, Func<ProfileSearch, string?> func) =>
-                string.IsNullOrEmpty(func(Criteria)) ? "" : $"{name}={WebUtility.UrlEncode(func(Criteria))}";
-
-            IEnumerable<string> parts()
+            void part(string name, Func<ProfileSearch, string?> func)
             {
-                yield return part("ContinentId", it => it.ContinentId);
-                yield return part("Skill", it => it.Skill);
-                yield return part("BioExperience", it => it.BioExperience);
-                yield return part("RemoteWork", it => it.RemoteWork);
+                if (!string.IsNullOrEmpty(func(Criteria))) dict.Add(name, func(Criteria));
             }
 
-            return $"?{string.Join("&", parts().Where(it => !string.IsNullOrEmpty(it)).ToArray())}";
+            part("ContinentId", it => it.ContinentId);
+            part("Skill", it => it.Skill);
+            part("BioExperience", it => it.BioExperience);
+            part("RemoteWork", it => it.RemoteWork);
+
+            return dict;
         }
     }
 }

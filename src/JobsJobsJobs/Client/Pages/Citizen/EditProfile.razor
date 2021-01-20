@@ -28,9 +28,9 @@
             <InputSelect id="continentId" @bind-Value=@ProfileForm.ContinentId class="form-control">
               <option>&ndash; Select &ndash;</option>
               @foreach (var (id, name) in Continents)
-          {
-          <option value="@id">@name</option>
-    }
+              {
+                <option value="@id">@name</option>
+              }
             </InputSelect>
             <ValidationMessage For=@(() => ProfileForm.ContinentId) />
           </div>

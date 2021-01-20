@@ -46,19 +46,12 @@ namespace JobsJobsJobs.Client.Pages.Citizen
         protected override async Task OnInitializedAsync()
         {
             ServerApi.SetJwt(http, state);
-            var continentTask = ServerApi.RetrieveMany<Continent>(http, "continent/all");
+            var continentTask = state.GetContinents(http);
             var profileTask = ServerApi.RetrieveProfile(http, state);
 
             await Task.WhenAll(continentTask, profileTask);
 
-            if (continentTask.Result.IsOk)
-            {
-                Continents = continentTask.Result.Ok;
-            }
-            else
-            {
-                ErrorMessages.Add(continentTask.Result.Error);
-            }
+            Continents = continentTask.Result;
 
             if (profileTask.Result.IsOk)
             {
