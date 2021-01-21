@@ -1,4 +1,6 @@
 ﻿using JobsJobsJobs.Shared;
+using Microsoft.JSInterop;
+using NodaTime;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
@@ -73,6 +75,32 @@ namespace JobsJobsJobs.Client
                 }
             }
             return _continents;
+        }
+
+        private DateTimeZone? _tz = null;
+
+        /// <summary>
+        /// Get the time zone for the current user's browser
+        /// </summary>
+        /// <param name="js">The JS interop runtime for the application</param>
+        /// <returns>The time zone based on the user's browser</returns>
+        public async Task<DateTimeZone> GetTimeZone(IJSRuntime js)
+        {
+            if (_tz == null)
+            {
+                try
+                {
+                    _tz = DateTimeZoneProviders.Tzdb.GetZoneOrNull(await js.InvokeAsync<string>("getTimeZone"));
+                }
+                catch (Exception) { }
+            }
+            if (_tz == null)
+            {
+                // Either the zone wasn't found, or the user's browser denied us access to it; there's not much to do
+                // here but set it to UTC and move on
+                _tz = DateTimeZoneProviders.Tzdb.GetZoneOrNull("Etc/UTC")!;
+            }
+            return _tz;
         }
 
         public AppState() { }

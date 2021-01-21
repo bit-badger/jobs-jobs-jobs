@@ -35,6 +35,9 @@
     function setPageTitle(theTitle) {
       document.title = theTitle
     }
+    function getTimeZone() {
+      return Intl.DateTimeFormat().resolvedOptions().timeZone
+    }
   </script>
 </body>
 
