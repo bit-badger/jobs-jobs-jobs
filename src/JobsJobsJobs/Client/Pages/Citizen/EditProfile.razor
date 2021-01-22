@@ -18,6 +18,12 @@
           <div class="form-check">
             <InputCheckbox id="seeking" class="form-check-input" @bind-Value=@ProfileForm.IsSeekingEmployment />
             <label for="seeking" class="form-check-label">I am currently seeking employment</label>
+            @if (IsSeeking)
+            {
+              <em>&nbsp; &nbsp; If you have found employment, consider
+                <a href="/success-story/add">telling your fellow citizens about it</a>
+              </em>
+            }
           </div>
         </div>
       </div>

@@ -20,6 +20,13 @@ else
         lists @Profile.Skills.Length skill@(Profile.Skills.Length != 1 ? "s" : "").
       </p>
       <p><a href="/profile/view/@state.User.Id">View Your Employment Profile</a></p>
+      @if (Profile.SeekingEmployment)
+      {
+        <p>
+          Your profile indicates that you are seeking employment. Once you find it,
+          <a href="/success-story/add">tell your fellow citizens about it!</a>
+        </p>
+      }
     }
     else
     {

@@ -24,6 +24,12 @@ namespace JobsJobsJobs.Client.Pages.Citizen
         private bool AllLoaded { get; set; } = false;
 
         /// <summary>
+        /// Whether the citizen is seeking employment at the time the profile is loaded (used to show success story
+        /// link)
+        /// </summary>
+        private bool IsSeeking { get; set; } = false;
+
+        /// <summary>
         /// The form for this page
         /// </summary>
         private ProfileForm ProfileForm { get; set; } = new ProfileForm();
@@ -63,6 +69,7 @@ namespace JobsJobsJobs.Client.Pages.Citizen
                 else
                 {
                     ProfileForm = ProfileForm.FromProfile(profileTask.Result.Ok);
+                    IsSeeking = profileTask.Result.Ok.SeekingEmployment;
                 }
                 if (ProfileForm.Skills.Count == 0) AddNewSkill();
             }

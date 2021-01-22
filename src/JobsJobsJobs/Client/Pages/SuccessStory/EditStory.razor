@@ -1,0 +1,57 @@
+﻿@page "/success-story/add"
+@page "/success-story/edit/{Id}"
+@inject HttpClient http
+@inject AppState state
+@inject NavigationManager nav
+@inject IToastService toast
+
+<PageTitle Title=@Title />
+
+<h3>@Title</h3>
+
+<ErrorList Errors=@ErrorMessages>
+  @if (Loading)
+  {
+    <p>Loading...</p>
+  }
+  else
+  {
+    @if (IsNew)
+    {
+      <p>
+        Congratulations on your employment! Your fellow citizens would enjoy hearing how it all came about; tell us
+        about it below! <em>(These will be visible to other users, but not to the general public.)</em>
+      </p>
+    }
+    <EditForm Model=@Form OnValidSubmit=@SaveStory>
+      <div class="form-row">
+        <div class="col">
+          <div class="form-check">
+            <InputCheckbox id="fromHere" class="form-check-input" @bind-Value=@Form.FromHere />
+            <label for="fromHere" class="form-check-label">I found my employment here</label>
+          </div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="col">
+          <div class="form-group">
+            <label for="story" class="jjj-label">The Success Story</label>
+            <MarkdownEditor Id="story" @bind-Text=@Form.Story />
+          </div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="col">
+          <br>
+          <button type="submit" class="btn btn-outline-primary">Save</button>
+          @if (IsNew)
+          {
+            <p>
+              <em>(Saving this will set &ldquo;Seeking Employment&rdquo; to &ldquo;No&rdquo; on your profile.)</em>
+            </p>
+          }
+        </div>
+      </div>
+    </EditForm>
+  }
+</ErrorList>

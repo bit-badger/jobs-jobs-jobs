@@ -1,11 +1,9 @@
 ﻿using JobsJobsJobs.Shared;
 using JobsJobsJobs.Shared.Api;
 using Microsoft.EntityFrameworkCore;
-using Npgsql;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace JobsJobsJobs.Server.Data

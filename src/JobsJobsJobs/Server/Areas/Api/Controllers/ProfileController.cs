@@ -33,6 +33,7 @@ namespace JobsJobsJobs.Server.Areas.Api.Controllers
         /// Constructor
         /// </summary>
         /// <param name="db">The data context to use for this request</param>
+        /// <param name="clock">The clock instance to use for this request</param>
         public ProfileController(JobsDbContext db, IClock clock)
         {
             _db = db;
@@ -114,5 +115,20 @@ namespace JobsJobsJobs.Server.Areas.Api.Controllers
         [HttpGet("search")]
         public async Task<IActionResult> Search([FromQuery] ProfileSearch search) =>
             Ok(await _db.SearchProfiles(search));
+
+        [HttpPatch("employment-found")]
+        public async Task<IActionResult> EmploymentFound()
+        {
+            var profile = await _db.FindProfileByCitizen(CurrentCitizenId);
+            if (profile == null) return NotFound();
+
+            var updated = profile with { SeekingEmployment = false };
+            _db.Update(updated);
+
+            await _db.SaveChangesAsync();
+
+            return Ok();
+        }
+            
     }
 }
