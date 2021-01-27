@@ -17,11 +17,6 @@ namespace JobsJobsJobs.Client.Pages.SuccessStory
         public string? Id { get; set; }
 
         /// <summary>
-        /// Whether we are loading information
-        /// </summary>
-        private bool Loading { get; set; } = true;
-
-        /// <summary>
         /// The page title / header
         /// </summary>
         public string Title => IsNew ? "Tell Your Success Story" : "Edit Success Story";
@@ -37,11 +32,10 @@ namespace JobsJobsJobs.Client.Pages.SuccessStory
         private bool IsNew => Form.Id == "new";
 
         /// <summary>
-        /// Error messages from API access
+        /// Retrieve the story
         /// </summary>
-        private IList<string> ErrorMessages { get; } = new List<string>();
-
-        protected override async Task OnInitializedAsync()
+        /// <param name="errors">A collection to use in reporting errors that may occur</param>
+        public async Task RetrieveStory(ICollection<string> errors)
         {
             if (Id != null)
             {
@@ -58,14 +52,13 @@ namespace JobsJobsJobs.Client.Pages.SuccessStory
                 }
                 else if (story.IsOk)
                 {
-                    ErrorMessages.Add($"The success story {Id} does not exist");
+                    errors.Add($"The success story {Id} does not exist");
                 }
                 else
                 {
-                    ErrorMessages.Add(story.Error);
+                    errors.Add(story.Error);
                 }
             }
-            Loading = false;
         }
 
         /// <summary>

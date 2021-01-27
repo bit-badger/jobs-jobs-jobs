@@ -19,11 +19,6 @@ namespace JobsJobsJobs.Client.Pages.Citizen
         private int _newSkillCounter = 0;
 
         /// <summary>
-        /// A flag that indicates all the required API calls have completed, and the form is ready to be displayed
-        /// </summary>
-        private bool AllLoaded { get; set; } = false;
-
-        /// <summary>
         /// Whether the citizen is seeking employment at the time the profile is loaded (used to show success story
         /// link)
         /// </summary>
@@ -45,11 +40,10 @@ namespace JobsJobsJobs.Client.Pages.Citizen
         private bool IsNew { get; set; } = false;
 
         /// <summary>
-        /// Error messages from API access
+        /// Set up the data needed to add or edit the user's profile
         /// </summary>
-        private IList<string> ErrorMessages { get; } = new List<string>();
-
-        protected override async Task OnInitializedAsync()
+        /// <param name="errors">The collection where errors can be reported</param>
+        public async Task SetUpProfile(ICollection<string> errors)
         {
             ServerApi.SetJwt(http, state);
             var continentTask = state.GetContinents(http);
@@ -75,10 +69,8 @@ namespace JobsJobsJobs.Client.Pages.Citizen
             }
             else
             {
-                ErrorMessages.Add(profileTask.Result.Error);
+                errors.Add(profileTask.Result.Error);
             }
-
-            AllLoaded = true;
         }
 
         /// <summary>
@@ -118,6 +110,5 @@ namespace JobsJobsJobs.Client.Pages.Citizen
                 toast.ShowError($"{(int)res.StatusCode} {error}");
             }
         }
-
     }
 }

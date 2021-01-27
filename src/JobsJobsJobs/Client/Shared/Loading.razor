@@ -1,0 +1,18 @@
+﻿@if (IsLoading)
+{
+  <p>@Message</p>
+}
+else if (ErrorMessages.Count > 0)
+{
+  <p>The following error@(ErrorMessages.Count == 1 ? "" : "s") occurred:</p>
+  <ul>
+    @foreach (var msg in ErrorMessages)
+    {
+      <li><pre>@msg</pre></li>
+    }
+  </ul>
+}
+else
+{
+  @ChildContent
+}

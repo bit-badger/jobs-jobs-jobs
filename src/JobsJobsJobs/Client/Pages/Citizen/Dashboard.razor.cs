@@ -12,11 +12,6 @@ namespace JobsJobsJobs.Client.Pages.Citizen
     public partial class Dashboard : ComponentBase
     {
         /// <summary>
-        /// Whether the data is being retrieved
-        /// </summary>
-        private bool RetrievingData { get; set; } = true;
-
-        /// <summary>
         /// The user's profile
         /// </summary>
         private Domain.Profile? Profile { get; set; } = null;
@@ -27,11 +22,10 @@ namespace JobsJobsJobs.Client.Pages.Citizen
         private int ProfileCount { get; set; }
 
         /// <summary>
-        /// Error messages from data access
+        /// Load the user's profile information
         /// </summary>
-        private IList<string> ErrorMessages { get; } = new List<string>();
-
-        protected override async Task OnInitializedAsync()
+        /// <param name="errors">A collection to report errors that may be encountered</param>
+        public async Task LoadProfile(ICollection<string> errors)
         {
             if (state.User != null)
             {
@@ -47,7 +41,7 @@ namespace JobsJobsJobs.Client.Pages.Citizen
                 }
                 else
                 {
-                    ErrorMessages.Add(profileTask.Result.Error);
+                    errors.Add(profileTask.Result.Error);
                 }
 
                 if (profileCountTask.Result.IsOk)
@@ -56,10 +50,8 @@ namespace JobsJobsJobs.Client.Pages.Citizen
                 }
                 else
                 {
-                    ErrorMessages.Add(profileCountTask.Result.Error);
+                    errors.Add(profileCountTask.Result.Error);
                 }
-
-                RetrievingData = false;
             }
         }
     }

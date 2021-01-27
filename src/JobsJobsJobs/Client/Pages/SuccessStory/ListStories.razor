@@ -3,15 +3,10 @@
 @inject AppState state
 
 <PageTitle Title="Success Stories" />
-
 <h3>Success Stories</h3>
 
-<ErrorList Errors=@ErrorMessages>
-  @if (Loading)
-  {
-    <p>Loading...</p>
-  }
-  else if (Stories.Any())
+<Loading OnLoad=@LoadStories>
+  @if (Stories.Any())
   {
     <table class="table table-sm table-hover">
       <thead>
@@ -43,4 +38,4 @@
   {
     <p>There are no success stories recorded <em>(yet)</em></p>
   }
-</ErrorList>
+</Loading>

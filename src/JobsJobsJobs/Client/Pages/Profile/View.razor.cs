@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Domain = JobsJobsJobs.Shared;
 
@@ -8,11 +7,6 @@ namespace JobsJobsJobs.Client.Pages.Profile
 {
     public partial class View : ComponentBase
     {
-        /// <summary>
-        /// Whether data for this component is loading
-        /// </summary>
-        private bool IsLoading { get; set; } = true;
-
         /// <summary>
         /// The citizen whose profile is being displayed
         /// </summary>
@@ -49,17 +43,16 @@ namespace JobsJobsJobs.Client.Pages.Profile
         }
 
         /// <summary>
-        /// Error messages from data retrieval
-        /// </summary>
-        private IList<string> ErrorMessages { get; } = new List<string>();
-
-        /// <summary>
         /// The ID of the citizen whose profile should be displayed
         /// </summary>
         [Parameter]
         public string Id { get; set; } = default!;
 
-        protected override async Task OnInitializedAsync()
+        /// <summary>
+        /// Retrieve the requested profile
+        /// </summary>
+        /// <param name="errors">A collection to report errors that may occur</param>
+        public async Task RetrieveProfile(ICollection<string> errors)
         {
             ServerApi.SetJwt(http, state);
             var citizenTask = ServerApi.RetrieveOne<Domain.Citizen>(http, $"citizen/get/{Id}");
@@ -73,11 +66,11 @@ namespace JobsJobsJobs.Client.Pages.Profile
             }
             else if (citizenTask.Result.IsOk)
             {
-                ErrorMessages.Add("Citizen not found");
+                errors.Add("Citizen not found");
             }
             else
             {
-                ErrorMessages.Add(citizenTask.Result.Error);
+                errors.Add(citizenTask.Result.Error);
             }
 
             if (profileTask.Result.IsOk && profileTask.Result.Ok != null)
@@ -86,14 +79,12 @@ namespace JobsJobsJobs.Client.Pages.Profile
             }
             else if (profileTask.Result.IsOk)
             {
-                ErrorMessages.Add("Profile not found");
+                errors.Add("Profile not found");
             }
             else
             {
-                ErrorMessages.Add(profileTask.Result.Error);
+                errors.Add(profileTask.Result.Error);
             }
-            
-            IsLoading = false;
         }
     }
 }

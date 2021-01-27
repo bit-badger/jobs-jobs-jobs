@@ -6,46 +6,39 @@
 
 <h3>Welcome, @state.User!.Name!</h3>
 
-@if (RetrievingData)
-{
-  <p>Retrieving your employment profile...</p>
-}
-else
-{
-  <ErrorList Errors=@ErrorMessages>
-    @if (Profile != null)
-    {
-      <p>
-        Your employment profile was last updated <FullDateTime TheDate=@Profile.LastUpdatedOn />. Your profile currently
-        lists @Profile.Skills.Length skill@(Profile.Skills.Length != 1 ? "s" : "").
-      </p>
-      <p><a href="/profile/view/@state.User.Id">View Your Employment Profile</a></p>
-      @if (Profile.SeekingEmployment)
-      {
-        <p>
-          Your profile indicates that you are seeking employment. Once you find it,
-          <a href="/success-story/add">tell your fellow citizens about it!</a>
-        </p>
-      }
-    }
-    else
-    {
-      <p>
-        You do not have an employment profile established; click &ldquo;Edit Profile&rdquo; in the menu to get
-        started!
-      </p>
-    }
-    <hr>
+<Loading OnLoad=@LoadProfile Message=@(new MarkupString("Retrieving your employment profile&hellip;"))>
+  @if (Profile != null)
+  {
     <p>
-      There @(ProfileCount == 1 ? "is" : "are") @(ProfileCount == 0 ? "no" : ProfileCount) employment
-      profile@(ProfileCount != 1 ? "s" : "") from citizens of Gitmo Nation.
-      @if (ProfileCount > 0)
-      {
-        <text>Take a look around and see if you can help them find work!</text>
-      }
+      Your employment profile was last updated <FullDateTime TheDate=@Profile.LastUpdatedOn />. Your profile currently
+      lists @Profile.Skills.Length skill@(Profile.Skills.Length != 1 ? "s" : "").
     </p>
-  </ErrorList>
-}
+    <p><a href="/profile/view/@state.User.Id">View Your Employment Profile</a></p>
+    @if (Profile.SeekingEmployment)
+    {
+      <p>
+        Your profile indicates that you are seeking employment. Once you find it,
+        <a href="/success-story/add">tell your fellow citizens about it!</a>
+      </p>
+    }
+  }
+  else
+  {
+    <p>
+      You do not have an employment profile established; click &ldquo;Edit Profile&rdquo; in the menu to get
+      started!
+    </p>
+  }
+  <hr>
+  <p>
+    There @(ProfileCount == 1 ? "is" : "are") @(ProfileCount == 0 ? "no" : ProfileCount) employment
+    profile@(ProfileCount != 1 ? "s" : "") from citizens of Gitmo Nation.
+    @if (ProfileCount > 0)
+    {
+      <text>Take a look around and see if you can help them find work!</text>
+    }
+  </p>
+</Loading>
 <hr>
 <h4>
   <a href="https://github.com/bit-badger/jobs-jobs-jobs/issues/3" target="_blank">Phase 3</a> &ndash; What Works
