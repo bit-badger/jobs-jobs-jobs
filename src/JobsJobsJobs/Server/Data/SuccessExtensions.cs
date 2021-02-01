@@ -28,7 +28,8 @@ namespace JobsJobsJobs.Server.Data
             await db.Successes
                 .Join(db.Citizens, s => s.CitizenId, c => c.Id, (s, c) => new { Success = s, Citizen = c })
                 .OrderByDescending(it => it.Success.RecordedOn)
-                .Select(it => new StoryEntry(it.Success.Id, it.Citizen.Id, it.Citizen.DisplayName, it.Success.RecordedOn))
+                .Select(it => new StoryEntry(it.Success.Id, it.Citizen.Id, it.Citizen.DisplayName,
+                    it.Success.RecordedOn, it.Success.FromHere, it.Success.Story != null))
                 .ToListAsync().ConfigureAwait(false);
     }
 }

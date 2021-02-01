@@ -13,6 +13,7 @@
         <tr>
           <th scope="col">Story</th>
           <th scope="col">From</th>
+          <th scope="col">Found Here?</th>
           <th scope="col">Recorded On</th>
         </tr>
       </thead>
@@ -21,13 +22,30 @@
         {
           <tr>
             <td>
-              <a href="/success-story/view/@story.Id">View</a>
+              @if (story.HasStory)
+              {
+                <a href="/success-story/view/@story.Id">View</a>
+              }
+              else
+              {
+                <em>None</em>
+              }
               @if (story.CitizenId == state.User!.Id)
               {
-                <text> ~ <a href="/success-story/edit/@story.Id">Edit</a></text>
+                <text> ~ </text><a href="/success-story/edit/@story.Id">Edit</a>
               }
             </td>
             <td>@story.CitizenName</td>
+            <td>
+              @if (story.FromHere)
+              {
+                <strong>Yes</strong>
+              }
+              else
+              {
+                <text>No</text>
+              }
+            </td>
             <td><FullDate TheDate=@story.RecordedOn /></td>
           </tr>
         }

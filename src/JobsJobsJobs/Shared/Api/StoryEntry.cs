@@ -5,5 +5,11 @@ namespace JobsJobsJobs.Shared.Api
     /// <summary>
     /// An entry in the list of success stories
     /// </summary>
-    public record StoryEntry(SuccessId Id, CitizenId CitizenId, string CitizenName, Instant RecordedOn);
+    public record StoryEntry(
+        SuccessId Id,
+        CitizenId CitizenId,
+        string CitizenName,
+        Instant RecordedOn,
+        bool FromHere,
+        bool HasStory);
 }

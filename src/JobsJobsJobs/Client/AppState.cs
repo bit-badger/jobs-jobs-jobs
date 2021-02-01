@@ -4,6 +4,7 @@ using NodaTime;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace JobsJobsJobs.Client
@@ -18,6 +19,17 @@ namespace JobsJobsJobs.Client
     /// </summary>
     public class AppState
     {
+        /// <summary>
+        /// The application version, as a nice display string
+        /// </summary>
+        public static Lazy<string> Version => new Lazy<string>(() =>
+        {
+            var version = Assembly.GetExecutingAssembly().GetName().Version!;
+            var display = $"v{version.Major}.{version.Minor}";
+            if (version.Build > 0) display += $".{version.Build}";
+            return display;
+        });
+
         public event Action OnChange = () => { };
 
         private UserInfo? _user = null;

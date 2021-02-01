@@ -29,7 +29,6 @@ namespace JobsJobsJobs.Client
         /// </summary>
         static ServerApi()
         {
-
             var options = new JsonSerializerOptions
             {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
