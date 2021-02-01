@@ -43,12 +43,19 @@ namespace JobsJobsJobs.Client.Pages.SuccessStory
                 var story = await ServerApi.RetrieveOne<Success>(http, $"success/{Id}");
                 if (story.IsOk && story.Ok != null)
                 {
-                    Form = new StoryForm
+                    if (story.Ok.CitizenId == state.User!.Id)
                     {
-                        Id = story.Ok.Id.ToString(),
-                        FromHere = story.Ok.FromHere,
-                        Story = story.Ok.Story?.Text ?? ""
-                    };
+                        Form = new StoryForm
+                        {
+                            Id = story.Ok.Id.ToString(),
+                            FromHere = story.Ok.FromHere,
+                            Story = story.Ok.Story?.Text ?? ""
+                        };
+                    }
+                    else
+                    {
+                        errors.Add("Stop messing with the URL");
+                    }
                 }
                 else if (story.IsOk)
                 {
