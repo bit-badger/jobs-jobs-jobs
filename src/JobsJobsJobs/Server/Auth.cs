@@ -80,6 +80,13 @@ namespace JobsJobsJobs.Server
                     $"Profiles must be from noagendasocial.com; yours is {profileResponse.AccountName}");
             }
 
+            // If the user hasn't filled in a display name, use the username as the display name.
+            //   (this is what Mastodon does)
+            if (string.IsNullOrWhiteSpace(profileResponse.DisplayName))
+            {
+                profileResponse.DisplayName = profileResponse.Username;
+            }
+
             return Result<MastodonAccount>.AsOk(profileResponse);
         }
 
