@@ -160,5 +160,18 @@ namespace JobsJobsJobs.Server.Data
                 x.Profile.SeekingEmployment, x.Profile.RemoteWork, x.Profile.FullTime, x.Profile.LastUpdatedOn))
                 .ToListAsync().ConfigureAwait(false);
         }
+        
+        /// <summary>
+        /// Delete skills and profile for the given citizen
+        /// </summary>
+        /// <param name="citizenId">The ID of the citizen whose profile should be deleted</param>
+        public static async Task DeleteProfileByCitizen(this JobsDbContext db, CitizenId citizenId)
+        {
+            var id = citizenId.ToString();
+            await db.Database.ExecuteSqlInterpolatedAsync($"DELETE FROM jjj.skill WHERE citizen_id = {id}")
+                .ConfigureAwait(false);
+            await db.Database.ExecuteSqlInterpolatedAsync($"DELETE FROM jjj.profile WHERE citizen_id = {id}")
+                .ConfigureAwait(false);
+        }
     }
 }

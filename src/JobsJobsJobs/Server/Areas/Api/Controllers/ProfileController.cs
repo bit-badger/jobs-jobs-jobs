@@ -129,6 +129,14 @@ namespace JobsJobsJobs.Server.Areas.Api.Controllers
 
             return Ok();
         }
-            
+        
+        [HttpDelete("")]
+        public async Task<IActionResult> Remove()
+        {
+            await _db.DeleteProfileByCitizen(CurrentCitizenId);
+            await _db.SaveChangesAsync();
+
+            return Ok();
+        }
     }
 }

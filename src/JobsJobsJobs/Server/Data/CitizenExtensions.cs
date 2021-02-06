@@ -34,7 +34,7 @@ namespace JobsJobsJobs.Server.Data
         /// </summary>
         /// <param name="citizen">The citizen to be added</param>
         public static async Task AddCitizen(this JobsDbContext db, Citizen citizen) =>
-            await db.Citizens.AddAsync(citizen);
+            await db.Citizens.AddAsync(citizen).ConfigureAwait(false);
 
         /// <summary>
         /// Update a citizen after they have logged on (update last seen, sync display name)
@@ -42,5 +42,20 @@ namespace JobsJobsJobs.Server.Data
         /// <param name="citizen">The updated citizen</param>
         public static void UpdateCitizen(this JobsDbContext db, Citizen citizen) =>
             db.Entry(citizen).State = EntityState.Modified;
+
+        /// <summary>
+        /// Delete a citizen
+        /// </summary>
+        /// <param name="citizenId">The ID of the citizen to be deleted</param>
+        /// <returns></returns>
+        public static async Task DeleteCitizen(this JobsDbContext db, CitizenId citizenId)
+        {
+            var id = citizenId.ToString();
+            await db.DeleteProfileByCitizen(citizenId).ConfigureAwait(false);
+            await db.Database.ExecuteSqlInterpolatedAsync($"DELETE FROM jjj.success WHERE citizen_id = {id}")
+                .ConfigureAwait(false);
+            await db.Database.ExecuteSqlInterpolatedAsync($"DELETE FROM jjj.citizen WHERE id = {id}")
+                .ConfigureAwait(false);
+        }
     }
 }

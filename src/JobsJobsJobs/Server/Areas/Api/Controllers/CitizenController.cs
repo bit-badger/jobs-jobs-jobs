@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using NodaTime;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace JobsJobsJobs.Server.Areas.Api.Controllers
@@ -43,6 +44,11 @@ namespace JobsJobsJobs.Server.Areas.Api.Controllers
             _clock = clock;
             _db = db;
         }
+
+        /// <summary>
+        /// The current citizen ID
+        /// </summary>
+        private CitizenId CurrentCitizenId => CitizenId.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
 
         [HttpGet("log-on/{authCode}")]
         public async Task<IActionResult> LogOn([FromRoute] string authCode)
@@ -86,6 +92,16 @@ namespace JobsJobsJobs.Server.Areas.Api.Controllers
         {
             var citizen = await _db.FindCitizenById(CitizenId.Parse(id));
             return citizen == null ? NotFound() : Ok(citizen);
+        }
+
+        [Authorize]
+        [HttpDelete("")]
+        public async Task<IActionResult> Remove()
+        {
+            await _db.DeleteCitizen(CurrentCitizenId);
+            await _db.SaveChangesAsync();
+
+            return Ok();
         }
     }
 }
