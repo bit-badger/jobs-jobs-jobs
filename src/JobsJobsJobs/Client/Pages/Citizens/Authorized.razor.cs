@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.WebUtilities;
 using System.Threading.Tasks;
 
-namespace JobsJobsJobs.Client.Pages.Citizen
+namespace JobsJobsJobs.Client.Pages.Citizens
 {
     public partial class Authorized : ComponentBase
     {

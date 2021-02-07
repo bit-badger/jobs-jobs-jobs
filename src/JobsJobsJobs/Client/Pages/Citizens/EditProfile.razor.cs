@@ -6,7 +6,7 @@ using System.Linq;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
 
-namespace JobsJobsJobs.Client.Pages.Citizen
+namespace JobsJobsJobs.Client.Pages.Citizens
 {
     /// <summary>
     /// Profile edit page (called EditProfile so as not to create naming conflicts)

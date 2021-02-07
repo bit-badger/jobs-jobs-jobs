@@ -1,21 +1,21 @@
-﻿using Microsoft.AspNetCore.Components;
+﻿using JobsJobsJobs.Shared;
+using Microsoft.AspNetCore.Components;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Domain = JobsJobsJobs.Shared;
 
-namespace JobsJobsJobs.Client.Pages.Profile
+namespace JobsJobsJobs.Client.Pages.Profiles
 {
     public partial class View : ComponentBase
     {
         /// <summary>
         /// The citizen whose profile is being displayed
         /// </summary>
-        private Domain.Citizen Citizen { get; set; } = default!;
+        private Citizen Citizen { get; set; } = default!;
 
         /// <summary>
         /// The profile to display
         /// </summary>
-        private Domain.Profile Profile { get; set; } = default!;
+        private Profile Profile { get; set; } = default!;
 
         /// <summary>
         /// The work types for the top of the page
@@ -55,8 +55,8 @@ namespace JobsJobsJobs.Client.Pages.Profile
         public async Task RetrieveProfile(ICollection<string> errors)
         {
             ServerApi.SetJwt(http, state);
-            var citizenTask = ServerApi.RetrieveOne<Domain.Citizen>(http, $"citizen/get/{Id}");
-            var profileTask = ServerApi.RetrieveOne<Domain.Profile>(http, $"profile/get/{Id}");
+            var citizenTask = ServerApi.RetrieveOne<Citizen>(http, $"citizen/get/{Id}");
+            var profileTask = ServerApi.RetrieveOne<Profile>(http, $"profile/get/{Id}");
 
             await Task.WhenAll(citizenTask, profileTask);
 

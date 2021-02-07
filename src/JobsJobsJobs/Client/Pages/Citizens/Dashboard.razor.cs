@@ -1,10 +1,10 @@
-﻿using JobsJobsJobs.Shared.Api;
+﻿using JobsJobsJobs.Shared;
+using JobsJobsJobs.Shared.Api;
 using Microsoft.AspNetCore.Components;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Domain = JobsJobsJobs.Shared;
 
-namespace JobsJobsJobs.Client.Pages.Citizen
+namespace JobsJobsJobs.Client.Pages.Citizens
 {
     /// <summary>
     /// The first page a user sees after signing in
@@ -14,7 +14,7 @@ namespace JobsJobsJobs.Client.Pages.Citizen
         /// <summary>
         /// The user's profile
         /// </summary>
-        private Domain.Profile? Profile { get; set; } = null;
+        private Profile? Profile { get; set; } = null;
 
         /// <summary>
         /// The number of profiles

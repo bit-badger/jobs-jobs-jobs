@@ -8,7 +8,7 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 
-namespace JobsJobsJobs.Client.Pages.Profile
+namespace JobsJobsJobs.Client.Pages.Profiles
 {
     public partial class Search : ComponentBase
     {
