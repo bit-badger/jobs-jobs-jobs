@@ -156,7 +156,7 @@ namespace JobsJobsJobs.Server.Data
                 query = query.Where(it => citizenIds.Contains(it.Citizen.Id));
             }
 
-            return await query.Select(x => new ProfileSearchResult(x.Citizen.Id, x.Citizen.DisplayName,
+            return await query.Select(x => new ProfileSearchResult(x.Citizen.Id, x.Citizen.CitizenName,
                 x.Profile.SeekingEmployment, x.Profile.RemoteWork, x.Profile.FullTime, x.Profile.LastUpdatedOn))
                 .ToListAsync().ConfigureAwait(false);
         }

@@ -3,8 +3,8 @@
 @inject AppState state
 
 <Loading OnLoad=@RetrieveProfile>
-  <PageTitle Title=@($"Employment Profile for {Citizen.DisplayName}") />
-  <h2><a href="@Citizen.ProfileUrl" target="_blank">@Citizen.DisplayName</a></h2>
+  <PageTitle Title=@($"Employment Profile for {Citizen.CitizenName}") />
+  <h2><a href="@Citizen.ProfileUrl" target="_blank">@Citizen.CitizenName</a></h2>
   <h4>@Profile.Continent!.Name, @Profile.Region</h4>
   <p>@WorkTypes</p>
 

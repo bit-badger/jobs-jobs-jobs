@@ -8,8 +8,15 @@ namespace JobsJobsJobs.Shared
     public record Citizen(
         CitizenId Id,
         string NaUser,
-        string DisplayName,
+        string? DisplayName,
+        string? RealName,
         string ProfileUrl,
         Instant JoinedOn,
-        Instant LastSeenOn);
+        Instant LastSeenOn)
+    {
+        /// <summary>
+        /// The user's name by which they should be known
+        /// </summary>
+        public string CitizenName => RealName ?? DisplayName ?? NaUser;
+    }
 }

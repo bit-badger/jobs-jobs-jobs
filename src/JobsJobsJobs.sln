@@ -11,6 +11,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JobsJobsJobs.Shared", "Jobs
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{50B51580-9F09-41E2-BC78-DAD38C37B583}"
 	ProjectSection(SolutionItems) = preProject
+		database\12-add-real-name.sql = database\12-add-real-name.sql
 		JobsJobsJobs\Directory.Build.props = JobsJobsJobs\Directory.Build.props
 		database\tables.sql = database\tables.sql
 	EndProjectSection

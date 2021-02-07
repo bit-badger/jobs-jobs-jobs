@@ -65,7 +65,8 @@ namespace JobsJobsJobs.Server.Areas.Api.Controllers
             var citizen = await _db.FindCitizenByNAUser(account.Username);
             if (citizen == null)
             {
-                citizen = new Citizen(await CitizenId.Create(), account.Username, account.DisplayName, account.Url,
+                citizen = new Citizen(await CitizenId.Create(), account.Username,
+                    string.IsNullOrWhiteSpace(account.DisplayName) ? null : account.DisplayName, null, account.Url,
                     now, now);
                 await _db.AddCitizen(citizen);
             }
@@ -73,7 +74,7 @@ namespace JobsJobsJobs.Server.Areas.Api.Controllers
             {
                 citizen = citizen with
                 {
-                    DisplayName = account.DisplayName,
+                    DisplayName = string.IsNullOrWhiteSpace(account.DisplayName) ? null : account.DisplayName,
                     LastSeenOn = now
                 };
                 _db.UpdateCitizen(citizen);
@@ -83,7 +84,7 @@ namespace JobsJobsJobs.Server.Areas.Api.Controllers
             // Step 3 - Generate JWT
             var jwt = Auth.CreateJwt(citizen, _config);
 
-            return new JsonResult(new LogOnSuccess(jwt, citizen.Id.ToString(), citizen.DisplayName));
+            return new JsonResult(new LogOnSuccess(jwt, citizen.Id.ToString(), citizen.CitizenName));
         }
 
         [Authorize]

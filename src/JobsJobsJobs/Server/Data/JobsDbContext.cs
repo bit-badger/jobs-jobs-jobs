@@ -49,11 +49,13 @@ namespace JobsJobsJobs.Server.Data
                 m.Property(e => e.Id).HasColumnName("id").IsRequired().HasMaxLength(12)
                     .HasConversion(Converters.CitizenIdConverter);
                 m.Property(e => e.NaUser).HasColumnName("na_user").IsRequired().HasMaxLength(50);
-                m.Property(e => e.DisplayName).HasColumnName("display_name").IsRequired().HasMaxLength(255);
+                m.Property(e => e.DisplayName).HasColumnName("display_name").HasMaxLength(255);
                 m.Property(e => e.ProfileUrl).HasColumnName("profile_url").IsRequired().HasMaxLength(1_024);
                 m.Property(e => e.JoinedOn).HasColumnName("joined_on").IsRequired();
                 m.Property(e => e.LastSeenOn).HasColumnName("last_seen_on").IsRequired();
+                m.Property(e => e.RealName).HasColumnName("real_name").HasMaxLength(255);
                 m.HasIndex(e => e.NaUser).IsUnique();
+                m.Ignore(e => e.CitizenName);
             });
 
             modelBuilder.Entity<Continent>(m =>
