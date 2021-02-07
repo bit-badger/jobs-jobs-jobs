@@ -48,9 +48,9 @@ namespace JobsJobsJobs.Client.Pages.Citizens
             ServerApi.SetJwt(http, state);
             var continentTask = state.GetContinents(http);
             var profileTask = ServerApi.RetrieveProfile(http, state);
-            //var citizenTask = ServerApi.RetrieveOne<Citizen>(http,)
+            var citizenTask = ServerApi.RetrieveOne<Citizen>(http, $"citizen/get/{state.User!.Id}");
 
-            await Task.WhenAll(continentTask, profileTask);
+            await Task.WhenAll(continentTask, profileTask, citizenTask);
 
             Continents = continentTask.Result;
 
@@ -71,6 +71,15 @@ namespace JobsJobsJobs.Client.Pages.Citizens
             else
             {
                 errors.Add(profileTask.Result.Error);
+            }
+
+            if (citizenTask.Result.IsOk)
+            {
+                ProfileForm.RealName = citizenTask.Result.Ok!.RealName ?? "";
+            }
+            else
+            {
+                errors.Add(citizenTask.Result.Error);
             }
         }
 
@@ -99,10 +108,20 @@ namespace JobsJobsJobs.Client.Pages.Citizens
             foreach (var blankSkill in blankSkills) ProfileForm.Skills.Remove(blankSkill);
 
             var res = await http.PostAsJsonAsync("/api/profile/save", ProfileForm);
-            if (res.IsSuccessStatusCode)
+            if (res.IsSuccessStatusCode && state.User != null)
             {
-                toast.ShowSuccess("Profile Saved Successfully");
-                nav.NavigateTo($"/profile/view/{state.User!.Id}");
+                var citizen = await ServerApi.RetrieveOne<Citizen>(http, $"citizen/get/{state.User.Id}");
+
+                if (citizen.IsOk)
+                {
+                    state.User = state.User with { Name = citizen.Ok!.CitizenName };
+                    toast.ShowSuccess("Profile Saved Successfully");
+                    nav.NavigateTo($"/profile/view/{state.User!.Id}");
+                }
+                else
+                {
+                    toast.ShowError(citizen.Error);
+                }
             }
             else
             {
