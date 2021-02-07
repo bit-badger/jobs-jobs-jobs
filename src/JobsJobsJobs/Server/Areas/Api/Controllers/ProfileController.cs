@@ -46,7 +46,7 @@ namespace JobsJobsJobs.Server.Areas.Api.Controllers
         private CitizenId CurrentCitizenId => CitizenId.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
 
         // This returns 204 to indicate that there is no profile data for the current citizen (if, of course, that is
-        // the case. The version where an ID is specified returns 404, which is an error condition, as it should not
+        // the case). The version where an ID is specified returns 404, which is an error condition, as it should not
         // occur unless someone is messing with a URL.
         [HttpGet("")]
         public async Task<IActionResult> Get()
@@ -88,6 +88,10 @@ namespace JobsJobsJobs.Server.Areas.Api.Controllers
             
             foreach (var skill in skills) await _db.SaveSkill(skill);
             await _db.DeleteMissingSkills(CurrentCitizenId, skills.Select(s => s.Id));
+
+            // Real Name
+            _db.Update((await _db.FindCitizenById(CurrentCitizenId))!
+                with { RealName = string.IsNullOrWhiteSpace(form.RealName) ? null : form.RealName });
 
             await _db.SaveChangesAsync();
             return Ok();

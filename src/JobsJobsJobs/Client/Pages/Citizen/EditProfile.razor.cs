@@ -48,6 +48,7 @@ namespace JobsJobsJobs.Client.Pages.Citizen
             ServerApi.SetJwt(http, state);
             var continentTask = state.GetContinents(http);
             var profileTask = ServerApi.RetrieveProfile(http, state);
+            //var citizenTask = ServerApi.RetrieveOne<Citizen>(http,)
 
             await Task.WhenAll(continentTask, profileTask);
 

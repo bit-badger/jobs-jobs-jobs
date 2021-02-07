@@ -12,6 +12,16 @@
   <EditForm Model=@ProfileForm OnValidSubmit=@SaveProfile>
     <DataAnnotationsValidator />
     <div class="form-row">
+      <div class="col col-xs-12 col-sm-10 col-md-8 col-lg-6">
+        <div class="form-group">
+          <label for="realName" class="jjj-label">Real Name</label>
+          <InputText id="realName" @bind-Value=@ProfileForm.RealName class="form-control"
+                     placeholder="Leave blank to use your NAS display name" />
+          <ValidationMessage For=@(() => ProfileForm.RealName) />
+        </div>
+      </div>
+    </div>
+    <div class="form-row">
       <div class="col">
         <div class="form-check">
           <InputCheckbox id="seeking" class="form-check-input" @bind-Value=@ProfileForm.IsSeekingEmployment />

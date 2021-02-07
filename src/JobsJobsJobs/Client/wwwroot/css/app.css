@@ -66,6 +66,7 @@ label.jjj-required::after {
   content: ' *';
 }
 
-label.jjj-label {
+label.jjj-label,
+::placeholder {
   font-style: italic;
 }

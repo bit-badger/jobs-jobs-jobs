@@ -20,6 +20,12 @@ namespace JobsJobsJobs.Shared.Api
         public bool IsPublic { get; set; }
 
         /// <summary>
+        /// The user's real name
+        /// </summary>
+        [StringLength(255)]
+        public string RealName { get; set; } = "";
+
+        /// <summary>
         /// The ID of the continent on which the citizen is located
         /// </summary>
         [Required]
