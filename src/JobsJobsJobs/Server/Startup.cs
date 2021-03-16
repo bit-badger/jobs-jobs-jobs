@@ -1,3 +1,4 @@
+using Blazored.Toast;
 using JobsJobsJobs.Server.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
@@ -43,6 +44,7 @@ namespace JobsJobsJobs.Server
             services.AddRazorPages()
                 .AddJsonOptions(options =>
                     options.JsonSerializerOptions.ConfigureForNodaTime(DateTimeZoneProviders.Tzdb));
+            services.AddBlazoredToast();
             services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;

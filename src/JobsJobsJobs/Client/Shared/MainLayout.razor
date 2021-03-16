@@ -25,9 +25,19 @@
     </div>
   </div>
 </div>
-<BlazoredToasts Position="ToastPosition.BottomRight"
-                ShowProgressBar="true" />
+@if (InitToasts)
+{
+  <BlazoredToasts Position="ToastPosition.BottomRight"
+                  ShowProgressBar="true" />
+}
 
 @code {
-  async void PlayJobs() => await js.InvokeVoidAsync("Audio.play", "pelosijobs");
+    bool InitToasts = false;
+    async void PlayJobs() => await js.InvokeVoidAsync("Audio.play", "pelosijobs");
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        base.OnAfterRender(firstRender);
+        if (!InitToasts) InitToasts = true;
+    }
 }
