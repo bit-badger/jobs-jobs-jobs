@@ -1,3 +1,5 @@
-# jobs-jobs-jobs
+# Jobs, Jobs, Jobs <small>_(and Jobs - Let's Vote for Jobs!)_</small>
 
-Repository for the development of No Agenda Jobs - currently parked [here](http://jobs.bitbadger.solutions)
+Source repository for **Jobs, Jobs, Jobs**, the jobs and career site for No Agenda nation.
+
+What is No Agenda? [So glad you asked!](https://noagendashow.net)
