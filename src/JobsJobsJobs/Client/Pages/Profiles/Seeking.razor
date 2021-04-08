@@ -1,0 +1,56 @@
+﻿@page "/profile/seeking"
+@inject HttpClient http
+@inject NavigationManager nav
+@inject AppState state
+
+<PageTitle Title="People Seeking Work" />
+<h3>People Seeking Work</h3>
+
+<ErrorList Errors=@ErrorMessages>
+  @if (Searching)
+  {
+    <p>Searching profiles...</p>
+  }
+  else
+  {
+    if (!Searched)
+    {
+      <p>Enter one or more criteria to filter results, or just click &ldquo;Search&rdquo; to list all profiles.</p>
+    }
+    <Collapsible HeaderText="Search Criteria" Collapsed=@(Searched && SearchResults.Any())>
+      <PublicSearchForm Criteria=@Criteria OnSearch=@DoSearch Continents=@Continents />
+    </Collapsible>
+    <br>
+    @if (SearchResults.Any())
+    {
+      <table class="table table-sm table-hover">
+        <thead>
+          <tr>
+            <th scope="col">Profile</th>
+            <th scope="col">Continent</th>
+            <th scope="col" class="text-center">Region</th>
+            <th scope="col" class="text-center">Remote?</th>
+            <th scope="col" class="text-center">Skills</th>
+          </tr>
+        </thead>
+        <tbody>
+          @foreach (var profile in SearchResults)
+          {
+            <tr>
+              <td><a href="/profile/bio/@profile.CitizenId">View</a></td>
+              <td class=@IsSeeking(profile)>@profile.DisplayName</td>
+              <td class="text-center">@YesOrNo(profile.SeekingEmployment)</td>
+              <td class="text-center">@YesOrNo(profile.RemoteWork)</td>
+              <td class="text-center">@YesOrNo(profile.FullTime)</td>
+              <td><FullDate TheDate=@profile.LastUpdated /></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+    else if (Searched)
+    {
+      <p>No results found for the specified criteria</p>
+    }
+  }
+</ErrorList>

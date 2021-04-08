@@ -1,5 +1,4 @@
 ﻿using JobsJobsJobs.Server.Data;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 
@@ -9,7 +8,6 @@ namespace JobsJobsJobs.Server.Areas.Api.Controllers
     /// API endpoint for continent information
     /// </summary>
     [Route("api/[controller]")]
-    [Authorize]
     [ApiController]
     public class ContinentController : ControllerBase
     {

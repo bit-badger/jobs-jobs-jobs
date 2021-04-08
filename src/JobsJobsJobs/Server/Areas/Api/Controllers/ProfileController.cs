@@ -120,6 +120,11 @@ namespace JobsJobsJobs.Server.Areas.Api.Controllers
         public async Task<IActionResult> Search([FromQuery] ProfileSearch search) =>
             Ok(await _db.SearchProfiles(search));
 
+        [HttpGet("public-search")]
+        [AllowAnonymous]
+        public async Task<IActionResult> SearchPublic([FromQuery] PublicSearch search) =>
+            Ok(await _db.SearchPublicProfiles(search));
+
         [HttpPatch("employment-found")]
         public async Task<IActionResult> EmploymentFound()
         {

@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace JobsJobsJobs.Client.Pages.Profiles
 {
-    public partial class Search : ComponentBase
+    public partial class Seeking : ComponentBase
     {
         /// <summary>
         /// Whether a search has been performed
@@ -24,7 +24,7 @@ namespace JobsJobsJobs.Client.Pages.Profiles
         /// <summary>
         /// The search criteria
         /// </summary>
-        private ProfileSearch Criteria { get; set; } = new ProfileSearch();
+        private PublicSearch Criteria { get; set; } = new PublicSearch();
 
         /// <summary>
         /// Error messages encountered while searching for profiles
@@ -56,8 +56,8 @@ namespace JobsJobsJobs.Client.Pages.Profiles
                     if (query.TryGetValue(part, out var partValue)) func(partValue);
                 }
                 setPart(nameof(Criteria.ContinentId), x => Criteria.ContinentId = x);
+                setPart(nameof(Criteria.Region), x => Criteria.Region = x);
                 setPart(nameof(Criteria.Skill), x => Criteria.Skill = x);
-                setPart(nameof(Criteria.BioExperience), x => Criteria.BioExperience = x);
                 setPart(nameof(Criteria.RemoteWork), x => Criteria.RemoteWork = x);
 
                 await RetrieveProfiles();
@@ -99,11 +99,6 @@ namespace JobsJobsJobs.Client.Pages.Profiles
             Searching = false;
         }
 
-        /// <summary>
-        /// Return a CSS class if the user is actively seeking work
-        /// </summary>
-        /// <param name="profile">The result in question</param>
-        /// <returns>A string with the appropriate CSS class, if actively seeking work</returns>
         private static string? IsSeeking(ProfileSearchResult profile) =>
             profile.SeekingEmployment ? "font-weight-bold" : null;
 
@@ -123,14 +118,14 @@ namespace JobsJobsJobs.Client.Pages.Profiles
             var dict = new Dictionary<string, string?>();
             if (Criteria.IsEmptySearch) return dict;
 
-            void part(string name, Func<ProfileSearch, string?> func)
+            void part(string name, Func<PublicSearch, string?> func)
             {
                 if (!string.IsNullOrEmpty(func(Criteria))) dict.Add(name, func(Criteria));
             }
 
             part(nameof(Criteria.ContinentId), it => it.ContinentId);
+            part(nameof(Criteria.Region), it => it.Region);
             part(nameof(Criteria.Skill), it => it.Skill);
-            part(nameof(Criteria.BioExperience), it => it.BioExperience);
             part(nameof(Criteria.RemoteWork), it => it.RemoteWork);
 
             return dict;

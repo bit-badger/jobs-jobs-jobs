@@ -111,7 +111,7 @@ namespace JobsJobsJobs.Server.Data
         /// <summary>
         /// Search profiles by the given criteria
         /// </summary>
-        //  TODO: A criteria parameter!
+        /// <param name="search">The search parameters</param>
         /// <returns>The information for profiles matching the criteria</returns>
         public static async Task<IEnumerable<ProfileSearchResult>> SearchProfiles(this JobsDbContext db,
             ProfileSearch search)
@@ -160,7 +160,56 @@ namespace JobsJobsJobs.Server.Data
                 x.Profile.SeekingEmployment, x.Profile.RemoteWork, x.Profile.FullTime, x.Profile.LastUpdatedOn))
                 .ToListAsync().ConfigureAwait(false);
         }
-        
+
+        /// <summary>
+        /// Search public profiles by the given criteria
+        /// </summary>
+        /// <param name="search">The search parameters</param>
+        /// <returns>The information for profiles matching the criteria</returns>
+        public static async Task<IEnumerable<ProfileSearchResult>> SearchPublicProfiles(this JobsDbContext db,
+            PublicSearch search)
+        {
+            var query = db.Profiles
+                .Join(db.Citizens, p => p.Id, c => c.Id, (p, c) => new { Profile = p, Citizen = c })
+                .Where(it => it.Profile.IsPublic);
+
+            var useIds = false;
+            var citizenIds = new List<CitizenId>();
+
+            if (!string.IsNullOrEmpty(search.ContinentId))
+            {
+                query = query.Where(it => it.Profile.ContinentId == ContinentId.Parse(search.ContinentId));
+            }
+
+            if (!string.IsNullOrEmpty(search.Region))
+            {
+                query = query.Where(it => it.Profile.Region.ToLower().Contains(search.Region.ToLower()));
+            }
+
+            if (!string.IsNullOrEmpty(search.RemoteWork))
+            {
+                query = query.Where(it => it.Profile.RemoteWork == (search.RemoteWork == "yes"));
+            }
+
+            if (!string.IsNullOrEmpty(search.Skill))
+            {
+                useIds = true;
+                citizenIds.AddRange(await db.Skills
+                    .Where(s => s.Description.ToLower().Contains(search.Skill.ToLower()))
+                    .Select(s => s.CitizenId)
+                    .ToListAsync().ConfigureAwait(false));
+            }
+
+            if (useIds)
+            {
+                query = query.Where(it => citizenIds.Contains(it.Citizen.Id));
+            }
+
+            return await query.Select(x => new ProfileSearchResult(x.Citizen.Id, x.Citizen.CitizenName,
+                x.Profile.SeekingEmployment, x.Profile.RemoteWork, x.Profile.FullTime, x.Profile.LastUpdatedOn))
+                .ToListAsync().ConfigureAwait(false);
+        }
+
         /// <summary>
         /// Delete skills and profile for the given citizen
         /// </summary>
