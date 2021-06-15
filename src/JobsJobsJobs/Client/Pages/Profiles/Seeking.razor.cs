@@ -39,7 +39,7 @@ namespace JobsJobsJobs.Client.Pages.Profiles
         /// <summary>
         /// The search results
         /// </summary>
-        private IEnumerable<ProfileSearchResult> SearchResults { get; set; } = Enumerable.Empty<ProfileSearchResult>();
+        private IEnumerable<PublicSearchResult> SearchResults { get; set; } = Enumerable.Empty<PublicSearchResult>();
 
         protected override async Task OnInitializedAsync()
         {
@@ -72,7 +72,7 @@ namespace JobsJobsJobs.Client.Pages.Profiles
         {
             var query = SearchQuery();
             query.Add("Searched", "True");
-            nav.NavigateTo(QueryHelpers.AddQueryString("/profile/search", query));
+            nav.NavigateTo(QueryHelpers.AddQueryString("/profile/seeking", query));
             await RetrieveProfiles();
         }
 
@@ -83,8 +83,8 @@ namespace JobsJobsJobs.Client.Pages.Profiles
         {
             Searching = true;
 
-            var searchResult = await ServerApi.RetrieveMany<ProfileSearchResult>(http,
-                QueryHelpers.AddQueryString("profile/search", SearchQuery()));
+            var searchResult = await ServerApi.RetrieveMany<PublicSearchResult>(http,
+                QueryHelpers.AddQueryString("profile/public-search", SearchQuery()));
 
             if (searchResult.IsOk)
             {

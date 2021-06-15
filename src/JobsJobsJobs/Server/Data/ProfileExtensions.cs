@@ -18,23 +18,12 @@ namespace JobsJobsJobs.Server.Data
         /// </summary>
         /// <param name="citizenId">The ID of the citizen whose profile should be retrieved</param>
         /// <returns>The profile, or null if it does not exist</returns>
-        public static async Task<Profile?> FindProfileByCitizen(this JobsDbContext db, CitizenId citizenId)
-        {
-            var profile = await db.Profiles.AsNoTracking()
+        public static async Task<Profile?> FindProfileByCitizen(this JobsDbContext db, CitizenId citizenId) =>
+            await db.Profiles.AsNoTracking()
+                .Include(p => p.Continent)
+                .Include(p => p.Skills)
                 .SingleOrDefaultAsync(p => p.Id == citizenId)
                 .ConfigureAwait(false);
-
-            if (profile != null)
-            {
-                return profile with
-                {
-                    Continent = await db.FindContinentById(profile.ContinentId).ConfigureAwait(false),
-                    Skills = (await db.FindSkillsByCitizen(citizenId).ConfigureAwait(false)).ToArray()
-                };
-            }
-
-            return null;
-        }
 
         /// <summary>
         /// Save a profile
@@ -51,16 +40,6 @@ namespace JobsJobsJobs.Server.Data
                 db.Entry(profile).State = EntityState.Modified;
             }
         }
-
-        /// <summary>
-        /// Retrieve all skills for the given citizen
-        /// </summary>
-        /// <param name="citizenId">The ID of the citizen whose skills should be retrieved</param>
-        /// <returns>The skills defined for this citizen</returns>
-        public static async Task<IEnumerable<Skill>> FindSkillsByCitizen(this JobsDbContext db, CitizenId citizenId) =>
-            await db.Skills.AsNoTracking()
-                .Where(s => s.CitizenId == citizenId)
-                .ToListAsync().ConfigureAwait(false);
 
         /// <summary>
         /// Save a skill
@@ -166,29 +145,30 @@ namespace JobsJobsJobs.Server.Data
         /// </summary>
         /// <param name="search">The search parameters</param>
         /// <returns>The information for profiles matching the criteria</returns>
-        public static async Task<IEnumerable<ProfileSearchResult>> SearchPublicProfiles(this JobsDbContext db,
+        public static async Task<IEnumerable<PublicSearchResult>> SearchPublicProfiles(this JobsDbContext db,
             PublicSearch search)
         {
             var query = db.Profiles
-                .Join(db.Citizens, p => p.Id, c => c.Id, (p, c) => new { Profile = p, Citizen = c })
-                .Where(it => it.Profile.IsPublic);
+                .Include(it => it.Continent)
+                .Include(it => it.Skills)
+                .Where(it => it.IsPublic);
 
             var useIds = false;
             var citizenIds = new List<CitizenId>();
 
             if (!string.IsNullOrEmpty(search.ContinentId))
             {
-                query = query.Where(it => it.Profile.ContinentId == ContinentId.Parse(search.ContinentId));
+                query = query.Where(it => it.ContinentId == ContinentId.Parse(search.ContinentId));
             }
 
             if (!string.IsNullOrEmpty(search.Region))
             {
-                query = query.Where(it => it.Profile.Region.ToLower().Contains(search.Region.ToLower()));
+                query = query.Where(it => it.Region.ToLower().Contains(search.Region.ToLower()));
             }
 
             if (!string.IsNullOrEmpty(search.RemoteWork))
             {
-                query = query.Where(it => it.Profile.RemoteWork == (search.RemoteWork == "yes"));
+                query = query.Where(it => it.RemoteWork == (search.RemoteWork == "yes"));
             }
 
             if (!string.IsNullOrEmpty(search.Skill))
@@ -202,11 +182,11 @@ namespace JobsJobsJobs.Server.Data
 
             if (useIds)
             {
-                query = query.Where(it => citizenIds.Contains(it.Citizen.Id));
+                query = query.Where(it => citizenIds.Contains(it.Id));
             }
 
-            return await query.Select(x => new ProfileSearchResult(x.Citizen.Id, x.Citizen.CitizenName,
-                x.Profile.SeekingEmployment, x.Profile.RemoteWork, x.Profile.FullTime, x.Profile.LastUpdatedOn))
+            return await query.Select(x => new PublicSearchResult(x.Continent!.Name, x.Region, x.RemoteWork,
+                x.Skills.Select(sk => $"{sk.Description} ({sk.Notes})")))
                 .ToListAsync().ConfigureAwait(false);
         }
 

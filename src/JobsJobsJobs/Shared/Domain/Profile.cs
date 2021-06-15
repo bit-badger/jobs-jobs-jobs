@@ -1,5 +1,5 @@
 ﻿using NodaTime;
-using System;
+using System.Collections.Generic;
 
 namespace JobsJobsJobs.Shared
 {
@@ -26,6 +26,6 @@ namespace JobsJobsJobs.Shared
         /// <summary>
         /// Convenience property for skills associated with a profile
         /// </summary>
-        public Skill[] Skills { get; set; } = Array.Empty<Skill>();
+        public ICollection<Skill> Skills { get; set; } = new List<Skill>();
     }
 }

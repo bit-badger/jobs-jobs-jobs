@@ -23,10 +23,13 @@
     <br>
     @if (SearchResults.Any())
     {
+      <p>
+        These profiles match your search criteria. To learn more about these people, join the merry band of human
+        resources in the <a href="https://noagendashow.net" target="_blank">No Agenda</a> tribe!
+      </p>
       <table class="table table-sm table-hover">
         <thead>
           <tr>
-            <th scope="col">Profile</th>
             <th scope="col">Continent</th>
             <th scope="col" class="text-center">Region</th>
             <th scope="col" class="text-center">Remote?</th>
@@ -37,12 +40,15 @@
           @foreach (var profile in SearchResults)
           {
             <tr>
-              <td><a href="/profile/bio/@profile.CitizenId">View</a></td>
-              <td class=@IsSeeking(profile)>@profile.DisplayName</td>
-              <td class="text-center">@YesOrNo(profile.SeekingEmployment)</td>
+              <td>@profile.Continent</td>
+              <td>@profile.Region</td>
               <td class="text-center">@YesOrNo(profile.RemoteWork)</td>
-              <td class="text-center">@YesOrNo(profile.FullTime)</td>
-              <td><FullDate TheDate=@profile.LastUpdated /></td>
+              <td>
+                @foreach (var skill in profile.Skills)
+                {
+                  @skill.Replace(" ()", "")<br>
+                }
+              </td>
             </tr>
           }
         </tbody>

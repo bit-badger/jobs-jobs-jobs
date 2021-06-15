@@ -11,7 +11,7 @@
   {
     <p>
       Your employment profile was last updated <FullDateTime TheDate=@Profile.LastUpdatedOn />. Your profile currently
-      lists @Profile.Skills.Length skill@(Profile.Skills.Length != 1 ? "s" : "").
+      lists @Profile.Skills.Count skill@(Profile.Skills.Count != 1 ? "s" : "").
     </p>
     <p><a href="/profile/view/@state.User.Id">View Your Employment Profile</a></p>
     @if (Profile.SeekingEmployment)
@@ -41,7 +41,6 @@
 </Loading>
 <hr>
 <p>
-  To see what is currently done, and how this application works, check out &ldquo;How It Works&rdquo; in the sidebar.
-  The application now has 4 of 5 phases complete towards version 1.0; the documentation was last updated January
-  31<sup>st</sup>, 2021.
+  To see how this application works, check out &ldquo;How It Works&rdquo; in the sidebar (last updated June
+  14<sup>th</sup>, 2021).
 </p>

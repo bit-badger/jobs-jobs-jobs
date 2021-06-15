@@ -97,10 +97,6 @@ namespace JobsJobsJobs.Server.Areas.Api.Controllers
             return Ok();
         }
 
-        [HttpGet("skills")]
-        public async Task<IActionResult> GetSkills() =>
-            Ok(await _db.FindSkillsByCitizen(CurrentCitizenId));
-
         [HttpGet("count")]
         public async Task<IActionResult> GetProfileCount() =>
             Ok(new Count(await _db.CountProfiles()));

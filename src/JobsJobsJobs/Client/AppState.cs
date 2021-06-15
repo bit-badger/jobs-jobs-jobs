@@ -22,7 +22,7 @@ namespace JobsJobsJobs.Client
         /// <summary>
         /// The application version, as a nice display string
         /// </summary>
-        public static Lazy<string> Version => new Lazy<string>(() =>
+        public static Lazy<string> Version => new(() =>
         {
             var version = Assembly.GetExecutingAssembly().GetName().Version!;
             var display = $"v{version.Major}.{version.Minor}";

@@ -83,8 +83,12 @@ namespace JobsJobsJobs.Server.Data
                 m.Property(e => e.LastUpdatedOn).HasColumnName("last_updated_on").IsRequired();
                 m.Property(e => e.Experience).HasColumnName("experience")
                     .HasConversion(Converters.OptionalMarkdownStringConverter);
-                m.Ignore(e => e.Continent);
-                m.Ignore(e => e.Skills);
+                m.HasOne(e => e.Continent)
+                    .WithMany()
+                    .HasForeignKey(e => e.ContinentId);
+                m.HasMany(e => e.Skills)
+                    .WithOne()
+                    .HasForeignKey(e => e.CitizenId);
             });
 
             modelBuilder.Entity<Skill>(m =>
