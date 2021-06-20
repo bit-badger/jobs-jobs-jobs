@@ -68,7 +68,7 @@ namespace JobsJobsJobs.Server.Data
             if (!ids.Any()) return;
 
             db.Skills.RemoveRange(await db.Skills.AsNoTracking()
-                .Where(s => !ids.Contains(s.Id)).ToListAsync()
+                .Where(s => s.CitizenId == citizenId && !ids.Contains(s.Id)).ToListAsync()
                 .ConfigureAwait(false));
         }
 
