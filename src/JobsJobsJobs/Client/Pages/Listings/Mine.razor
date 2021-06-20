@@ -1,0 +1,25 @@
+﻿@page "/listings/mine"
+@inject HttpClient http
+@inject NavigationManager nav
+@inject AppState state
+
+<PageTitle Title="My Job Listings" />
+<h3>My Job Listings</h3>
+
+<ErrorList Errors=@ErrorMessages>
+  @if (Loading)
+  {
+    <p>Loading job listings&hellip;</p>
+  }
+  else
+  {
+    @if (Listings.Any())
+    {
+      <p>TODO: list them</p>
+    }
+    else
+    {
+      <p><em>No job listings found</em></p>
+    }
+  }
+</ErrorList>
