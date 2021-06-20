@@ -4,3 +4,6 @@ src/**/bin
 src/**/obj
 src/**/appsettings.*.json
 src/.vs
+
+## This stores history of every deployment
+src/JobsJobsJobs/Server/Properties/PublishProfiles/FolderProfile.pubxml.user
