@@ -21,6 +21,12 @@ namespace JobsJobsJobs.Server.Data
             new(v => v.ToString(), v => ContinentId.Parse(v));
 
         /// <summary>
+        /// Job Listing ID converter
+        /// </summary>
+        public static readonly ValueConverter<ListingId, string> ListingIdConverter =
+            new(v => v.ToString(), v => ListingId.Parse(v));
+
+        /// <summary>
         /// Markdown converter
         /// </summary>
         public static readonly ValueConverter<MarkdownString, string> MarkdownStringConverter =

@@ -53,7 +53,8 @@ namespace JobsJobsJobs.Server.Areas.Api.Controllers
             if (form.Id == "new")
             {
                 var story = new Success(await SuccessId.Create(), CurrentCitizenId, _clock.GetCurrentInstant(),
-                    form.FromHere, string.IsNullOrWhiteSpace(form.Story) ? null : new MarkdownString(form.Story));
+                    form.FromHere, "profile",
+                    string.IsNullOrWhiteSpace(form.Story) ? null : new MarkdownString(form.Story));
                 await _db.AddAsync(story);
             }
             else

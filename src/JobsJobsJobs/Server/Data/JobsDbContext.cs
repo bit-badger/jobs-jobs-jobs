@@ -19,6 +19,11 @@ namespace JobsJobsJobs.Server.Data
         public DbSet<Continent> Continents { get; set; } = default!;
 
         /// <summary>
+        /// Job listings
+        /// </summary>
+        public DbSet<Listing> Listings { get; set; } = default!;
+
+        /// <summary>
         /// Employment profiles
         /// </summary>
         public DbSet<Profile> Profiles { get; set; } = default!;
@@ -66,6 +71,33 @@ namespace JobsJobsJobs.Server.Data
                 m.Property(e => e.Name).HasColumnName("name").IsRequired().HasMaxLength(255);
             });
 
+            modelBuilder.Entity<Listing>(m =>
+            {
+                m.ToTable("listing", "jjj").HasKey(e => e.Id);
+                m.Property(e => e.Id).HasColumnName("id").IsRequired().HasMaxLength(12)
+                    .HasConversion(Converters.ListingIdConverter);
+                m.Property(e => e.CitizenId).HasColumnName("citizen_id").IsRequired().HasMaxLength(12)
+                    .HasConversion(Converters.CitizenIdConverter);
+                m.Property(e => e.CreatedOn).HasColumnName("created_on").IsRequired();
+                m.Property(e => e.Title).HasColumnName("title").IsRequired().HasMaxLength(100);
+                m.Property(e => e.ContinentId).HasColumnName("continent_id").IsRequired().HasMaxLength(12)
+                    .HasConversion(Converters.ContinentIdConverter);
+                m.Property(e => e.Region).HasColumnName("region").IsRequired().HasMaxLength(255);
+                m.Property(e => e.RemoteWork).HasColumnName("remote_work").IsRequired();
+                m.Property(e => e.IsExpired).HasColumnName("expired").IsRequired();
+                m.Property(e => e.UpdatedOn).HasColumnName("updated_on").IsRequired();
+                m.Property(e => e.Text).HasColumnName("listing").IsRequired()
+                    .HasConversion(Converters.MarkdownStringConverter);
+                m.Property(e => e.NeededBy).HasColumnName("needed_by");
+                m.Property(e => e.WasFilledHere).HasColumnName("filled_here");
+                m.HasOne(e => e.Citizen)
+                    .WithMany()
+                    .HasForeignKey(e => e.CitizenId);
+                m.HasOne(e => e.Continent)
+                    .WithMany()
+                    .HasForeignKey(e => e.ContinentId);
+            });
+
             modelBuilder.Entity<Profile>(m =>
             {
                 m.ToTable("profile", "jjj").HasKey(e => e.Id);
@@ -111,6 +143,7 @@ namespace JobsJobsJobs.Server.Data
                     .HasConversion(Converters.CitizenIdConverter);
                 m.Property(e => e.RecordedOn).HasColumnName("recorded_on").IsRequired();
                 m.Property(e => e.FromHere).HasColumnName("from_here").IsRequired();
+                m.Property(e => e.Source).HasColumnName("source").IsRequired().HasMaxLength(7);
                 m.Property(e => e.Story).HasColumnName("story")
                     .HasConversion(Converters.OptionalMarkdownStringConverter);
             });
