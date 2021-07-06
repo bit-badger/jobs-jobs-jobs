@@ -50,6 +50,9 @@
     color: white;
 }
 
+.nav-item.separator {
+  border-bottom: solid 1px white;
+}
 @media (min-width: 641px) {
     .navbar-toggler {
         display: none;

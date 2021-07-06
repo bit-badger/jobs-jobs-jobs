@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NodaTime;
+using System;
 
 namespace JobsJobsJobs.Shared
 {
@@ -8,15 +9,15 @@ namespace JobsJobsJobs.Shared
     public record Listing(
         ListingId Id,
         CitizenId CitizenId,
-        DateTime CreatedOn,
+        Instant CreatedOn,
         string Title,
         ContinentId ContinentId,
         string Region,
         bool RemoteWork,
         bool IsExpired,
-        DateTime UpdatedOn,
+        Instant UpdatedOn,
         MarkdownString Text,
-        DateTime? NeededBy,
+        LocalDate? NeededBy,
         bool? WasFilledHere)
     {
         /// <summary>

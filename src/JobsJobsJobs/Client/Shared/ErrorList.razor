@@ -15,7 +15,7 @@ else
 
 @code {
     [Parameter]
-    public IList<string> Errors { get; set; } = default!;
+    public ICollection<string> Errors { get; set; } = default!;
 
     [Parameter]
     public RenderFragment ChildContent { get; set; } = default!;
