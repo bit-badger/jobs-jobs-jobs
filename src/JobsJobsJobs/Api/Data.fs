@@ -1,14 +1,11 @@
 /// Data access functions for Jobs, Jobs, Jobs
 module JobsJobsJobs.Api.Data
 
-open JobsJobsJobs.Domain
+open FSharp.Control.Tasks
 open JobsJobsJobs.Domain.Types
 open Polly
 open RethinkDb.Driver
 open RethinkDb.Driver.Net
-open Microsoft.Extensions.Configuration
-open FSharp.Control.Tasks
-open Microsoft.Extensions.Logging
 
 /// Shorthand for the RethinkDB R variable (how every command starts)
 let private r = RethinkDB.R
@@ -20,6 +17,7 @@ let awaitIgnore x = x |> Async.AwaitTask |> Async.RunSynchronously |> ignore
 /// JSON converters used with RethinkDB persistence
 module Converters =
   
+  open JobsJobsJobs.Domain
   open Microsoft.FSharpLu.Json
   open Newtonsoft.Json
   open System
@@ -106,8 +104,11 @@ module Table =
 [<RequireQualifiedAccess>]
 module Startup =
   
+  open Microsoft.Extensions.Configuration
+  open Microsoft.Extensions.Logging
+  
   /// Create a RethinkDB connection
-  let createConnection (cfg : IConfigurationSection) (log : ILogger)=
+  let createConnection (cfg : IConfigurationSection) (log : ILogger) =
     
     // Add all required JSON converters
     Converters.all ()
@@ -166,4 +167,107 @@ module Startup =
     do! ensureIndexes Table.Listing [ "citizenId"; "continentId" ]
     do! ensureIndexes Table.Profile [ "continentId" ]
     do! ensureIndexes Table.Success [ "citizenId" ]
+    }
+
+
+/// Determine if a record type (not nullable) is null
+let toOption x = match x |> box |> isNull with true -> None | false -> Some x
+
+/// A retry policy where we will reconnect to RethinkDB if it has gone away
+let withReconn (conn : IConnection) = 
+  Policy
+    .Handle<ReqlDriverError>()
+    .RetryAsync(System.Action<exn, int>(fun ex _ ->
+        printf "Encountered RethinkDB exception: %s" ex.Message
+        match ex.Message.Contains "socket" with
+        | true ->
+            printf "Reconnecting to RethinkDB"
+            (conn :?> Connection).Reconnect()
+        | false -> ()))
+
+
+/// Citizen data access functions
+[<RequireQualifiedAccess>]
+module Citizen =
+  
+  /// Find a citizen by their ID
+  let findById (citizenId : CitizenId) conn = task {
+    let! citizen =
+      withReconn(conn).ExecuteAsync(fun () ->
+          r.Table(Table.Citizen)
+            .Get(citizenId)
+            .RunResultAsync<Citizen> conn)
+    return toOption citizen
+    }
+
+  /// Find a citizen by their No Agenda Social username
+  let findByNaUser (naUser : string) conn = task {
+    let! citizen =
+      withReconn(conn).ExecuteAsync(fun () ->
+          r.Table(Table.Citizen)
+            .GetAll(naUser).OptArg("index", "naUser").Nth(0)
+            .RunResultAsync<Citizen> conn)
+    return toOption citizen
+    }
+  
+  /// Add a citizen
+  let add (citizen : Citizen) conn = task {
+    let! _ =
+      withReconn(conn).ExecuteAsync(fun () ->
+          r.Table(Table.Citizen)
+            .Insert(citizen)
+            .RunWriteAsync conn)
+    ()
+    }
+
+
+/// Profile data access functions
+[<RequireQualifiedAccess>]
+module Profile =
+
+  /// Find a profile by citizen ID
+  let findById (citizenId : CitizenId) conn = task {
+    let! profile =
+      withReconn(conn).ExecuteAsync(fun () ->
+          r.Table(Table.Profile)
+            .Get(citizenId)
+            .RunResultAsync<Profile> conn)
+    return toOption profile
+    }
+  
+  /// Insert or update a profile
+  let save (profile : Profile) conn = task {
+    let! _ =
+      withReconn(conn).ExecuteAsync(fun () ->
+          r.Table(Table.Profile)
+            .Get(profile.id)
+            .Replace(profile)
+            .RunWriteAsync conn)
+    ()
+    }
+
+
+/// Success story data access functions
+[<RequireQualifiedAccess>]
+module Success =
+
+  /// Find a success report by its ID
+  let findById (successId : SuccessId) conn = task {
+    let! success =
+      withReconn(conn).ExecuteAsync(fun () ->
+          r.Table(Table.Success)
+            .Get(successId)
+            .RunResultAsync<Success> conn)
+    return toOption success
+    }
+
+  /// Insert or update a success story
+  let save (success : Success) conn = task {
+    let! _ =
+      withReconn(conn).ExecuteAsync(fun () ->
+          r.Table(Table.Success)
+            .Get(success.id)
+            .Replace(success)
+            .RunWriteAsync conn)
+    ()
     }

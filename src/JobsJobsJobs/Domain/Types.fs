@@ -10,6 +10,7 @@ open System
 type CitizenId = CitizenId of Guid
 
 /// A user of Jobs, Jobs, Jobs
+[<CLIMutable; NoComparison; NoEquality>]
 type Citizen = {
   /// The ID of the user
   id          : CitizenId
@@ -32,6 +33,7 @@ type Citizen = {
 type ContinentId = ContinentId of Guid
 
 /// A continent
+[<CLIMutable; NoComparison; NoEquality>]
 type Continent = {
   /// The ID of the continent
   id   : ContinentId
@@ -48,6 +50,7 @@ type MarkdownString = Text of string
 type ListingId = ListingId of Guid
 
 /// A job listing
+[<CLIMutable; NoComparison; NoEquality>]
 type Listing = {
   /// The ID of the job listing
   id            : ListingId
@@ -91,6 +94,7 @@ type Skill = {
 
 
 /// A job seeker profile
+[<CLIMutable; NoComparison; NoEquality>]
 type Profile = {
   /// The ID of the citizen to whom this profile belongs
   id                : CitizenId
@@ -120,6 +124,7 @@ type Profile = {
 type SuccessId = SuccessId of Guid
 
 /// A record of success finding employment
+[<CLIMutable; NoComparison; NoEquality>]
 type Success = {
   /// The ID of the success report
   id         : SuccessId

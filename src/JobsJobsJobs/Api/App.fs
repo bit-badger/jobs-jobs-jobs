@@ -26,13 +26,12 @@ open Microsoft.Extensions.Logging
 
 /// Configure dependency injection
 let configureServices (svc : IServiceCollection) =
-  svc.AddGiraffe()
-    .AddSingleton<IClock>(SystemClock.Instance)
-    .AddLogging ()
-  |> ignore
+  svc.AddGiraffe ()                             |> ignore
+  svc.AddSingleton<IClock> SystemClock.Instance |> ignore
+  svc.AddLogging ()                             |> ignore
   let svcs = svc.BuildServiceProvider()
-  let cfg = svcs.GetRequiredService<IConfiguration>().GetSection "Rethink"
-  let log = svcs.GetRequiredService<ILoggerFactory>().CreateLogger "Data.Startup"
+  let cfg  = svcs.GetRequiredService<IConfiguration>().GetSection "Rethink"
+  let log  = svcs.GetRequiredService<ILoggerFactory>().CreateLogger "Data.Startup"
   let conn = Data.Startup.createConnection cfg log
   svc.AddSingleton conn |> ignore
   Data.Startup.establishEnvironment cfg log conn |> Data.awaitIgnore
