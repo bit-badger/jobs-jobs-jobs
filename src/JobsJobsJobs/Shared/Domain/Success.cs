@@ -10,6 +10,6 @@ namespace JobsJobsJobs.Shared
         CitizenId CitizenId,
         Instant RecordedOn,
         bool FromHere,
-        string Source,
+        // string Source,
         MarkdownString? Story);
 }

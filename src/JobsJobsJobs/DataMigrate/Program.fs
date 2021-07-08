@@ -33,17 +33,21 @@ let createHostBuilder argv =
             Startup.establishEnvironment cfg log conn |> awaitIgnore
         ))
     .Build()
-  
+
 [<EntryPoint>]
 let main argv =
   let host = createHostBuilder argv
   let r    = RethinkDb.Driver.RethinkDB.R
   
+  printfn "0) Connecting to databases..."
+
   use db = host.Services.GetRequiredService<JobsDbContext> ()
   let conn = host.Services.GetRequiredService<IConnection> ()
 
   task {
-    // Migrate continents
+    
+    printfn "1) Migrating continents..."
+    
     let mutable continentXref = Map.empty<string, Types.ContinentId>
     let! continents = db.Continents.AsNoTracking().ToListAsync ()
     let reContinents =
@@ -59,7 +63,8 @@ let main argv =
       |> List.ofSeq
     let! _ = r.Table(Table.Continent).Insert(reContinents).RunWriteAsync conn
 
-    // Migrate citizens
+    printfn "2) Migrating citizens..."
+
     let mutable citizenXref = Map.empty<string, Types.CitizenId>
     let! citizens = db.Citizens.AsNoTracking().ToListAsync ()
     let reCitizens =
@@ -79,7 +84,8 @@ let main argv =
           it)
     let! _ = r.Table(Table.Citizen).Insert(reCitizens).RunWriteAsync conn
 
-    // Migrate profile information (includes skills)
+    printfn "3) Migrating profiles and skills..."
+
     let! profiles = db.Profiles.AsNoTracking().ToListAsync ()
     let reProfiles =
       profiles
@@ -103,15 +109,16 @@ let main argv =
             region            = p.Region
             remoteWork        = p.RemoteWork
             fullTime          = p.FullTime
-            biography         = Types.Text (string p.Biography)
+            biography         = Types.Text p.Biography.Text
             lastUpdatedOn     = p.LastUpdatedOn
-            experience        = match p.Experience with null -> None | x -> (string >> Types.Text >> Some) x
+            experience        = match p.Experience with null -> None | x -> (Types.Text >> Some) x.Text
             skills            = reSkills
             }
           it)
     let! _ = r.Table(Table.Profile).Insert(reProfiles).RunWriteAsync conn
 
-    // Migrate success stories
+    printfn "4) Migrating success stories..."
+
     let! successes = db.Successes.AsNoTracking().ToListAsync ()
     let reSuccesses =
       successes
@@ -122,12 +129,14 @@ let main argv =
               recordedOn = s.RecordedOn
               fromHere   = s.FromHere
               source     = "profile"
-              story      = match s.Story with null -> None | x -> (string >> Types.Text >> Some) x
+              story      = match s.Story with null -> None | x -> (Types.Text >> Some) x.Text
             }
           it)
     let! _ = r.Table(Table.Success).Insert(reSuccesses).RunWriteAsync conn
     ()
     }
   |> awaitIgnore
+
+  printfn "Migration complete"
 
   0

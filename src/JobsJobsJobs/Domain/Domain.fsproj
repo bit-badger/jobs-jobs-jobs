@@ -9,6 +9,7 @@
   <ItemGroup>
     <Compile Include="Types.fs" />
     <Compile Include="Modules.fs" />
+    <Compile Include="SharedTypes.fs" />
   </ItemGroup>
 
   <ItemGroup>

@@ -143,7 +143,7 @@ namespace JobsJobsJobs.Server.Data
                     .HasConversion(Converters.CitizenIdConverter);
                 m.Property(e => e.RecordedOn).HasColumnName("recorded_on").IsRequired();
                 m.Property(e => e.FromHere).HasColumnName("from_here").IsRequired();
-                m.Property(e => e.Source).HasColumnName("source").IsRequired().HasMaxLength(7);
+                // m.Property(e => e.Source).HasColumnName("source").IsRequired().HasMaxLength(7);
                 m.Property(e => e.Story).HasColumnName("story")
                     .HasConversion(Converters.OptionalMarkdownStringConverter);
             });

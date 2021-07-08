@@ -8,6 +8,8 @@
 
   <ItemGroup>
     <Compile Include="Data.fs" />
+    <Compile Include="Auth.fs" />
+    <Compile Include="Handlers.fs" />
     <Compile Include="App.fs" />
   </ItemGroup>
   
@@ -20,6 +22,7 @@
     <PackageReference Include="Microsoft.FSharpLu.Json" Version="0.11.7" />
     <PackageReference Include="Polly" Version="7.2.2" />
     <PackageReference Include="RethinkDb.Driver" Version="2.3.150" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.11.1" />
   </ItemGroup>
 
 </Project>

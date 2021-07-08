@@ -220,6 +220,17 @@ module Citizen =
     ()
     }
 
+  /// Update the display name and last seen on date for a citizen
+  let logOnUpdate (citizen : Citizen) conn = task {
+    let! _ =
+      withReconn(conn).ExecuteAsync(fun () ->
+          r.Table(Table.Citizen)
+            .Get(citizen.id)
+            .Update(r.HashMap(nameof citizen.displayName, citizen.displayName)
+                        .With(nameof citizen.lastSeenOn, citizen.lastSeenOn))
+            .RunWriteAsync conn)
+    ()
+  }
 
 /// Profile data access functions
 [<RequireQualifiedAccess>]
