@@ -211,30 +211,80 @@ module Citizen =
     }
   
   /// Add a citizen
-  let add (citizen : Citizen) conn = task {
-    let! _ =
-      withReconn(conn).ExecuteAsync(fun () ->
+  let add (citizen : Citizen) conn =
+    withReconn(conn).ExecuteAsync(fun () -> task {
+        let! _ =
           r.Table(Table.Citizen)
             .Insert(citizen)
-            .RunWriteAsync conn)
-    ()
-    }
+            .RunWriteAsync conn
+        ()
+      })
 
   /// Update the display name and last seen on date for a citizen
-  let logOnUpdate (citizen : Citizen) conn = task {
-    let! _ =
-      withReconn(conn).ExecuteAsync(fun () ->
+  let logOnUpdate (citizen : Citizen) conn =
+    withReconn(conn).ExecuteAsync(fun () -> task {
+        let! _ =
           r.Table(Table.Citizen)
             .Get(citizen.id)
             .Update(r.HashMap(nameof citizen.displayName, citizen.displayName)
                         .With(nameof citizen.lastSeenOn, citizen.lastSeenOn))
-            .RunWriteAsync conn)
-    ()
-  }
+            .RunWriteAsync conn
+        ()
+      })
+  
+  /// Delete a citizen
+  let delete (citizenId : CitizenId) conn =
+    withReconn(conn).ExecuteAsync(fun () -> task {
+        let! _ =
+          r.Table(Table.Profile)
+            .Get(citizenId)
+            .Delete()
+            .RunWriteAsync conn
+        let! _ =
+          r.Table(Table.Success)
+            .GetAll(citizenId).OptArg("index", "citizenId")
+            .Delete()
+            .RunWriteAsync conn
+        let! _ =
+          r.Table(Table.Citizen)
+            .Get(citizenId)
+            .Delete()
+            .RunWriteAsync conn
+        ()
+      })
+  
+  /// Update a citizen's real name
+  let realNameUpdate (citizenId : CitizenId) (realName : string option) conn =
+    withReconn(conn).ExecuteAsync(fun () -> task {
+        let! _ =
+          r.Table(Table.Citizen)
+            .Get(citizenId)
+            .Update(r.HashMap(nameof realName, realName))
+            .RunWriteAsync conn
+        ()
+      })
+
+
+/// Continent data access functions
+[<RequireQualifiedAccess>]
+module Continent =
+
+  /// Get all continents
+  let all conn =
+    withReconn(conn).ExecuteAsync(fun () ->
+        r.Table(Table.Continent)
+          .RunResultAsync<Continent list> conn)
+
 
 /// Profile data access functions
 [<RequireQualifiedAccess>]
 module Profile =
+
+  let count conn =
+    withReconn(conn).ExecuteAsync(fun () ->
+        r.Table(Table.Profile)
+          .Count()
+          .RunResultAsync<int64> conn)
 
   /// Find a profile by citizen ID
   let findById (citizenId : CitizenId) conn = task {
@@ -247,15 +297,15 @@ module Profile =
     }
   
   /// Insert or update a profile
-  let save (profile : Profile) conn = task {
-    let! _ =
-      withReconn(conn).ExecuteAsync(fun () ->
+  let save (profile : Profile) conn =
+    withReconn(conn).ExecuteAsync(fun () -> task {
+        let! _ =
           r.Table(Table.Profile)
             .Get(profile.id)
             .Replace(profile)
-            .RunWriteAsync conn)
-    ()
-    }
+            .RunWriteAsync conn
+        ()
+      })
 
 
 /// Success story data access functions

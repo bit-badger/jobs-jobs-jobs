@@ -48,14 +48,6 @@ module ContinentId =
   let ofString = fromShortGuid >> ContinentId
 
 
-/// Support functions for Markdown strings
-module MarkdownString =
-  /// The Markdown conversion pipeline (enables all advanced features)
-  let private pipeline = MarkdownPipelineBuilder().UseAdvancedExtensions().Build ()
-  /// Convert this Markdown string to HTML
-  let toHtml = function (Text text) -> Markdown.ToHtml (text, pipeline)
-
-
 /// Support functions for listing IDs
 module ListingId =
   /// Create a new job listing ID
@@ -65,6 +57,31 @@ module ListingId =
   /// Parse a string into a listing ID
   let ofString = fromShortGuid >> ListingId
 
+
+/// Support functions for Markdown strings
+module MarkdownString =
+  /// The Markdown conversion pipeline (enables all advanced features)
+  let private pipeline = MarkdownPipelineBuilder().UseAdvancedExtensions().Build ()
+  /// Convert this Markdown string to HTML
+  let toHtml = function (Text text) -> Markdown.ToHtml (text, pipeline)
+
+
+/// Support functions for Profiles
+module Profile =
+  // An empty profile
+  let empty =
+    { id                = CitizenId Guid.Empty
+      seekingEmployment = false
+      isPublic          = false
+      continentId       = ContinentId Guid.Empty
+      region            = ""
+      remoteWork        = false
+      fullTime          = false
+      biography         = Text ""
+      lastUpdatedOn     = NodaTime.Instant.MinValue
+      experience        = None
+      skills            = []
+      }
 
 /// Support functions for skill IDs
 module SkillId =
