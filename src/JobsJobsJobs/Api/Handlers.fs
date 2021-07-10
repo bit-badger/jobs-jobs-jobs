@@ -59,13 +59,12 @@ module Helpers =
   /// Get the RethinkDB connection from the request context
   let conn (ctx : HttpContext) = ctx.GetService<IConnection> ()
 
-  /// Return None if the string is null, empty, or whitespace; otherwise, return Some and the trimmed string
-  let noneIfEmpty x =
-    match (defaultArg (Option.ofObj x) "").Trim () with | "" -> None | it -> Some it
+  /// `None` if a `string option` is `None`, whitespace, or empty
+  let noneIfBlank (s : string option) =
+    s |> Option.map (fun x -> match x.Trim () with "" -> None | _ -> Some x) |> Option.flatten
   
-  /// Return None if an optional string is None or empty
-  let noneIfBlank s =
-    s |> Option.map (fun x -> match x with "" -> None | _ -> Some x) |> Option.flatten
+  /// `None` if a `string` is null, empty, or whitespace; otherwise, `Some` and the trimmed string
+  let noneIfEmpty = Option.ofObj >> noneIfBlank
   
   /// Try to get the current user
   let tryUser (ctx : HttpContext) =
@@ -79,7 +78,10 @@ module Helpers =
 
   /// Get the ID of the currently logged in citizen
   //  NOTE: if no one is logged in, this will raise an exception
-  let currentCitizenId ctx = (tryUser >> Option.get >> CitizenId.ofString) ctx
+  let currentCitizenId = tryUser >> Option.get >> CitizenId.ofString
+
+  /// Return an empty OK response
+  let ok : HttpHandler = Successful.OK ""
 
 
 
@@ -143,7 +145,7 @@ module Citizen =
     authorize
     >=> fun next ctx -> task {
       do! Data.Citizen.delete (currentCitizenId ctx) (conn ctx)
-      return! Successful.OK "" next ctx
+      return! ok next ctx
       }
 
 
@@ -189,7 +191,7 @@ module Profile =
     >=> fun next ctx -> task {
       let! theCount = Data.Profile.count (conn ctx)
       return! json { count = theCount } next ctx
-    }
+      }
   
   // POST: /api/profile/save
   let save : HttpHandler =
@@ -222,6 +224,26 @@ module Profile =
                                           })
               } dbConn
       do! Data.Citizen.realNameUpdate citizenId (noneIfBlank (Some form.realName)) dbConn
-      return! Successful.OK "" next ctx
-    }
+      return! ok next ctx
+      }
+  
+  // PATCH: /api/profile/employment-found
+  let employmentFound : HttpHandler =
+    authorize
+    >=> fun next ctx -> task {
+      let dbConn = conn ctx
+      match! Data.Profile.findById (currentCitizenId ctx) dbConn with
+      | Some profile ->
+          do! Data.Profile.save { profile with seekingEmployment = false } dbConn
+          return! ok next ctx
+      | None -> return! Error.notFound next ctx
+      }
+  
+  // DELETE: /api/profile
+  let delete : HttpHandler =
+    authorize
+    >=> fun next ctx -> task {
+      do! Data.Profile.delete (currentCitizenId ctx) (conn ctx)
+      return! ok next ctx
+      }
   

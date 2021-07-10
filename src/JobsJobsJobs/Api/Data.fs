@@ -186,6 +186,49 @@ let withReconn (conn : IConnection) =
         | false -> ()))
 
 
+/// Profile data access functions
+[<RequireQualifiedAccess>]
+module Profile =
+
+  let count conn =
+    withReconn(conn).ExecuteAsync(fun () ->
+        r.Table(Table.Profile)
+          .Count()
+          .RunResultAsync<int64> conn)
+
+  /// Find a profile by citizen ID
+  let findById (citizenId : CitizenId) conn = task {
+    let! profile =
+      withReconn(conn).ExecuteAsync(fun () ->
+          r.Table(Table.Profile)
+            .Get(citizenId)
+            .RunResultAsync<Profile> conn)
+    return toOption profile
+    }
+  
+  /// Insert or update a profile
+  let save (profile : Profile) conn =
+    withReconn(conn).ExecuteAsync(fun () -> task {
+        let! _ =
+          r.Table(Table.Profile)
+            .Get(profile.id)
+            .Replace(profile)
+            .RunWriteAsync conn
+        ()
+      })
+  
+  /// Delete a citizen's profile
+  let delete (citizenId : CitizenId) conn =
+    withReconn(conn).ExecuteAsync(fun () -> task {
+        let! _ =
+          r.Table(Table.Profile)
+            .Get(citizenId)
+            .Delete()
+            .RunWriteAsync conn
+        ()
+      })
+
+
 /// Citizen data access functions
 [<RequireQualifiedAccess>]
 module Citizen =
@@ -233,13 +276,9 @@ module Citizen =
       })
   
   /// Delete a citizen
-  let delete (citizenId : CitizenId) conn =
+  let delete citizenId conn =
     withReconn(conn).ExecuteAsync(fun () -> task {
-        let! _ =
-          r.Table(Table.Profile)
-            .Get(citizenId)
-            .Delete()
-            .RunWriteAsync conn
+        do! Profile.delete citizenId conn
         let! _ =
           r.Table(Table.Success)
             .GetAll(citizenId).OptArg("index", "citizenId")
@@ -274,38 +313,6 @@ module Continent =
     withReconn(conn).ExecuteAsync(fun () ->
         r.Table(Table.Continent)
           .RunResultAsync<Continent list> conn)
-
-
-/// Profile data access functions
-[<RequireQualifiedAccess>]
-module Profile =
-
-  let count conn =
-    withReconn(conn).ExecuteAsync(fun () ->
-        r.Table(Table.Profile)
-          .Count()
-          .RunResultAsync<int64> conn)
-
-  /// Find a profile by citizen ID
-  let findById (citizenId : CitizenId) conn = task {
-    let! profile =
-      withReconn(conn).ExecuteAsync(fun () ->
-          r.Table(Table.Profile)
-            .Get(citizenId)
-            .RunResultAsync<Profile> conn)
-    return toOption profile
-    }
-  
-  /// Insert or update a profile
-  let save (profile : Profile) conn =
-    withReconn(conn).ExecuteAsync(fun () -> task {
-        let! _ =
-          r.Table(Table.Profile)
-            .Get(profile.id)
-            .Replace(profile)
-            .RunWriteAsync conn
-        ()
-      })
 
 
 /// Success story data access functions

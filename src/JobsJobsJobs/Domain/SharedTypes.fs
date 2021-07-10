@@ -78,3 +78,27 @@ module ProfileForm =
                                   notes       = s.notes
                                   })
       }
+
+
+/// The various ways profiles can be searched
+type ProfileSearch = {
+  /// Retrieve citizens from this continent
+  continentId   : string option
+  /// Text for a search within a citizen's skills
+  skill         : string option
+  /// Text for a search with a citizen's professional biography and experience fields
+  bioExperience : string option
+  /// Whether to retrieve citizens who do or do not want remote work
+  remoteWork    : string
+  }
+
+/// Support functions for profile searches
+module ProfileSearch =
+  /// Is the search empty?
+  let isEmptySearch search =
+    [ search.continentId
+      search.skill
+      search.bioExperience
+      match search.remoteWork with "" -> Some search.remoteWork | _ -> None
+      ]
+    |> List.exists Option.isSome

@@ -12,21 +12,20 @@ open Giraffe.EndpointRouting
 let webApp = [
   subRoute "/api" [
     subRoute "/citizen" [
-      GET [
+      GET_HEAD [
         routef "/log-on/%s" Handlers.Citizen.logOn
         routef "/get/%O"    Handlers.Citizen.get
         ]
       DELETE [ route "" Handlers.Citizen.delete ]
       ]
-    subRoute "/continent" [
-      GET [ route "/all" Handlers.Continent.all ]
-      ]
+    GET_HEAD [ route "/continent/all" Handlers.Continent.all ]
     subRoute "/profile" [
-      GET [
+      GET_HEAD [
         route  ""        Handlers.Profile.current
         route  "/count"  Handlers.Profile.count
         routef "/get/%O" Handlers.Profile.get
         ]
+      PATCH [ route "/employment-found" Handlers.Profile.employmentFound ]
       POST [ route "/save" Handlers.Profile.save ]
       ]
     ]
