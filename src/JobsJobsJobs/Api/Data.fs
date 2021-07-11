@@ -185,10 +185,14 @@ let withReconn (conn : IConnection) =
             (conn :?> Connection).Reconnect()
         | false -> ()))
 
+open JobsJobsJobs.Domain.SharedTypes
 
 /// Profile data access functions
 [<RequireQualifiedAccess>]
 module Profile =
+
+  open JobsJobsJobs.Domain
+  open RethinkDb.Driver.Ast
 
   let count conn =
     withReconn(conn).ExecuteAsync(fun () ->
@@ -227,6 +231,67 @@ module Profile =
             .RunWriteAsync conn
         ()
       })
+  
+  /// Search profiles (logged-on users)
+  let search (srch : ProfileSearch) conn = task {
+    let results =
+      seq {
+        match srch.continentId with
+        | Some conId ->
+            yield (fun (q : ReqlExpr) ->
+                q.Filter(r.HashMap(nameof srch.continentId, ContinentId.ofString conId)) :> ReqlExpr)
+        | None -> ()
+        match srch.remoteWork with
+        | "" -> ()
+        | _ -> yield (fun q -> q.Filter(r.HashMap(nameof srch.remoteWork, srch.remoteWork = "yes")) :> ReqlExpr)
+        match srch.skill with
+        | Some skl ->
+            yield (fun q -> q.Filter(ReqlFunction1(fun it ->
+                upcast it.G("skills.description").Downcase().Match(skl.ToLowerInvariant ()))) :> ReqlExpr)
+        | None -> ()
+        match srch.bioExperience with
+        | Some text ->
+            let txt = text.ToLowerInvariant ()
+            yield (fun q -> q.Filter(ReqlFunction1(fun it ->
+                upcast it.G("biography" ).Downcase().Match(txt)
+                   .Or(it.G("experience").Downcase().Match(txt)))) :> ReqlExpr)
+        | None -> ()
+        }
+      |> Seq.toList
+      |> List.fold (fun q f -> f q) (r.Table(Table.Profile) :> ReqlExpr)
+    // TODO: pluck fields, include display name
+    return! results.RunResultAsync<ProfileSearchResult list> conn
+    }
+
+  // Search profiles (public)
+  let publicSearch (srch : PublicSearch) conn = task {
+    let results =
+      seq {
+        match srch.continentId with
+        | Some conId ->
+            yield (fun (q : ReqlExpr) ->
+                q.Filter(r.HashMap(nameof srch.continentId, ContinentId.ofString conId)) :> ReqlExpr)
+        | None -> ()
+        match srch.region with
+        | Some reg ->
+            yield (fun q ->
+                q.Filter(ReqlFunction1(fun it ->
+                    upcast it.G("region").Downcase().Match(reg.ToLowerInvariant ()))) :> ReqlExpr)
+        | None -> ()
+        match srch.remoteWork with
+        | "" -> ()
+        | _ -> yield (fun q -> q.Filter(r.HashMap(nameof srch.remoteWork, srch.remoteWork = "yes")) :> ReqlExpr)
+        match srch.skill with
+        | Some skl ->
+            yield (fun q -> q.Filter(ReqlFunction1(fun it ->
+                upcast it.G("skills.description").Downcase().Match(skl.ToLowerInvariant ()))) :> ReqlExpr)
+        | None -> ()
+        }
+      |> Seq.toList
+      |> List.fold (fun q f -> f q) (r.Table(Table.Profile) :> ReqlExpr)
+    // TODO: pluck fields, compile skills
+    return! results.RunResultAsync<PublicSearchResult list> conn
+    }
 
 
 /// Citizen data access functions
@@ -315,6 +380,18 @@ module Continent =
           .RunResultAsync<Continent list> conn)
 
 
+/// Job listing data access functions
+[<RequireQualifiedAccess>]
+module Listing =
+
+  /// Find all job listings posted by the given citizen
+  let findByCitizen (citizenId : CitizenId) conn =
+    withReconn(conn).ExecuteAsync(fun () ->
+        r.Table(Table.Listing)
+          .GetAll(citizenId).OptArg("index", nameof citizenId)
+          .RunResultAsync<Listing list> conn)
+
+
 /// Success story data access functions
 [<RequireQualifiedAccess>]
 module Success =
@@ -339,3 +416,10 @@ module Success =
             .RunWriteAsync conn)
     ()
     }
+
+  // Retrieve all success stories  
+  let all conn =
+    // TODO: identify query and fields that will make StoryEntry meaningful
+    withReconn(conn).ExecuteAsync(fun () ->
+        r.Table(Table.Success)
+          .RunResultAsync<StoryEntry list> conn)

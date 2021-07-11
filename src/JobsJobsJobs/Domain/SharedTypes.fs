@@ -2,6 +2,7 @@
 module JobsJobsJobs.Domain.SharedTypes
 
 open JobsJobsJobs.Domain.Types
+open NodaTime
 
 // fsharplint:disable FieldNames
 
@@ -102,3 +103,84 @@ module ProfileSearch =
       match search.remoteWork with "" -> Some search.remoteWork | _ -> None
       ]
     |> List.exists Option.isSome
+
+
+/// A user matching the profile search
+type ProfileSearchResult = {
+  // The ID of the citizen
+  citizenId         : CitizenId
+  // The citizen's display name
+  displayName       : string
+  // Whether this citizen is currently seeking employment
+  seekingEmployment : bool
+  // Whether this citizen is looking for remote work
+  remoteWork        : bool
+  // Whether this citizen is looking for full-time work
+  fullTime          : bool
+  // When this profile was last updated
+  lastUpdated       : Instant
+  }
+
+
+/// The parameters for a public job search
+type PublicSearch = {
+  /// Retrieve citizens from this continent
+  continentId : string option
+  /// Retrieve citizens from this region
+  region : string option
+  /// Text for a search within a citizen's skills
+  skill : string option
+  /// Whether to retrieve citizens who do or do not want remote work
+  remoteWork : string
+  }
+
+/// Support functions for pblic searches
+module PublicSearch =
+  /// Is the search empty?
+  let isEmptySearch (srch : PublicSearch) =
+    [ srch.continentId
+      srch.skill
+      match srch.remoteWork with "" -> Some srch.remoteWork | _ -> None
+      ]
+    |> List.exists Option.isSome
+
+
+/// A public profile search result
+type PublicSearchResult = {
+  /// The name of the continent on which the citizen resides
+  continent  : string
+  /// The region in which the citizen resides
+  region     : string
+  /// Whether this citizen is seeking remote work
+  remoteWork : bool
+  /// The skills this citizen has identified
+  skills     : string list
+  }
+
+
+/// The data required to provide a success story
+type StoryForm = {
+  /// The ID of this story
+  id       : string
+  /// Whether the employment was obtained from Jobs, Jobs, Jobs
+  fromHere : bool
+  /// The success story
+  story    : string
+  }
+
+
+/// An entry in the list of success stories
+type StoryEntry = {
+  /// The ID of this success story
+  id          : SuccessId
+  /// The ID of the citizen who recorded this story
+  citizenId   : CitizenId
+  /// The name of the citizen who recorded this story
+  citizenName : string
+  /// When this story was recorded
+  RecordedOn  : Instant
+  /// Whether this story involves an opportunity that arose due to Jobs, Jobs, Jobs
+  fromHere    : bool
+  /// Whether this report has a further story, or if it is simply a "found work" entry
+  hasStory    : bool
+  }

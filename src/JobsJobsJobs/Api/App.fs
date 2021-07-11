@@ -8,34 +8,12 @@ open Microsoft.Extensions.Hosting
 open Giraffe
 open Giraffe.EndpointRouting
 
-/// All available routes for the application
-let webApp = [
-  subRoute "/api" [
-    subRoute "/citizen" [
-      GET_HEAD [
-        routef "/log-on/%s" Handlers.Citizen.logOn
-        routef "/get/%O"    Handlers.Citizen.get
-        ]
-      DELETE [ route "" Handlers.Citizen.delete ]
-      ]
-    GET_HEAD [ route "/continent/all" Handlers.Continent.all ]
-    subRoute "/profile" [
-      GET_HEAD [
-        route  ""        Handlers.Profile.current
-        route  "/count"  Handlers.Profile.count
-        routef "/get/%O" Handlers.Profile.get
-        ]
-      PATCH [ route "/employment-found" Handlers.Profile.employmentFound ]
-      POST [ route "/save" Handlers.Profile.save ]
-      ]
-    ]
-  ]
 
 /// Configure the ASP.NET Core pipeline to use Giraffe
 let configureApp (app : IApplicationBuilder) =
   app
     .UseRouting()
-    .UseEndpoints(fun e -> e.MapGiraffeEndpoints webApp)
+    .UseEndpoints(fun e -> e.MapGiraffeEndpoints Handlers.allEndpoints)
   |> ignore
 
 open NodaTime

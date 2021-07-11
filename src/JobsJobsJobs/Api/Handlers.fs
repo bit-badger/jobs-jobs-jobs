@@ -86,6 +86,7 @@ module Helpers =
 
 
 /// Handlers for /api/citizen routes
+[<RequireQualifiedAccess>]
 module Citizen =
 
   // GET: /api/citizen/log-on/[code]
@@ -160,6 +161,18 @@ module Continent =
       return! json continents next ctx
       }
 
+
+/// Handlers for /api/listing[s] routes
+[<RequireQualifiedAccess>]
+module Listing =
+
+  // GET: /api/listing/mine
+  let mine : HttpHandler =
+    authorize
+    >=> fun next ctx -> task {
+      let! listings = Data.Listing.findByCitizen (currentCitizenId ctx) (conn ctx)
+      return! json listings next ctx
+      }
 
 /// Handlers for /api/profile routes
 [<RequireQualifiedAccess>]
@@ -247,3 +260,117 @@ module Profile =
       return! ok next ctx
       }
   
+  // GET: /api/profile/search
+  let search : HttpHandler =
+    authorize
+    >=> fun next ctx -> task {
+      let  search  = ctx.BindQueryString<ProfileSearch> ()
+      let! results = Data.Profile.search search (conn ctx)
+      return! json results next ctx
+      }
+  
+  // GET: /api/profile/public-search
+  let publicSearch : HttpHandler =
+    fun next ctx -> task {
+      let  search  = ctx.BindQueryString<PublicSearch> ()
+      let! results = Data.Profile.publicSearch search (conn ctx)
+      return! json results next ctx
+      }
+
+
+/// Handlers for /api/success routes
+[<RequireQualifiedAccess>]
+module Success =
+
+  open System
+
+  // GET: /api/success/[id]
+  let get successId : HttpHandler =
+    authorize
+    >=> fun next ctx -> task {
+      match! Data.Success.findById (SuccessId successId) (conn ctx) with
+      | Some story -> return! json story next ctx
+      | None -> return! Error.notFound next ctx
+      }
+
+  // GET: /api/success/list
+  let all : HttpHandler =
+    authorize
+    >=> fun next ctx -> task {
+      let! stories = Data.Success.all (conn ctx)
+      return! json stories next ctx
+      }
+  
+  // POST: /api/success/save
+  let save : HttpHandler =
+    authorize
+    >=> fun next ctx -> task {
+      let  citizenId = currentCitizenId ctx
+      let  dbConn    = conn ctx
+      let  now       = (clock ctx).GetCurrentInstant ()
+      let! form      = ctx.BindJsonAsync<StoryForm> ()
+      let! success = task {
+        match form.id with
+        | "new" ->
+            return Some { id         = (Guid.NewGuid >> SuccessId) ()
+                          citizenId  = citizenId
+                          recordedOn = now
+                          fromHere   = form.fromHere
+                          source     = "profile"
+                          story      = noneIfEmpty form.story |> Option.map Text
+                          }
+        | successId ->
+            match! Data.Success.findById (SuccessId.ofString successId) dbConn with
+            | Some story when story.citizenId = citizenId ->
+                return Some { story with
+                                fromHere = form.fromHere
+                                story    = noneIfEmpty form.story |> Option.map Text
+                              }
+            | Some _ | None -> return None
+        }
+      match success with
+      | Some story ->
+          do! Data.Success.save story dbConn
+          return! ok next ctx
+      | None -> return! Error.notFound next ctx
+      }
+
+
+open Giraffe.EndpointRouting
+
+/// All available endpoints for the application
+let allEndpoints = [
+  subRoute "/api" [
+    subRoute "/citizen" [
+      GET_HEAD [
+        routef "/log-on/%s" Citizen.logOn
+        routef "/get/%O"    Citizen.get
+        ]
+      DELETE [ route "" Citizen.delete ]
+      ]
+    GET_HEAD [ route "/continent/all" Continent.all ]
+    subRoute "/listing" [
+      GET_HEAD [
+        route "s/mine" Listing.mine
+        ]
+      ]
+    subRoute "/profile" [
+      GET_HEAD [
+        route  ""               Profile.current
+        route  "/count"         Profile.count
+        routef "/get/%O"        Profile.get
+        route  "/public-search" Profile.publicSearch
+        route  "/search"        Profile.search
+        ]
+      PATCH [ route "/employment-found" Profile.employmentFound ]
+      POST [ route "/save" Profile.save ]
+      ]
+    subRoute "/success" [
+      GET_HEAD [
+        routef "/get/%O" Success.get
+        route  "/list"   Success.all
+        ]
+      POST [ route "/save" Success.save ]
+      ]
+    ]
+  ]
