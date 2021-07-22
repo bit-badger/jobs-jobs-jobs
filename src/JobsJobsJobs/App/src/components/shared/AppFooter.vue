@@ -4,20 +4,6 @@
   </p>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue'
-
-export default defineComponent({
-  name: 'AppFooter',
-
-  data () {
-    return {
-      //
-    }
-  }
-})
-</script>
-
 <style lang="sass" scoped>
 p
   padding-top: 2rem

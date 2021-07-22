@@ -6,7 +6,7 @@
       <router-link to="/"><v-icon icon="mdi-home" /> Home</router-link>
       <!-- If not logged in -->
       <router-link to="/profile/seeking"><v-icon icon="mdi-view-list-outline" /> Job Seekers</router-link>
-      <router-link to="/log-on"><v-icon icon="mdi-login-variant" /> Log On</router-link>
+      <a :href="authUrl"><v-icon icon="mdi-login-variant" /> Log On</a>
       <!-- If logged in -->
       <router-link to="/citizen/profile"><v-icon icon="mdi-pencil" /> Edit Your Profile</router-link>
       <router-link to="/profile/search"><v-icon icon="mdi-view-list-outline" /> View Profiles</router-link>
@@ -23,10 +23,19 @@ import { defineComponent } from 'vue'
 
 export default defineComponent({
   name: 'AppNav',
-
-  data () {
+  setup () {
     return {
-      //
+      /** The authorization URL to which the user should be directed */
+      authUrl: (() => {
+        /** The client ID for Jobs, Jobs, Jobs at No Agenda Social */
+        const id = 'k_06zlMy0N451meL4AqlwMQzs5PYr6g3d2Q_dCT-OjU'
+        const client = `client_id=${id}`
+        const scope = 'scope=read:accounts'
+        const redirect = `redirect_uri=${document.location.origin}/citizen/authorized`
+        const respType = 'response_type=code'
+        // TODO: move NAS base URL to config
+        return `https://noagendasocial.com/oauth/authorize?${client}&${scope}&${redirect}&${respType}`
+      })()
     }
   }
 })

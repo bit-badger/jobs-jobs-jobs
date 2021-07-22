@@ -2,30 +2,20 @@ import { createRouter, createWebHistory, RouteLocationNormalized, RouteLocationN
 import Home from '../views/Home.vue'
 
 const routes: Array<RouteRecordRaw> = [
+  { path: '/', component: Home },
+  { path: '/how-it-works', component: () => import(/* webpackChunkName: "help" */ '../views/HowItWorks.vue') },
+  { path: '/privacy-policy', component: () => import(/* webpackChunkName: "legal" */ '../views/PrivacyPolicy.vue') },
+  { path: '/terms-of-service', component: () => import(/* webpackChunkName: "legal" */ '../views/TermsOfService.vue') },
+  // Citizen URLs
   {
-    path: '/',
-    name: 'Home',
-    component: Home
-  },
-  {
-    path: '/how-it-works',
-    name: 'HowItWorks',
-    component: () => import(/* webpackChunkName: "help" */ '../views/HowItWorks.vue')
-  },
-  {
-    path: '/privacy-policy',
-    name: 'PrivacyPolicy',
-    component: () => import(/* webpackChunkName: "privacy" */ '../views/PrivacyPolicy.vue')
-  },
-  {
-    path: '/terms-of-service',
-    name: 'TermsOfService',
-    component: () => import(/* webpackChunkName: "terms" */ '../views/TermsOfService.vue')
+    path: '/citizen/authorized',
+    component: () => import(/* webpackChunkName: "logon" */ '../views/citizen/Authorized.vue')
   }
 ]
 
 const router = createRouter({
   history: createWebHistory(process.env.BASE_URL),
+  // eslint-disable-next-line
   scrollBehavior (to: RouteLocationNormalized, from: RouteLocationNormalizedLoaded, savedPosition: any) {
     return savedPosition ?? { top: 0, left: 0 }
   },

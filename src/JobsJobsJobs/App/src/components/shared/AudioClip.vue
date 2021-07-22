@@ -13,15 +13,19 @@ export default defineComponent({
       required: true
     }
   },
-  computed: {
-    clipSource () : string {
-      return `/audio/${this.clip}.mp3`
-    }
-  },
-  methods: {
-    playFile () {
-      const audio = document.getElementById(this.clip) as HTMLAudioElement
+  setup (props) {
+    /** The full relative URL for the audio clip */
+    const clipSource = `/audio/${props.clip}.mp3`
+
+    /** Play the audio file */
+    const playFile = () => {
+      const audio = document.getElementById(props.clip) as HTMLAudioElement
       audio.play()
+    }
+
+    return {
+      clipSource,
+      playFile
     }
   }
 })

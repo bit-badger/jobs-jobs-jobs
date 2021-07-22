@@ -30,7 +30,7 @@ export default defineComponent({
     AppNav,
     TitleBar
   },
-  data () {
+  setup () {
     return {
       //
     }
