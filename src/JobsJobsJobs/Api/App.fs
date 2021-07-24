@@ -12,9 +12,12 @@ open Giraffe.EndpointRouting
 /// Configure the ASP.NET Core pipeline to use Giraffe
 let configureApp (app : IApplicationBuilder) =
   app
-    .UseCors(fun p -> p.AllowAnyOrigin() |> ignore)
+    .UseCors(fun p -> p.AllowAnyOrigin().AllowAnyHeader() |> ignore)
+    .UseStaticFiles()
     .UseRouting()
-    .UseEndpoints(fun e -> e.MapGiraffeEndpoints Handlers.allEndpoints)
+    .UseEndpoints(fun e ->
+        e.MapGiraffeEndpoints Handlers.allEndpoints
+        e.MapFallbackToFile "index.html" |> ignore)
   |> ignore
 
 open NodaTime

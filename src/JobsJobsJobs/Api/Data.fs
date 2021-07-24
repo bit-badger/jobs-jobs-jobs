@@ -106,11 +106,14 @@ module Startup =
   
   open Microsoft.Extensions.Configuration
   open Microsoft.Extensions.Logging
+  open NodaTime
+  open NodaTime.Serialization.JsonNet
   
   /// Create a RethinkDB connection
   let createConnection (cfg : IConfigurationSection) (log : ILogger) =
     
     // Add all required JSON converters
+    Converter.Serializer.ConfigureForNodaTime DateTimeZoneProviders.Tzdb |> ignore
     Converters.all ()
     |> List.iter Converter.Serializer.Converters.Add
     // Read the configuration and create a connection
@@ -382,7 +385,7 @@ module Continent =
 
 /// Job listing data access functions
 [<RequireQualifiedAccess>]
-module Listing =
+module Listing =  
 
   /// Find all job listings posted by the given citizen
   let findByCitizen (citizenId : CitizenId) conn =

@@ -10,6 +10,10 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: '/citizen/authorized',
     component: () => import(/* webpackChunkName: "logon" */ '../views/citizen/Authorized.vue')
+  },
+  {
+    path: '/citizen/dashboard',
+    component: () => import(/* webpackChunkName: "logon" */ '../views/citizen/Dashboard.vue')
   }
 ]
 

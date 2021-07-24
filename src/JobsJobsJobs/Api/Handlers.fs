@@ -7,6 +7,7 @@ open JobsJobsJobs.Domain
 open JobsJobsJobs.Domain.SharedTypes
 open JobsJobsJobs.Domain.Types
 open Microsoft.AspNetCore.Http
+open Microsoft.Extensions.Logging
 
 /// Handler to return the files required for the Vue client app
 module Vue =
@@ -19,15 +20,20 @@ module Vue =
 module Error =
   
   open System.Threading.Tasks
+  open Microsoft.Extensions.Logging
 
   /// Handler that will return a status code 404 and the text "Not Found"
   let notFound : HttpHandler =
     fun next ctx -> task {
+      let fac = ctx.GetService<ILoggerFactory>()
+      let log = fac.CreateLogger("Handler")
       match [ "GET"; "HEAD" ] |> List.contains ctx.Request.Method with
       | true ->
+          log.LogInformation "Returning Vue app"
           // TODO: check for valid URL prefixes
           return! Vue.app next ctx
       | false ->
+          log.LogInformation "Returning 404"
           return! RequestErrors.NOT_FOUND $"The URL {string ctx.Request.Path} was not recognized as a valid URL" next
                     ctx
       }
