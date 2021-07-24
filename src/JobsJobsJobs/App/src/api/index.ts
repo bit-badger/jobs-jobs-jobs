@@ -5,7 +5,7 @@ import { LogOnSuccess } from './types'
  * @param url The partial URL for the API
  * @returns A full URL for the API
  */
-const apiUrl = (url : string) : string => `/api/${url}`
+const apiUrl = (url : string) : string => `http://localhost:5000/api/${url}`
 
 export default {
 
@@ -15,10 +15,9 @@ export default {
    * @returns The user result, or an error
    */
   logOn: async (code : string) : Promise<LogOnSuccess | string> => {
-    const resp = await fetch(apiUrl(`/citizen/log-on/${code}`), { method: 'GET' })
+    const resp = await fetch(apiUrl(`citizen/log-on/${code}`), { method: 'GET', mode: 'cors' })
     if (resp.status === 200) return await resp.json() as LogOnSuccess
-    console.error(await resp.text())
-    return 'Error logging on'
+    return `Error logging on - ${await resp.text()}`
   }
 }
 

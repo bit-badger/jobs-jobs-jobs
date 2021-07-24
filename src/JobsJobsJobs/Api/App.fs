@@ -12,6 +12,7 @@ open Giraffe.EndpointRouting
 /// Configure the ASP.NET Core pipeline to use Giraffe
 let configureApp (app : IApplicationBuilder) =
   app
+    .UseCors(fun p -> p.AllowAnyOrigin() |> ignore)
     .UseRouting()
     .UseEndpoints(fun e -> e.MapGiraffeEndpoints Handlers.allEndpoints)
   |> ignore
@@ -25,6 +26,7 @@ let configureServices (svc : IServiceCollection) =
   svc.AddGiraffe ()                             |> ignore
   svc.AddSingleton<IClock> SystemClock.Instance |> ignore
   svc.AddLogging ()                             |> ignore
+  svc.AddCors ()                                |> ignore
   let svcs = svc.BuildServiceProvider()
   let cfg  = svcs.GetRequiredService<IConfiguration>().GetSection "Rethink"
   let log  = svcs.GetRequiredService<ILoggerFactory>().CreateLogger (nameof Data.Startup)
