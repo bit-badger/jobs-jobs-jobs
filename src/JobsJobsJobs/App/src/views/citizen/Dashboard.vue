@@ -45,7 +45,7 @@ export default defineComponent({
     const user = store.state.user as LogOnSuccess
 
     /** Error messages from data retrieval */
-    const errorMessage = ref('')
+    const errorMessages : string[] = []
 
     /** The user's profile */
     const profile : Ref<Profile | undefined> = ref(undefined)
@@ -56,13 +56,13 @@ export default defineComponent({
     const retrieveData = async () => {
       const profileResult = await api.profile.retreive(undefined, user)
       if (typeof profileResult === 'string') {
-        errorMessage.value = profileResult
+        errorMessages.push(profileResult)
       } else if (typeof profileResult !== 'undefined') {
         profile.value = profileResult
       }
       const count = await api.profile.count(user)
       if (typeof count === 'string') {
-        errorMessage.value = `${errorMessage.value}\n${count}`
+        errorMessages.push(count)
       } else {
         profileCount.value = count
       }
@@ -72,7 +72,7 @@ export default defineComponent({
 
     return {
       user,
-      errorMessage,
+      errorMessages,
       profile,
       profileCount
     }

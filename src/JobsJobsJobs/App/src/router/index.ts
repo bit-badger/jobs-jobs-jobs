@@ -14,6 +14,10 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: '/citizen/dashboard',
     component: () => import(/* webpackChunkName: "logon" */ '../views/citizen/Dashboard.vue')
+  },
+  {
+    path: '/citizen/profile',
+    component: () => import(/* webpackChurchName: "profedit" */ '../views/citizen/EditProfile.vue')
   }
 ]
 
