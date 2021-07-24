@@ -1,11 +1,12 @@
 {
   "name": "jobs-jobs-jobs",
-  "version": "0.1.0",
+  "version": "1.0.1",
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build --mode development",
-    "lint": "vue-cli-service lint"
+    "lint": "vue-cli-service lint",
+    "apiserve": "vue-cli-service build --mode development && cd ../Api && dotnet run -c Debug"
   },
   "dependencies": {
     "@mdi/font": "5.9.55",

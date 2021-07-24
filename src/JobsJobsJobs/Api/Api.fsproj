@@ -16,9 +16,14 @@
   <ItemGroup>
     <ProjectReference Include="..\Domain\Domain.fsproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include=".\wwwroot" />
+  </ItemGroup>
   
   <ItemGroup>
     <PackageReference Include="Giraffe" Version="5.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="5.0.8" />
     <PackageReference Include="Microsoft.FSharpLu.Json" Version="0.11.7" />
     <PackageReference Include="NodaTime.Serialization.JsonNet" Version="3.0.0" />
     <PackageReference Include="Polly" Version="7.2.2" />

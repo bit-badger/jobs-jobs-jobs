@@ -15,14 +15,19 @@ let configureApp (app : IApplicationBuilder) =
     .UseCors(fun p -> p.AllowAnyOrigin().AllowAnyHeader() |> ignore)
     .UseStaticFiles()
     .UseRouting()
+    .UseAuthentication()
+    .UseAuthorization()
     .UseEndpoints(fun e ->
         e.MapGiraffeEndpoints Handlers.allEndpoints
         e.MapFallbackToFile "index.html" |> ignore)
   |> ignore
 
 open NodaTime
+open Microsoft.AspNetCore.Authentication.JwtBearer
 open Microsoft.Extensions.Configuration
 open Microsoft.Extensions.Logging
+open Microsoft.IdentityModel.Tokens
+open System.Text
 
 /// Configure dependency injection
 let configureServices (svc : IServiceCollection) =
@@ -30,12 +35,31 @@ let configureServices (svc : IServiceCollection) =
   svc.AddSingleton<IClock> SystemClock.Instance |> ignore
   svc.AddLogging ()                             |> ignore
   svc.AddCors ()                                |> ignore
-  let svcs = svc.BuildServiceProvider()
-  let cfg  = svcs.GetRequiredService<IConfiguration>().GetSection "Rethink"
-  let log  = svcs.GetRequiredService<ILoggerFactory>().CreateLogger (nameof Data.Startup)
-  let conn = Data.Startup.createConnection cfg log
+  
+  let svcs = svc.BuildServiceProvider ()
+  let cfg  = svcs.GetRequiredService<IConfiguration> ()
+  
+  svc.AddAuthentication(fun o ->
+      o.DefaultAuthenticateScheme <- JwtBearerDefaults.AuthenticationScheme
+      o.DefaultChallengeScheme    <- JwtBearerDefaults.AuthenticationScheme
+      o.DefaultScheme             <- JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(fun o ->
+        o.RequireHttpsMetadata      <- false
+        o.TokenValidationParameters <- TokenValidationParameters (
+          ValidateIssuer   = true,
+          ValidateAudience = true,
+          ValidAudience    = "https://noagendacareers.com",
+          ValidIssuer      = "https://noagendacareers.com",
+          IssuerSigningKey = SymmetricSecurityKey (
+            Encoding.UTF8.GetBytes (cfg.GetSection("Auth").["ServerSecret"]))))
+    |> ignore
+  svc.AddAuthorization () |> ignore
+
+  let dbCfg = cfg.GetSection "Rethink"
+  let log   = svcs.GetRequiredService<ILoggerFactory>().CreateLogger (nameof Data.Startup)
+  let conn  = Data.Startup.createConnection dbCfg log
   svc.AddSingleton conn |> ignore
-  Data.Startup.establishEnvironment cfg log conn |> Data.awaitIgnore
+  Data.Startup.establishEnvironment dbCfg log conn |> Data.awaitIgnore
 
 [<EntryPoint>]
 let main _ =
