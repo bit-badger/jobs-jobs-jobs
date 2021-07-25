@@ -1,4 +1,4 @@
-import { Count, LogOnSuccess, Profile } from './types'
+import { Citizen, Continent, Count, LogOnSuccess, Profile } from './types'
 
 /**
  * Create a URL that will access the API
@@ -39,6 +39,46 @@ export default {
       const resp = await fetch(apiUrl(`citizen/log-on/${code}`), { method: 'GET', mode: 'cors' })
       if (resp.status === 200) return await resp.json() as LogOnSuccess
       return `Error logging on - ${await resp.text()}`
+    },
+
+    /**
+     * Retrieve a citizen by their ID
+     *
+     * @param id The citizen ID to be retrieved
+     * @param user The currently logged-on user
+     * @returns The citizen, or an error
+     */
+    retrieve: async (id : string, user : LogOnSuccess) : Promise<Citizen | string> => {
+      const resp = await fetch(apiUrl(`citizen/get/${id}`), reqInit('GET', user))
+      if (resp.status === 200) return await resp.json() as Citizen
+      return `Error retrieving citizen ${id} - ${await resp.text()}`
+    },
+
+    /**
+     * Delete the current citizen's entire Jobs, Jobs, Jobs record
+     *
+     * @param user The currently logged-on user
+     * @returns Undefined if successful, an error if not
+     */
+    delete: async (user : LogOnSuccess) : Promise<string | undefined> => {
+      const resp = await fetch(apiUrl('citizen'), reqInit('DELETE', user))
+      if (resp.status === 200) return undefined
+      return `Error deleting citizen - ${await resp.text()}`
+    }
+  },
+
+  /** API functions for continents */
+  continent: {
+
+    /**
+     * Get all continents
+     *
+     * @returns All continents, or an error
+     */
+    all: async () : Promise<Continent[] | string> => {
+      const resp = await fetch(apiUrl('continent/all'), { method: 'GET' })
+      if (resp.status === 200) return await resp.json() as Continent[]
+      return `Error retrieving continents - ${await resp.text()}`
     }
   },
 
@@ -71,7 +111,19 @@ export default {
         const result = await resp.json() as Count
         return result.count
       }
-      return `Error counting profiles = ${await resp.text()}`
+      return `Error counting profiles - ${await resp.text()}`
+    },
+
+    /**
+     * Delete the current user's employment profile
+     *
+     * @param user The currently logged-on user
+     * @returns Undefined if successful, an error if not
+     */
+    delete: async (user : LogOnSuccess) : Promise<string | undefined> => {
+      const resp = await fetch(apiUrl('profile'), reqInit('DELETE', user))
+      if (resp.status === 200) return undefined
+      return `Error deleting profile - ${await resp.text()}`
     }
   }
 }

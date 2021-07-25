@@ -22,6 +22,7 @@ let configureApp (app : IApplicationBuilder) =
         e.MapFallbackToFile "index.html" |> ignore)
   |> ignore
 
+open Newtonsoft.Json
 open NodaTime
 open Microsoft.AspNetCore.Authentication.JwtBearer
 open Microsoft.Extensions.Configuration
@@ -36,6 +37,10 @@ let configureServices (svc : IServiceCollection) =
   svc.AddLogging ()                             |> ignore
   svc.AddCors ()                                |> ignore
   
+  let jsonCfg = JsonSerializerSettings ()
+  Data.Converters.all () |> List.iter jsonCfg.Converters.Add
+  svc.AddSingleton<Json.ISerializer> (NewtonsoftJson.Serializer jsonCfg) |> ignore
+
   let svcs = svc.BuildServiceProvider ()
   let cfg  = svcs.GetRequiredService<IConfiguration> ()
   

@@ -17,7 +17,42 @@ const routes: Array<RouteRecordRaw> = [
   },
   {
     path: '/citizen/profile',
-    component: () => import(/* webpackChurchName: "profedit" */ '../views/citizen/EditProfile.vue')
+    component: () => import(/* webpackChunkName: "profedit" */ '../views/citizen/EditProfile.vue')
+  },
+  {
+    path: '/citizen/log-off',
+    component: () => import(/* webpackChunkName: "logoff" */ '../views/citizen/LogOff.vue')
+  },
+  // Profile URLs
+  {
+    path: '/profile/view/:id',
+    component: () => import(/* webpackChunkName: "profview" */ '../views/profile/ProfileView.vue')
+  },
+  {
+    path: '/profile/search',
+    component: () => import(/* webpackChunkName: "profview" */ '../views/profile/ProfileSearch.vue')
+  },
+  {
+    path: '/profile/seeking',
+    component: () => import(/* webpackChunkName: "seeking" */ '../views/profile/Seeking.vue')
+  },
+  // "So Long" URLs
+  {
+    path: '/so-long/options',
+    component: () => import(/* webpackChunkName: "so-long" */ '../views/so-long/DeletionOptions.vue')
+  },
+  {
+    path: '/so-long/success',
+    component: () => import(/* webpackChunkName: "so-long" */ '../views/so-long/DeletionSuccess.vue')
+  },
+  // Success Story URLs
+  {
+    path: '/success-story/list',
+    component: () => import(/* webpackChunkName: "succview" */ '../views/success-story/StoryList.vue')
+  },
+  {
+    path: '/success-story/add',
+    component: () => import(/* webpackChunkName: "succedit" */ '../views/success-story/StoryAdd.vue')
   }
 ]
 

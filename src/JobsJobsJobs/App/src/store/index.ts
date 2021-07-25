@@ -1,11 +1,12 @@
 import { InjectionKey } from 'vue'
 import { createStore, Store, useStore as baseUseStore } from 'vuex'
-import api, { LogOnSuccess } from '../api'
+import api, { Continent, LogOnSuccess } from '../api'
 
 /** The state tracked by the application */
 export interface State {
   user: LogOnSuccess | undefined
   logOnState: string
+  continents: Continent[]
 }
 
 /** An injection key to identify this state with Vue */
@@ -20,15 +21,22 @@ export default createStore({
   state: () : State => {
     return {
       user: undefined,
-      logOnState: 'Logging you on with No Agenda Social...'
+      logOnState: 'Logging you on with No Agenda Social...',
+      continents: []
     }
   },
   mutations: {
     setUser (state, user: LogOnSuccess) {
       state.user = user
     },
+    clearUser (state) {
+      state.user = undefined
+    },
     setLogOnState (state, message) {
       state.logOnState = message
+    },
+    setContinents (state, continents : Continent[]) {
+      state.continents = continents
     }
   },
   actions: {
@@ -38,6 +46,15 @@ export default createStore({
         commit('setLogOnState', logOnResult)
       } else {
         commit('setUser', logOnResult)
+      }
+    },
+    async ensureContinents ({ state, commit }) {
+      if (state.continents.length > 0) return
+      const theSeven = await api.continent.all()
+      if (typeof theSeven === 'string') {
+        console.error(theSeven)
+      } else {
+        commit('setContinents', theSeven)
       }
     }
   },

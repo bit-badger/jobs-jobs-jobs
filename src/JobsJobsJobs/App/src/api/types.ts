@@ -1,4 +1,30 @@
 
+/** A user of Jobs, Jobs, Jobs */
+export interface Citizen {
+  /** The ID of the user */
+  id : string
+  /** The handle by which the user is known on Mastodon */
+  naUser : string
+  /** The user's display name from Mastodon (updated every login) */
+  displayName : string | undefined
+  /** The user's real name */
+  realName : string | undefined
+  /** The URL for the user's Mastodon profile */
+  profileUrl : string
+  /** When the user joined Jobs, Jobs, Jobs */
+  joinedOn : number
+  /** When the user last logged in */
+  lastSeenOn : number
+}
+
+/** A continent */
+export interface Continent {
+  /** The ID of the continent */
+  id : string
+  /** The name of the continent */
+  name : string
+}
+
 /** A successful logon */
 export interface LogOnSuccess {
   /** The JSON Web Token (JWT) to use for API access */
