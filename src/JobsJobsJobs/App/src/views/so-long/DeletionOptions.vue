@@ -1,37 +1,40 @@
 <template>
-  <h3>Account Deletion Options</h3>
+  <article>
+    <page-title title="Account Deletion Options" />
+    <h3>Account Deletion Options</h3>
 
-  <p v-if="error !== ''">{{error}}</p>
+    <p v-if="error !== ''">{{error}}</p>
 
-  <h4>Option 1 &ndash; Delete Your Profile</h4>
-  <p>
-    Utilizing this option will remove your current employment profile and skills. This will preserve any success stories
-    you may have written, and preserves this application&rsquo;s knowledge of you. This is what you want to use if you
-    want to clear out your profile and start again (and remove the current one from others&rsquo; view).
-  </p>
-  <p class="text-center">
-    <button class="btn btn-danger" @click="deleteProfile">Delete Your Profile</button>
-  </p>
+    <h4>Option 1 &ndash; Delete Your Profile</h4>
+    <p>
+      Utilizing this option will remove your current employment profile and skills. This will preserve any success
+      stories you may have written, and preserves this application&rsquo;s knowledge of you. This is what you want to
+      use if you want to clear out your profile and start again (and remove the current one from others&rsquo; view).
+    </p>
+    <p class="text-center">
+      <v-btn color="error" @click="deleteProfile">Delete Your Profile</v-btn>
+    </p>
 
-  <hr>
+    <hr>
 
-  <h4>Option 2 &ndash; Delete Your Account</h4>
-  <p>
-    This option will make it like you never visited this site. It will delete your profile, skills, success stories, and
-    account. This is what you want to use if you want to disappear from this application. Clicking the button below
-    <strong>will not</strong> affect your No Agenda Social account in any way; its effects are limited to Jobs, Jobs,
-    Jobs.
-  </p>
-  <p>
-    <em>
-      (This will not revoke this application&rsquo;s permissions on No Agenda Social; you will have to remove this
-      yourself. The confirmation message has a link where you can do this; once the page loads, find the
-      <strong>Jobs, Jobs, Jobs</strong> entry, and click the <strong>&times; Revoke</strong> link for that entry.)
-    </em>
-  </p>
-  <p class="text-center">
-    <button class="btn btn-danger" @click="deleteAccount">Delete Your Entire Account</button>
-  </p>
+    <h4>Option 2 &ndash; Delete Your Account</h4>
+    <p>
+      This option will make it like you never visited this site. It will delete your profile, skills, success stories,
+      and account. This is what you want to use if you want to disappear from this application. Clicking the button
+      below <strong>will not</strong> affect your No Agenda Social account in any way; its effects are limited to Jobs,
+      Jobs, Jobs.
+    </p>
+    <p>
+      <em>
+        (This will not revoke this application&rsquo;s permissions on No Agenda Social; you will have to remove this
+        yourself. The confirmation message has a link where you can do this; once the page loads, find the
+        <strong>Jobs, Jobs, Jobs</strong> entry, and click the <strong>&times; Revoke</strong> link for that entry.)
+      </em>
+    </p>
+    <p class="text-center">
+      <v-btn color="error" @click="deleteAccount">Delete Your Entire Account</v-btn>
+    </p>
+  </article>
 </template>
 
 <script lang="ts">

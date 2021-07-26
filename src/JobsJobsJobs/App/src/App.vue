@@ -8,7 +8,11 @@
     </v-app-bar>
     <v-main>
       <v-container fluid>
-        <router-view></router-view>
+        <router-view v-slot="{ Component }">
+          <transition name="fade" mode="out-in">
+            <component :is="Component" />
+          </transition>
+        </router-view>
       </v-container>
     </v-main>
     <v-footer app>
@@ -29,11 +33,6 @@ export default defineComponent({
     AppFooter,
     AppNav,
     TitleBar
-  },
-  setup () {
-    return {
-      //
-    }
   }
 })
 </script>
@@ -66,4 +65,11 @@ ul
   justify-content: center
 .v-footer
   flex-direction: row-reverse
+// Route transitions
+.fade-enter-active,
+.fade-leave-active
+  transition: opacity 0.125s ease
+.fade-enter-from,
+.fade-leave-to
+  opacity: 0
 </style>

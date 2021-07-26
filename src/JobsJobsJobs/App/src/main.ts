@@ -3,9 +3,13 @@ import vuetify from './plugins/vuetify'
 import App from './App.vue'
 import router from './router'
 import store, { key } from './store'
+import PageTitle from './components/PageTitle.vue'
 
-createApp(App)
+const app = createApp(App)
   .use(router)
   .use(store, key)
   .use(vuetify)
-  .mount('#app')
+
+app.component('PageTitle', PageTitle)
+
+app.mount('#app')

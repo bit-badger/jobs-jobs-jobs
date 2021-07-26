@@ -1,5 +1,8 @@
 <template>
-  <p>{{message}}</p>
+  <article>
+    <page-title title="Logging on..." />
+    <p>{{message}}</p>
+  </article>
 </template>
 
 <script lang="ts">

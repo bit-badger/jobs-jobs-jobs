@@ -1,4 +1,5 @@
-import { Citizen, Continent, Count, LogOnSuccess, Profile } from './types'
+import { MarkedOptions } from 'marked'
+import { Citizen, Continent, Count, LogOnSuccess, Profile, ProfileForView } from './types'
 
 /**
  * Create a URL that will access the API
@@ -22,6 +23,31 @@ const reqInit = (method : string, user : LogOnSuccess) : RequestInit => {
     method
     // mode: 'cors'
   }
+}
+
+/**
+ * Retrieve a result for an API call
+ *
+ * @param resp The response received from the API
+ * @param action The action being performed (used in error messages)
+ * @returns The expected result (if found), undefined (if not found), or an error string
+ */
+async function apiResult<T> (resp : Response, action : string) : Promise<T | undefined | string> {
+  if (resp.status === 200) return await resp.json() as T
+  if (resp.status === 404) return undefined
+  return `Error ${action} - ${await resp.text()}`
+}
+
+/**
+ * Run an API action that does not return a result
+ *
+ * @param resp The response received from the API call
+ * @param action The action being performed (used in error messages)
+ * @returns Undefined (if successful), or an error string
+ */
+const apiAction = async (resp : Response, action : string) : Promise<string | undefined> => {
+  if (resp.status === 200) return undefined
+  return `Error ${action} - ${await resp.text()}`
 }
 
 export default {
@@ -48,11 +74,8 @@ export default {
      * @param user The currently logged-on user
      * @returns The citizen, or an error
      */
-    retrieve: async (id : string, user : LogOnSuccess) : Promise<Citizen | string> => {
-      const resp = await fetch(apiUrl(`citizen/get/${id}`), reqInit('GET', user))
-      if (resp.status === 200) return await resp.json() as Citizen
-      return `Error retrieving citizen ${id} - ${await resp.text()}`
-    },
+    retrieve: async (id : string, user : LogOnSuccess) : Promise<Citizen | string | undefined> =>
+      apiResult<Citizen>(await fetch(apiUrl(`citizen/get/${id}`), reqInit('GET', user)), `retrieving citizen ${id}`),
 
     /**
      * Delete the current citizen's entire Jobs, Jobs, Jobs record
@@ -60,11 +83,8 @@ export default {
      * @param user The currently logged-on user
      * @returns Undefined if successful, an error if not
      */
-    delete: async (user : LogOnSuccess) : Promise<string | undefined> => {
-      const resp = await fetch(apiUrl('citizen'), reqInit('DELETE', user))
-      if (resp.status === 200) return undefined
-      return `Error deleting citizen - ${await resp.text()}`
-    }
+    delete: async (user : LogOnSuccess) : Promise<string | undefined> =>
+      apiAction(await fetch(apiUrl('citizen'), reqInit('DELETE', user)), 'deleting citizen')
   },
 
   /** API functions for continents */
@@ -75,11 +95,8 @@ export default {
      *
      * @returns All continents, or an error
      */
-    all: async () : Promise<Continent[] | string> => {
-      const resp = await fetch(apiUrl('continent/all'), { method: 'GET' })
-      if (resp.status === 200) return await resp.json() as Continent[]
-      return `Error retrieving continents - ${await resp.text()}`
-    }
+    all: async () : Promise<Continent[] | string | undefined> =>
+      apiResult<Continent[]>(await fetch(apiUrl('continent/all'), { method: 'GET' }), 'retrieving continents')
   },
 
   /** API functions for profiles */
@@ -98,6 +115,16 @@ export default {
       if (resp.status === 200) return await resp.json() as Profile
       if (resp.status !== 204) return `Error retrieving profile - ${await resp.text()}`
     },
+
+    /**
+     * Retrieve a profile for viewing
+     *
+     * @param id The ID of the profile to retrieve for viewing
+     * @param user The currently logged-on user
+     * @returns The profile (if found), undefined (if not found), or an error string
+     */
+    retreiveForView: async (id : string, user : LogOnSuccess) : Promise<ProfileForView | string | undefined> =>
+      apiResult<ProfileForView>(await fetch(apiUrl(`profile/view/${id}`), reqInit('GET', user)), 'retrieving profile'),
 
     /**
      * Count profiles in the system
@@ -120,12 +147,15 @@ export default {
      * @param user The currently logged-on user
      * @returns Undefined if successful, an error if not
      */
-    delete: async (user : LogOnSuccess) : Promise<string | undefined> => {
-      const resp = await fetch(apiUrl('profile'), reqInit('DELETE', user))
-      if (resp.status === 200) return undefined
-      return `Error deleting profile - ${await resp.text()}`
-    }
+    delete: async (user : LogOnSuccess) : Promise<string | undefined> =>
+      apiAction(await fetch(apiUrl('profile'), reqInit('DELETE', user)), 'deleting profile')
   }
+}
+
+/** The standard Jobs, Jobs, Jobs options for `marked` (GitHub-Flavo(u)red Markdown (GFM) with smart quotes) */
+export const markedOptions : MarkedOptions = {
+  gfm: true,
+  smartypants: true
 }
 
 export * from './types'

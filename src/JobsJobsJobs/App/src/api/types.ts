@@ -71,6 +71,16 @@ export interface Profile {
   skills : Skill[]
 }
 
+/** The data required to show a viewable profile */
+export interface ProfileForView {
+  /** The profile itself */
+  profile : Profile
+  /** The citizen to whom the profile belongs */
+  citizen : Citizen
+  /** The continent for the profile */
+  continent : Continent
+}
+
 /** A count */
 export interface Count {
   /** The count being returned */

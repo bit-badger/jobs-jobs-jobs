@@ -1,5 +1,8 @@
 <template>
-  <p>Logging off&hellip;</p>
+  <article>
+    <page-title title="Logging off..." />
+    <p>Logging off&hellip;</p>
+  </article>
 </template>
 
 <script lang="ts">

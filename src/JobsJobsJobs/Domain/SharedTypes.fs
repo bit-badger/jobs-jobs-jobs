@@ -122,6 +122,17 @@ type ProfileSearchResult = {
   }
 
 
+/// The data required to show a viewable profile
+type ProfileForView = {
+  /// The profile itself
+  profile : Profile
+  /// The citizen to whom the profile belongs
+  citizen : Citizen
+  /// The continent for the profile
+  continent : Continent
+}
+
+
 /// The parameters for a public job search
 type PublicSearch = {
   /// Retrieve citizens from this continent

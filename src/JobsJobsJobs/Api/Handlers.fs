@@ -203,6 +203,29 @@ module Profile =
       | Some profile -> return! json profile next ctx
       | None -> return! Error.notFound next ctx
       }
+
+  // GET: /api/profile/view/[id]
+  let view citizenId : HttpHandler =
+    authorize
+    >=> fun next ctx -> task {
+      let citId  = CitizenId citizenId
+      let dbConn = conn ctx
+      match! Data.Profile.findById citId dbConn with
+      | Some profile ->
+          match! Data.Citizen.findById citId dbConn with
+          | Some citizen ->
+              match! Data.Continent.findById profile.continentId dbConn with
+              | Some continent ->
+                  return!
+                    json {
+                      profile   = profile
+                      citizen   = citizen
+                      continent = continent
+                      } next ctx
+              | None -> return! Error.notFound next ctx
+          | None -> return! Error.notFound next ctx
+      | None -> return! Error.notFound next ctx
+      }
   
   // GET: /api/profile/count
   let count : HttpHandler =
@@ -365,6 +388,7 @@ let allEndpoints = [
         route  ""               Profile.current
         route  "/count"         Profile.count
         routef "/get/%O"        Profile.get
+        routef "/view/%O"       Profile.view
         route  "/public-search" Profile.publicSearch
         route  "/search"        Profile.search
         ]

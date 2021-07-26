@@ -381,6 +381,16 @@ module Continent =
     withReconn(conn).ExecuteAsync(fun () ->
         r.Table(Table.Continent)
           .RunResultAsync<Continent list> conn)
+  
+  /// Get a continent by its ID
+  let findById (contId : ContinentId) conn = task {
+    let! continent =
+      withReconn(conn).ExecuteAsync(fun () ->
+          r.Table(Table.Continent)
+            .Get(contId)
+            .RunResultAsync<Continent> conn)
+    return toOption continent
+  }
 
 
 /// Job listing data access functions

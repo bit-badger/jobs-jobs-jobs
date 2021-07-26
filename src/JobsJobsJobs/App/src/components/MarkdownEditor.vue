@@ -1,7 +1,7 @@
 <template>
   <nav class="nav nav-pills">
-    <a href="#" class="nav-link @MarkdownClass" @click.prevent="showMarkdown">Markdown</a>
-    <a href="#" class="nav-link @PreviewClass" @click.prevent="showPreview">Preview</a>
+    <v-btn rounded="pill" :color="sourceColor" @click="showMarkdown">Markdown</v-btn> &nbsp;
+    <v-btn rounded="pill" :color="previewColor" @click="showPreview">Preview</v-btn>
   </nav>
   <section v-if="preview" class="preview" v-html="previewHtml">
   </section>
@@ -10,7 +10,10 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from 'vue'
+import { computed, defineComponent, ref } from 'vue'
+import marked from 'marked'
+import { markedOptions } from '../api'
+
 export default defineComponent({
   name: 'MarkdownEditor',
   props: {
@@ -32,12 +35,13 @@ export default defineComponent({
     const previewHtml = ref('')
 
     /** Show the Markdown source */
-    const showMarkdown = () => { preview.value = false }
+    const showMarkdown = () => {
+      preview.value = false
+    }
 
     /** Show the Markdown preview */
     const showPreview = () => {
-      // TODO: render markdown as HTML
-      previewHtml.value = props.text
+      previewHtml.value = marked(props.text, markedOptions)
       preview.value = true
     }
 
@@ -45,8 +49,15 @@ export default defineComponent({
       preview,
       previewHtml,
       showMarkdown,
-      showPreview
+      showPreview,
+      sourceColor: computed(() => preview.value ? '' : 'primary'),
+      previewColor: computed(() => preview.value ? 'primary' : '')
     }
   }
 })
 </script>
+
+<style lang="sass" scoped>
+textarea
+  width: 100%
+</style>

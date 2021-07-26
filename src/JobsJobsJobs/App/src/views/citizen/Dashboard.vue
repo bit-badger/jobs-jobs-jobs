@@ -1,35 +1,39 @@
 <template>
-  <h3>Welcome, {{user.name}}</h3>
-  <load-data :load="retrieveData">
-    <template v-if="profile">
+  <article>
+    <page-title title="Dashboard" />
+    <h3>Welcome, {{user.name}}</h3>
+    <load-data :load="retrieveData">
+      <template v-if="profile">
+        <p>
+          Your employment profile was last updated {{profile.lastUpdatedOn}}. Your profile currently lists
+          {{profile.skills.length}} skill<span v-if="profile.skills.length !== 1">s</span>.
+        </p>
+        <p><router-link :to="'/profile/view/' + user.citizenId">View Your Employment Profile</router-link></p>
+        <p v-if="profile.seekingEmployment">
+          Your profile indicates that you are seeking employment. Once you find it,
+          <router-link to="/success-story/add">tell your fellow citizens about it!</router-link>
+        </p>
+      </template>
+      <template v-else>
+        <p>
+          You do not have an employment profile established; click &ldquo;Edit Profile&rdquo; in the menu to get
+          started!
+        </p>
+      </template>
+      <hr>
       <p>
-        Your employment profile was last updated {{profile.lastUpdatedOn}}. Your profile currently lists
-        {{profile.skills.length}} skill<span v-if="profile.skills.length !== 1">s</span>.
+        There <template v-if="profileCount === 1">is</template><template v-else>are</template>&nbsp;
+        <template v-if="profileCount === 0">no</template><template v-else>{{profileCount}}</template>
+        employment profile<template v-if="profileCount !== 1">s</template> from citizens of Gitmo Nation.
+        <template v-if="profileCount > 0">Take a look around and see if you can help them find work!</template>
       </p>
-      <p><router-link :to="'/profile/view/' + user.citizenId">View Your Employment Profile</router-link></p>
-      <p v-if="profile.seekingEmployment">
-        Your profile indicates that you are seeking employment. Once you find it,
-        <router-link to="/success-story/add">tell your fellow citizens about it!</router-link>
-      </p>
-    </template>
-    <template v-else>
-      <p>
-        You do not have an employment profile established; click &ldquo;Edit Profile&rdquo; in the menu to get
-        started!
-      </p>
-    </template>
+    </load-data>
     <hr>
     <p>
-      There <span v-if="profileCount === 1">is</span><span v-else>are</span> <span v-if="profileCount === 0">no</span><span v-else>{{profileCount}}</span>
-      employment profile<span v-if="profileCount !== 1">s</span> from citizens of Gitmo Nation.
-      <span v-if="profileCount > 0">Take a look around and see if you can help them find work!</span>
+      To see how this application works, check out &ldquo;How It Works&rdquo; in the sidebar (last updated June
+      14<sup>th</sup>, 2021).
     </p>
-  </load-data>
-  <hr>
-  <p>
-    To see how this application works, check out &ldquo;How It Works&rdquo; in the sidebar (last updated June
-    14<sup>th</sup>, 2021).
-  </p>
+  </article>
 </template>
 
 <script lang="ts">

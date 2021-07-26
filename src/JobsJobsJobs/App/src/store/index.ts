@@ -4,8 +4,11 @@ import api, { Continent, LogOnSuccess } from '../api'
 
 /** The state tracked by the application */
 export interface State {
+  /** The currently logged-on user */
   user: LogOnSuccess | undefined
+  /** The state of the log on process */
   logOnState: string
+  /** All continents (use `ensureContinents` action) */
   continents: Continent[]
 }
 
@@ -26,13 +29,13 @@ export default createStore({
     }
   },
   mutations: {
-    setUser (state, user: LogOnSuccess) {
+    setUser (state, user : LogOnSuccess) {
       state.user = user
     },
     clearUser (state) {
       state.user = undefined
     },
-    setLogOnState (state, message) {
+    setLogOnState (state, message : string) {
       state.logOnState = message
     },
     setContinents (state, continents : Continent[]) {
