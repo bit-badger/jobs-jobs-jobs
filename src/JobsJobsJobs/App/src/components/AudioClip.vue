@@ -1,5 +1,5 @@
 <template>
-  <span @click.prevent="playFile"><slot></slot></span><audio :id="clip"><source :src="clipSource"></audio>
+  <span @click="playFile"><slot></slot><audio :id="clip"><source :src="clipSource"></audio></span>
 </template>
 
 <script lang="ts">

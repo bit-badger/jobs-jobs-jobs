@@ -3,17 +3,17 @@
     <p class="home-link"><router-link to="/">Jobs, Jobs, Jobs</router-link></p>
     <p>&nbsp;</p>
     <nav>
-      <template v-if="!isLoggedOn">
-        <router-link to="/"><v-icon icon="mdi-home" /> Home</router-link>
-        <router-link to="/profile/seeking"><v-icon icon="mdi-view-list-outline" /> Job Seekers</router-link>
-        <a :href="authUrl"><v-icon icon="mdi-login-variant" /> Log On</a>
-      </template>
-      <template v-else>
+      <template v-if="isLoggedOn">
         <router-link to="/citizen/dashboard"><v-icon icon="mdi-view-dashboard-variant" />Dashboard</router-link>
         <router-link to="/citizen/profile"><v-icon icon="mdi-pencil" /> Edit Your Profile</router-link>
         <router-link to="/profile/search"><v-icon icon="mdi-view-list-outline" /> View Profiles</router-link>
         <router-link to="/success-story/list"><v-icon icon="mdi-thumb-up" /> Success Stories</router-link>
         <router-link to="/citizen/log-off"><v-icon icon="mdi-logout-variant" /> Log Off</router-link>
+      </template>
+      <template v-else>
+        <router-link to="/"><v-icon icon="mdi-home" /> Home</router-link>
+        <router-link to="/profile/seeking"><v-icon icon="mdi-view-list-outline" /> Job Seekers</router-link>
+        <a :href="authUrl"><v-icon icon="mdi-login-variant" /> Log On</a>
       </template>
       <router-link to="/how-it-works"><v-icon icon="mdi-help-circle-outline" /> How It Works</router-link>
     </nav>

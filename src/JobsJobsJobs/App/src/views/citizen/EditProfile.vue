@@ -113,7 +113,7 @@ import { computed, defineComponent, Ref, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import api, { LogOnSuccess, Profile } from '../../api'
 import MarkdownEditor from '../../components/MarkdownEditor.vue'
-import LoadData from '../../components/shared/LoadData.vue'
+import LoadData from '../../components/LoadData.vue'
 import { useStore } from '../../store'
 
 export default defineComponent({

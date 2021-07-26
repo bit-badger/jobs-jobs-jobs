@@ -23,9 +23,9 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue'
-import AppFooter from './components/shared/AppFooter.vue'
-import AppNav from './components/shared/AppNav.vue'
-import TitleBar from './components/shared/TitleBar.vue'
+import AppFooter from './components/layout/AppFooter.vue'
+import AppNav from './components/layout/AppNav.vue'
+import TitleBar from './components/layout/TitleBar.vue'
 
 export default defineComponent({
   name: 'App',

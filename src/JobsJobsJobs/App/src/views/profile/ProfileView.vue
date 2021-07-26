@@ -36,7 +36,7 @@
 import { computed, defineComponent, ref, Ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import marked from 'marked'
-import LoadData from '../../components/shared/LoadData.vue'
+import LoadData from '../../components/LoadData.vue'
 import { useStore } from '../../store'
 import api, { LogOnSuccess, markedOptions, ProfileForView } from '../../api'
 

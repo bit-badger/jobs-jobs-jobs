@@ -11,10 +11,10 @@ export interface Citizen {
   realName : string | undefined
   /** The URL for the user's Mastodon profile */
   profileUrl : string
-  /** When the user joined Jobs, Jobs, Jobs */
-  joinedOn : number
-  /** When the user last logged in */
-  lastSeenOn : number
+  /** When the user joined Jobs, Jobs, Jobs (date) */
+  joinedOn : string
+  /** When the user last logged in (date) */
+  lastSeenOn : string
 }
 
 /** A continent */
@@ -63,8 +63,8 @@ export interface Profile {
   fullTime : boolean
   /** The citizen's professional biography */
   biography : string
-  /** When the citizen last updated their profile */
-  lastUpdatedOn : number
+  /** When the citizen last updated their profile (date) */
+  lastUpdatedOn : string
   /** The citizen's experience (topical / chronological) */
   experience : string | undefined
   /** Skills this citizen possesses */
