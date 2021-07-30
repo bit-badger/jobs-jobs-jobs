@@ -1,5 +1,5 @@
 import { MarkedOptions } from 'marked'
-import { Citizen, Continent, Count, LogOnSuccess, Profile, ProfileForView } from './types'
+import { Citizen, Continent, Count, LogOnSuccess, Profile, ProfileForView, StoryEntry, Success } from './types'
 
 /**
  * Create a URL that will access the API
@@ -149,6 +149,29 @@ export default {
      */
     delete: async (user : LogOnSuccess) : Promise<string | undefined> =>
       apiAction(await fetch(apiUrl('profile'), reqInit('DELETE', user)), 'deleting profile')
+  },
+
+  /** API functions for success stories */
+  success: {
+
+    /**
+     * Retrieve all success stories
+     *
+     * @param user The currently logged-on user
+     * @returns All success stories (if any exist), undefined (if none exist), or an error
+     */
+    list: async (user : LogOnSuccess) : Promise<StoryEntry[] | string | undefined> =>
+      apiResult<StoryEntry[]>(await fetch(apiUrl('success/list'), reqInit('GET', user)), 'retrieving success stories'),
+
+    /**
+     * Retrieve a success story by its ID
+     *
+     * @param id The success story ID to be retrieved
+     * @param user The currently logged-on user
+     * @returns The success story, or an error
+     */
+    retrieve: async (id : string, user : LogOnSuccess) : Promise<Success | string | undefined> =>
+      apiResult<Success>(await fetch(apiUrl(`success/${id}`), reqInit('GET', user)), `retrieving success story ${id}`)
   }
 }
 

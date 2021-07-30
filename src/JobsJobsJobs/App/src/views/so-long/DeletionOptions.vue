@@ -40,8 +40,8 @@
 <script lang="ts">
 import { defineComponent, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import api, { LogOnSuccess } from '../../api'
-import { useStore } from '../../store'
+import api, { LogOnSuccess } from '@/api'
+import { useStore } from '@/store'
 
 export default defineComponent({
   name: 'DeletionOptions',

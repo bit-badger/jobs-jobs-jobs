@@ -189,6 +189,7 @@ let withReconn (conn : IConnection) =
         | false -> ()))
 
 open JobsJobsJobs.Domain.SharedTypes
+open RethinkDb.Driver.Ast
 
 /// Profile data access functions
 [<RequireQualifiedAccess>]
@@ -432,7 +433,11 @@ module Success =
 
   // Retrieve all success stories  
   let all conn =
-    // TODO: identify query and fields that will make StoryEntry meaningful
     withReconn(conn).ExecuteAsync(fun () ->
         r.Table(Table.Success)
+          .EqJoin("citizenId", r.Table(Table.Citizen))
+          .Without(r.HashMap("right", "id"))
+          .Zip()
+          .Merge(Javascript "function (s) { return { citizenName: s.realName || s.displayName || s.naUser } }")
+          .Pluck("id", "citizenId", "citizenName", "recordedOn", "fromHere", "hasStory")
           .RunResultAsync<StoryEntry list> conn)

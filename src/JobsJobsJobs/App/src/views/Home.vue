@@ -16,7 +16,7 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue'
-import AudioClip from '../components/AudioClip.vue'
+import AudioClip from '@/components/AudioClip.vue'
 
 export default defineComponent({
   name: 'Home',

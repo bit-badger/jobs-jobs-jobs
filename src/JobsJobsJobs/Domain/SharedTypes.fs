@@ -189,7 +189,7 @@ type StoryEntry = {
   /// The name of the citizen who recorded this story
   citizenName : string
   /// When this story was recorded
-  RecordedOn  : Instant
+  recordedOn  : Instant
   /// Whether this story involves an opportunity that arose due to Jobs, Jobs, Jobs
   fromHere    : bool
   /// Whether this report has a further story, or if it is simply a "found work" entry

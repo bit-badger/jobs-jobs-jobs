@@ -4,8 +4,8 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue'
-import { format, parseJSON } from 'date-fns'
-import { utcToZonedTime } from 'date-fns-tz'
+import { format } from 'date-fns'
+import { parseToUtc } from './FullDate.vue'
 
 export default defineComponent({
   name: 'FullDateTime',
@@ -17,10 +17,7 @@ export default defineComponent({
   },
   setup (props) {
     return {
-      formatted: format(
-        utcToZonedTime(
-          parseJSON(props.date), Intl.DateTimeFormat().resolvedOptions().timeZone),
-        'PPPppp')
+      formatted: format(parseToUtc(props.date), 'PPPppp')
     }
   }
 })

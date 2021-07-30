@@ -23,8 +23,8 @@
                 </span>
               </div>
               <div v-else>
-                You do not have an employment profile established; click below (or &ldquo;Edit Profile&rdquo; in the menu)
-                to get started!
+                You do not have an employment profile established; click below (or &ldquo;Edit Profile&rdquo; in the
+                menu) to get started!
               </div>
             </v-card-text>
             <v-card-actions>
@@ -74,11 +74,11 @@
 
 <script lang="ts">
 import { defineComponent, Ref, ref } from 'vue'
-import api, { LogOnSuccess, Profile } from '../../api'
-import { useStore } from '../../store'
-import FullDateTime from '../../components/FullDateTime.vue'
-import LoadData from '../../components/LoadData.vue'
 import { useRouter } from 'vue-router'
+import api, { LogOnSuccess, Profile } from '@/api'
+import { useStore } from '@/store'
+import FullDateTime from '@/components/FullDateTime.vue'
+import LoadData from '@/components/LoadData.vue'
 
 export default defineComponent({
   name: 'Dashboard',

@@ -9,7 +9,7 @@
             <v-col cols="12" sm="10" md="8" lg="6">
               <label for="realName">Real Name</label>
               <input type="text" id="realName" v-model="realName" maxlength="255"
-                    placeholder="Leave blank to use your NAS display name">
+                     placeholder="Leave blank to use your NAS display name">
             </v-col>
           </v-row>
           <v-row>
@@ -34,7 +34,7 @@
             <v-col cols="12" sm="6" md="8">
               <label for="region" class="jjj-required">Region</label>
               <input type="text" id="region" v-model="profile.region" maxlength="255"
-                    placeholder="Country, state, geographic area, etc.">
+                     placeholder="Country, state, geographic area, etc.">
             </v-col>
           </v-row>
           <v-row>
@@ -111,10 +111,10 @@
 <script lang="ts">
 import { computed, defineComponent, Ref, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import api, { LogOnSuccess, Profile } from '../../api'
-import MarkdownEditor from '../../components/MarkdownEditor.vue'
-import LoadData from '../../components/LoadData.vue'
-import { useStore } from '../../store'
+import api, { LogOnSuccess, Profile } from '@/api'
+import MarkdownEditor from '@/components/MarkdownEditor.vue'
+import LoadData from '@/components/LoadData.vue'
+import { useStore } from '@/store'
 
 export default defineComponent({
   name: 'EditProfile',

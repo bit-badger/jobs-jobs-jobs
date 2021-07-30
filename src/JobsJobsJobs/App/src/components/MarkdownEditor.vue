@@ -12,7 +12,7 @@
 <script lang="ts">
 import { computed, defineComponent, ref } from 'vue'
 import marked from 'marked'
-import { markedOptions } from '../api'
+import { markedOptions } from '@/api'
 
 export default defineComponent({
   name: 'MarkdownEditor',

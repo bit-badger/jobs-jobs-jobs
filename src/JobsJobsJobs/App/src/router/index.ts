@@ -9,11 +9,11 @@ const routes: Array<RouteRecordRaw> = [
   // Citizen URLs
   {
     path: '/citizen/authorized',
-    component: () => import(/* webpackChunkName: "logon" */ '../views/citizen/Authorized.vue')
+    component: () => import(/* webpackChunkName: "dashboard" */ '../views/citizen/Authorized.vue')
   },
   {
     path: '/citizen/dashboard',
-    component: () => import(/* webpackChunkName: "logon" */ '../views/citizen/Dashboard.vue')
+    component: () => import(/* webpackChunkName: "dashboard" */ '../views/citizen/Dashboard.vue')
   },
   {
     path: '/citizen/profile',
@@ -48,11 +48,15 @@ const routes: Array<RouteRecordRaw> = [
   // Success Story URLs
   {
     path: '/success-story/list',
-    component: () => import(/* webpackChunkName: "succview" */ '../views/success-story/StoryList.vue')
+    component: () => import(/* webpackChunkName: "success" */ '../views/success-story/StoryList.vue')
   },
   {
     path: '/success-story/add',
     component: () => import(/* webpackChunkName: "succedit" */ '../views/success-story/StoryAdd.vue')
+  },
+  {
+    path: '/success-story/view/:id',
+    component: () => import(/* webpackChunkName: "success" */ '../views/success-story/StoryView.vue')
   }
 ]
 

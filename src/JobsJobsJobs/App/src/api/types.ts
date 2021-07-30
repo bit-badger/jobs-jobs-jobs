@@ -86,3 +86,35 @@ export interface Count {
   /** The count being returned */
   count : number
 }
+
+/** An entry in the list of success stories */
+export interface StoryEntry {
+  /** The ID of this success story */
+  id : string
+  /** The ID of the citizen who recorded this story */
+  citizenId : string
+  /** The name of the citizen who recorded this story */
+  citizenName : string
+  /** When this story was recorded (date) */
+  recordedOn : string
+  /** Whether this story involves an opportunity that arose due to Jobs, Jobs, Jobs */
+  fromHere : boolean
+  /** Whether this report has a further story, or if it is simply a "found work" entry */
+  hasStory : boolean
+}
+
+/** A record of success finding employment */
+export interface Success {
+  /** The ID of the success report */
+  id : string
+  /** The ID of the citizen who wrote this success report */
+  citizenId : string
+  /** When this success report was recorded (date) */
+  recordedOn : string
+  /** Whether the success was due, at least in part, to Jobs, Jobs, Jobs */
+  fromHere : boolean
+  /** The source of this success (listing or profile) */
+  source : string
+  /** The success story */
+  story : string | undefined
+}
