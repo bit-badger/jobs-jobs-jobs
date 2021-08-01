@@ -39,6 +39,8 @@ export default defineComponent({
 
 <style lang="sass">
 // Overall app styles
+html
+  scroll-behavior: smooth
 h3
   font-size: 1.75rem
 h4

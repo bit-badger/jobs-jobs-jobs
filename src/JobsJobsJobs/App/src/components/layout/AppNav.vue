@@ -13,7 +13,7 @@
       <template v-else>
         <router-link to="/"><v-icon icon="mdi-home" /> Home</router-link>
         <router-link to="/profile/seeking"><v-icon icon="mdi-view-list-outline" /> Job Seekers</router-link>
-        <a :href="authUrl"><v-icon icon="mdi-login-variant" /> Log On</a>
+        <router-link to="/citizen/log-on"><v-icon icon="mdi-login-variant" /> Log On</router-link>
       </template>
       <router-link to="/how-it-works"><v-icon icon="mdi-help-circle-outline" /> How It Works</router-link>
     </nav>
@@ -30,18 +30,6 @@ export default defineComponent({
     const store = useStore()
 
     return {
-      /** The authorization URL to which the user should be directed */
-      authUrl: (() => {
-        /** The client ID for Jobs, Jobs, Jobs at No Agenda Social */
-        const id = 'k_06zlMy0N451meL4AqlwMQzs5PYr6g3d2Q_dCT-OjU'
-        const client = `client_id=${id}`
-        const scope = 'scope=read:accounts'
-        const redirect = `redirect_uri=${document.location.origin}/citizen/authorized`
-        const respType = 'response_type=code'
-        // TODO: move NAS base URL to config
-        return `https://noagendasocial.com/oauth/authorize?${client}&${scope}&${redirect}&${respType}`
-      })(),
-
       /** Whether a user is logged in or not */
       isLoggedOn: computed(() => store.state.user !== undefined)
     }

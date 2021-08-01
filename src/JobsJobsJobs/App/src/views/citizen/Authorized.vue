@@ -9,6 +9,7 @@
 import { computed, defineComponent, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useStore } from '@/store'
+import { AFTER_LOG_ON_URL } from '@/router'
 
 export default defineComponent({
   name: 'Authorized',
@@ -21,7 +22,15 @@ export default defineComponent({
       const code = router.currentRoute.value.query.code
       if (code) {
         await store.dispatch('logOn', code)
-        if (store.state.user !== undefined) { router.push('/citizen/dashboard') }
+        if (store.state.user !== undefined) {
+          const afterLogOnUrl = window.localStorage.getItem(AFTER_LOG_ON_URL)
+          if (afterLogOnUrl) {
+            window.localStorage.removeItem(AFTER_LOG_ON_URL)
+            router.push(afterLogOnUrl)
+          } else {
+            router.push('/citizen/dashboard')
+          }
+        }
       } else {
         store.commit('setLogOnState', 'Did not receive a token from No Agenda Social (perhaps you clicked "Cancel"?)')
       }
