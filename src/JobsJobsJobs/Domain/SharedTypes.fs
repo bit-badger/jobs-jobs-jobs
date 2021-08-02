@@ -82,6 +82,7 @@ module ProfileForm =
 
 
 /// The various ways profiles can be searched
+[<CLIMutable>]
 type ProfileSearch = {
   /// Retrieve citizens from this continent
   continentId   : string option
@@ -107,18 +108,18 @@ module ProfileSearch =
 
 /// A user matching the profile search
 type ProfileSearchResult = {
-  // The ID of the citizen
+  /// The ID of the citizen
   citizenId         : CitizenId
-  // The citizen's display name
+  /// The citizen's display name
   displayName       : string
-  // Whether this citizen is currently seeking employment
+  /// Whether this citizen is currently seeking employment
   seekingEmployment : bool
-  // Whether this citizen is looking for remote work
+  /// Whether this citizen is looking for remote work
   remoteWork        : bool
-  // Whether this citizen is looking for full-time work
+  /// Whether this citizen is looking for full-time work
   fullTime          : bool
-  // When this profile was last updated
-  lastUpdated       : Instant
+  /// When this profile was last updated
+  lastUpdatedOn     : Instant
   }
 
 

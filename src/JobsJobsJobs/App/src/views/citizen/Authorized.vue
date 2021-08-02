@@ -1,7 +1,7 @@
 <template>
   <article>
     <page-title title="Logging on..." />
-    <p>{{message}}</p>
+    <p v-html="message"></p>
   </article>
 </template>
 
@@ -32,7 +32,8 @@ export default defineComponent({
           }
         }
       } else {
-        store.commit('setLogOnState', 'Did not receive a token from No Agenda Social (perhaps you clicked "Cancel"?)')
+        store.commit('setLogOnState',
+          'Did not receive a token from No Agenda Social (perhaps you clicked &ldquo;Cancel&rdquo;?)')
       }
     }
 

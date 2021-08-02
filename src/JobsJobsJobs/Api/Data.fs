@@ -237,35 +237,46 @@ module Profile =
       })
   
   /// Search profiles (logged-on users)
-  let search (srch : ProfileSearch) conn = task {
-    let results =
-      seq {
-        match srch.continentId with
-        | Some conId ->
-            yield (fun (q : ReqlExpr) ->
-                q.Filter(r.HashMap(nameof srch.continentId, ContinentId.ofString conId)) :> ReqlExpr)
-        | None -> ()
-        match srch.remoteWork with
-        | "" -> ()
-        | _ -> yield (fun q -> q.Filter(r.HashMap(nameof srch.remoteWork, srch.remoteWork = "yes")) :> ReqlExpr)
-        match srch.skill with
-        | Some skl ->
-            yield (fun q -> q.Filter(ReqlFunction1(fun it ->
-                upcast it.G("skills.description").Downcase().Match(skl.ToLowerInvariant ()))) :> ReqlExpr)
-        | None -> ()
-        match srch.bioExperience with
-        | Some text ->
-            let txt = text.ToLowerInvariant ()
-            yield (fun q -> q.Filter(ReqlFunction1(fun it ->
-                upcast it.G("biography" ).Downcase().Match(txt)
-                   .Or(it.G("experience").Downcase().Match(txt)))) :> ReqlExpr)
-        | None -> ()
-        }
-      |> Seq.toList
-      |> List.fold (fun q f -> f q) (r.Table(Table.Profile) :> ReqlExpr)
-    // TODO: pluck fields, include display name
-    return! results.RunResultAsync<ProfileSearchResult list> conn
-    }
+  let search (srch : ProfileSearch) conn =
+    withReconn(conn).ExecuteAsync(fun () ->
+        (seq {
+          match srch.continentId with
+          | Some conId ->
+              yield (fun (q : ReqlExpr) ->
+                  q.Filter(r.HashMap(nameof srch.continentId, ContinentId.ofString conId)) :> ReqlExpr)
+          | None -> ()
+          match srch.remoteWork with
+          | "" -> ()
+          | _ -> yield (fun q -> q.Filter(r.HashMap(nameof srch.remoteWork, srch.remoteWork = "yes")) :> ReqlExpr)
+          match srch.skill with
+          | Some skl ->
+              yield (fun q -> q.Filter(ReqlFunction1(fun it ->
+                  upcast it.G("skills.description").Downcase().Match(skl.ToLowerInvariant ()))) :> ReqlExpr)
+          | None -> ()
+          match srch.bioExperience with
+          | Some text ->
+              let txt = text.ToLowerInvariant ()
+              yield (fun q -> q.Filter(ReqlFunction1(fun it ->
+                  upcast it.G("biography" ).Downcase().Match(txt)
+                     .Or(it.G("experience").Downcase().Match(txt)))) :> ReqlExpr)
+          | None -> ()
+          }
+        |> Seq.toList
+        |> List.fold
+            (fun q f -> f q)
+            (r.Table(Table.Profile)
+              .EqJoin("id", r.Table(Table.Citizen))
+              .Without(r.HashMap("right", "id"))
+              .Zip() :> ReqlExpr))
+          .Merge(ReqlFunction1(fun it ->
+              upcast r
+                .HashMap("displayName",
+                  r.Branch(it.G("realName"   ).Default_("").Ne(""), it.G("realName"),
+                           it.G("displayName").Default_("").Ne(""), it.G("displayName"),
+                                                                    it.G("naUser")))
+                .With("citizenId", it.G("id"))))
+          .Pluck("citizenId", "displayName", "seekingEmployment", "remoteWork", "fullTime", "lastUpdatedOn")
+          .RunResultAsync<ProfileSearchResult list> conn)
 
   // Search profiles (public)
   let publicSearch (srch : PublicSearch) conn = task {
@@ -438,6 +449,11 @@ module Success =
           .EqJoin("citizenId", r.Table(Table.Citizen))
           .Without(r.HashMap("right", "id"))
           .Zip()
-          .Merge(Javascript "function (s) { return { citizenName: s.realName || s.displayName || s.naUser } }")
+          .Merge(ReqlFunction1(fun it ->
+              upcast r
+                .HashMap("displayName",
+                  r.Branch(it.G("realName"   ).Default_("").Ne(""), it.G("realName"),
+                           it.G("displayName").Default_("").Ne(""), it.G("displayName"),
+                                                                    it.G("naUser")))))
           .Pluck("id", "citizenId", "citizenName", "recordedOn", "fromHere", "hasStory")
           .RunResultAsync<StoryEntry list> conn)

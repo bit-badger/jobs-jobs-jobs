@@ -24,7 +24,7 @@ export default createStore({
   state: () : State => {
     return {
       user: undefined,
-      logOnState: 'Logging you on with No Agenda Social...',
+      logOnState: '<em>Welcome back! Verifying your No Agenda Social account&hellip;</em>',
       continents: []
     }
   },

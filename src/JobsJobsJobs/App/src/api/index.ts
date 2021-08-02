@@ -1,5 +1,16 @@
 import { MarkedOptions } from 'marked'
-import { Citizen, Continent, Count, LogOnSuccess, Profile, ProfileForView, StoryEntry, Success } from './types'
+import {
+  Citizen,
+  Continent,
+  Count,
+  LogOnSuccess,
+  Profile,
+  ProfileForView,
+  ProfileSearch,
+  ProfileSearchResult,
+  StoryEntry,
+  Success
+} from './types'
 
 /**
  * Create a URL that will access the API
@@ -125,6 +136,23 @@ export default {
      */
     retreiveForView: async (id : string, user : LogOnSuccess) : Promise<ProfileForView | string | undefined> =>
       apiResult<ProfileForView>(await fetch(apiUrl(`profile/view/${id}`), reqInit('GET', user)), 'retrieving profile'),
+
+    /**
+     * Search for profiles using the given parameters
+     *
+     * @param query The profile search parameters
+     * @param user The currently logged-on user
+     * @returns The matching profiles (if found), undefined (if API returns 404), or an error string
+     */
+    search: async (query : ProfileSearch, user : LogOnSuccess) : Promise<ProfileSearchResult[] | string | undefined> => {
+      const params = new URLSearchParams()
+      if (query.continentId) params.append('continentId', query.continentId)
+      if (query.skill) params.append('skill', query.skill)
+      if (query.bioExperience) params.append('bioExperience', query.bioExperience)
+      params.append('remoteWork', query.remoteWork)
+      return apiResult<ProfileSearchResult[]>(await fetch(apiUrl(`profile/search?${params.toString()}`),
+        reqInit('GET', user)), 'searching profiles')
+    },
 
     /**
      * Count profiles in the system

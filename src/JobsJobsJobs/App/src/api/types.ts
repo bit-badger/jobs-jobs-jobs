@@ -81,6 +81,34 @@ export interface ProfileForView {
   continent : Continent
 }
 
+/** The various ways profiles can be searched */
+export interface ProfileSearch {
+  /** Retrieve citizens from this continent */
+  continentId : string | undefined
+  /** Text for a search within a citizen's skills */
+  skill : string | undefined
+  /** Text for a search with a citizen's professional biography and experience fields */
+  bioExperience : string | undefined
+  /** Whether to retrieve citizens who do or do not want remote work */
+  remoteWork : string
+}
+
+/** A user matching the profile search */
+export interface ProfileSearchResult {
+  /** The ID of the citizen */
+  citizenId : string
+  /** The citizen's display name */
+  displayName : string
+  /** Whether this citizen is currently seeking employment */
+  seekingEmployment : boolean
+  /** Whether this citizen is looking for remote work */
+  remoteWork : boolean
+  /** Whether this citizen is looking for full-time work */
+  fullTime : boolean
+  /** When this profile was last updated (date) */
+  lastUpdatedOn : string
+}
+
 /** A count */
 export interface Count {
   /** The count being returned */

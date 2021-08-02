@@ -1,17 +1,17 @@
 <template>
   <div v-if="loading">Loading&hellip;</div>
-  <template v-else>
-    <div v-if="errors.length > 0">
-      <p v-for="(error, idx) in errors" :key="idx">{{error}}</p>
-    </div>
-    <slot v-else></slot>
-  </template>
+  <error-list v-else :errors="errors">
+    <slot></slot>
+  </error-list>
 </template>
 
 <script lang="ts">
 import { defineComponent, onMounted, ref } from 'vue'
+import ErrorList from './ErrorList.vue'
+
 export default defineComponent({
   name: 'LoadData',
+  components: { ErrorList },
   props: {
     load: {
       type: Function,
