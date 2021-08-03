@@ -10,6 +10,11 @@
             <option v-for="c in continents" :key="c.id" :value="c.id">{{c.name}}</option>
           </select>
         </v-col>
+        <v-col cols="12" sm="6" md="4" lg="3">
+          <label for="region" class="jjj-label">Region</label>
+          <input type="text" id="region" class="form-control form-control-sm" placeholder="(free-form text)"
+                 :value="criteria.region" @input="updateValue('region', $event.target.value)">
+        </v-col>
         <v-col cols="12" sm="6" offset-md="2" lg="3" offset-lg="0">
           <label class="jjj-label">Seeking Remote Work?</label><br>
           <div class="form-check form-check-inline">
@@ -33,11 +38,6 @@
           <input type="text" id="skillSearch" class="form-control form-control-sm" placeholder="(free-form text)"
                  :value="criteria.skill" @input="updateValue('skill', $event.target.value)">
         </v-col>
-        <v-col cols="12" sm="6" lg="3">
-          <label for="bioSearch" class="jjj-label">Bio / Experience</label>
-          <input type="text" id="bioSearch" class="form-control form-control-sm" placeholder="(free-form text)"
-                 :value="criteria.bioExperience" @input="updateValue('bioExperience', $event.target.value)">
-        </v-col>
       </v-row>
       <v-row>
         <v-col cols="12">
@@ -51,11 +51,11 @@
 
 <script lang="ts">
 import { computed, defineComponent, onMounted } from 'vue'
-import { ProfileSearch } from '@/api'
+import { PublicSearch } from '@/api'
 import { useStore } from '@/store'
 
 export default defineComponent({
-  name: 'ProfileSearchForm',
+  name: 'ProfilePublicSearchForm',
   props: {
     modelValue: {
       type: Object,
@@ -67,7 +67,7 @@ export default defineComponent({
     const store = useStore()
 
     /** The initial search criteria passed; this is what we'll update and emit when data changes */
-    const criteria : ProfileSearch = { ...props.modelValue as ProfileSearch }
+    const criteria : PublicSearch = { ...props.modelValue as PublicSearch }
 
     /** Make sure we have continents */
     onMounted(async () => await store.dispatch('ensureContinents'))

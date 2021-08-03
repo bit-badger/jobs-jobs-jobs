@@ -35,6 +35,16 @@ export default defineComponent({
     TitleBar
   }
 })
+
+/**
+ * Return "Yes" for true and "No" for false
+ *
+ * @param cond The condition to be checked
+ * @returns "Yes" for true, "No" for false
+ */
+export function yesOrNo (cond : boolean) : string {
+  return cond ? 'Yes' : 'No'
+}
 </script>
 
 <style lang="sass">

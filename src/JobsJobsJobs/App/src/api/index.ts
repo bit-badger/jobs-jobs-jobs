@@ -8,6 +8,8 @@ import {
   ProfileForView,
   ProfileSearch,
   ProfileSearchResult,
+  PublicSearch,
+  PublicSearchResult,
   StoryEntry,
   Success
 } from './types'
@@ -112,6 +114,23 @@ export default {
 
   /** API functions for profiles */
   profile: {
+
+    /**
+     * Search for public profile data using the given parameters
+     *
+     * @param query The public profile search parameters
+     * @returns The matching public profiles (if found), undefined (if API returns 404), or an error string
+     */
+    publicSearch: async (query : PublicSearch) : Promise<PublicSearchResult[] | string | undefined> => {
+      const params = new URLSearchParams()
+      if (query.continentId) params.append('continentId', query.continentId)
+      if (query.region) params.append('bioExperience', query.region)
+      if (query.skill) params.append('skill', query.skill)
+      params.append('remoteWork', query.remoteWork)
+      return apiResult<PublicSearchResult[]>(
+        await fetch(apiUrl(`profile/public-search?${params.toString()}`), { method: 'GET' }),
+        'searching public profile data')
+    },
 
     /**
      * Retrieve a profile

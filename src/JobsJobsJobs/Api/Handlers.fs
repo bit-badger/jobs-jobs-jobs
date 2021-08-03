@@ -20,7 +20,6 @@ module Vue =
 module Error =
   
   open System.Threading.Tasks
-  open Microsoft.Extensions.Logging
 
   /// Handler that will return a status code 404 and the text "Not Found"
   let notFound : HttpHandler =
@@ -49,7 +48,6 @@ module Helpers =
 
   open NodaTime
   open Microsoft.Extensions.Configuration
-  open Microsoft.Extensions.Logging
   open RethinkDb.Driver.Net
   open System.Security.Claims
 

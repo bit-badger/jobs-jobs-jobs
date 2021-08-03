@@ -42,9 +42,11 @@
 </template>
 
 <script lang="ts">
-import { computed, defineComponent, Ref, ref, watch } from 'vue'
+import { defineComponent, Ref, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { yesOrNo } from '@/App.vue'
 import api, { LogOnSuccess, ProfileSearch, ProfileSearchResult } from '@/api'
+import { queryValue } from '@/router'
 import { useStore } from '@/store'
 
 import CollapsePanel from '@/components/CollapsePanel.vue'
@@ -88,25 +90,17 @@ export default defineComponent({
     /** The current search results */
     const results : Ref<ProfileSearchResult[]> = ref([])
 
-    /** Return "Yes" for true and "No" for false */
-    const yesOrNo = (cond : boolean) => cond ? 'Yes' : 'No'
-
-    /** Get a value from the query string */
-    const queryValue = (key : string) : string | undefined => {
-      const value = route.query[key]
-      if (value) return Array.isArray(value) && value.length > 0 ? value[0]?.toString() : value.toString()
-    }
-
+    /** Set up the page to match its requested state */
     const setUpPage = async () => {
-      if (queryValue('searched') === 'true') {
+      if (queryValue(route, 'searched') === 'true') {
         searched.value = true
         try {
           searching.value = true
-          const searchParams : ProfileSearch = { // eslint-disable-line
-            continentId: queryValue('continentId'),
-            skill: queryValue('skill'),
-            bioExperience: queryValue('bioExperience'),
-            remoteWork: queryValue('remoteWork') || ''
+          const searchParams : ProfileSearch = {
+            continentId: queryValue(route, 'continentId'),
+            skill: queryValue(route, 'skill'),
+            bioExperience: queryValue(route, 'bioExperience'),
+            remoteWork: queryValue(route, 'remoteWork') || ''
           }
           const searchResult = await api.profile.search(searchParams, store.state.user as LogOnSuccess)
           if (typeof searchResult === 'string') {
@@ -124,6 +118,7 @@ export default defineComponent({
         searched.value = false
         criteria.value = emptyCriteria
         errors.value = []
+        results.value = []
       }
     }
 
@@ -135,9 +130,8 @@ export default defineComponent({
       doSearch: () => router.push({ query: { searched: 'true', ...criteria.value } }),
       searching,
       searched,
-      yesOrNo,
       results,
-      continents: computed(() => store.state.continents)
+      yesOrNo
     }
   }
 })

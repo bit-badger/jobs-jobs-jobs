@@ -279,34 +279,46 @@ module Profile =
           .RunResultAsync<ProfileSearchResult list> conn)
 
   // Search profiles (public)
-  let publicSearch (srch : PublicSearch) conn = task {
-    let results =
-      seq {
-        match srch.continentId with
-        | Some conId ->
-            yield (fun (q : ReqlExpr) ->
-                q.Filter(r.HashMap(nameof srch.continentId, ContinentId.ofString conId)) :> ReqlExpr)
-        | None -> ()
-        match srch.region with
-        | Some reg ->
-            yield (fun q ->
-                q.Filter(ReqlFunction1(fun it ->
-                    upcast it.G("region").Downcase().Match(reg.ToLowerInvariant ()))) :> ReqlExpr)
-        | None -> ()
-        match srch.remoteWork with
-        | "" -> ()
-        | _ -> yield (fun q -> q.Filter(r.HashMap(nameof srch.remoteWork, srch.remoteWork = "yes")) :> ReqlExpr)
-        match srch.skill with
-        | Some skl ->
-            yield (fun q -> q.Filter(ReqlFunction1(fun it ->
-                upcast it.G("skills.description").Downcase().Match(skl.ToLowerInvariant ()))) :> ReqlExpr)
-        | None -> ()
-        }
-      |> Seq.toList
-      |> List.fold (fun q f -> f q) (r.Table(Table.Profile) :> ReqlExpr)
-    // TODO: pluck fields, compile skills
-    return! results.RunResultAsync<PublicSearchResult list> conn
-    }
+  let publicSearch (srch : PublicSearch) conn =
+    withReconn(conn).ExecuteAsync(fun () ->
+        (seq {
+          match srch.continentId with
+          | Some conId ->
+              yield (fun (q : ReqlExpr) ->
+                  q.Filter(r.HashMap(nameof srch.continentId, ContinentId.ofString conId)) :> ReqlExpr)
+          | None -> ()
+          match srch.region with
+          | Some reg ->
+              yield (fun q ->
+                  q.Filter(ReqlFunction1(fun it ->
+                      upcast it.G("region").Downcase().Match(reg.ToLowerInvariant ()))) :> ReqlExpr)
+          | None -> ()
+          match srch.remoteWork with
+          | "" -> ()
+          | _ -> yield (fun q -> q.Filter(r.HashMap(nameof srch.remoteWork, srch.remoteWork = "yes")) :> ReqlExpr)
+          match srch.skill with
+          | Some skl ->
+              yield (fun q -> q.Filter(ReqlFunction1(fun it ->
+                  upcast it.G("skills.description").Downcase().Match(skl.ToLowerInvariant ()))) :> ReqlExpr)
+          | None -> ()
+          }
+        |> Seq.toList
+        |> List.fold
+            (fun q f -> f q)
+            (r.Table(Table.Profile)
+              .EqJoin("continentId", r.Table(Table.Continent))
+              .Without(r.HashMap("right", "id"))
+              .Zip()
+              .Filter(r.HashMap("isPublic", true)) :> ReqlExpr))
+          .Merge(ReqlFunction1(fun it ->
+              upcast r
+                .HashMap("skills", 
+                  it.G("skills").Map(ReqlFunction1(fun skill ->
+                    upcast r.Branch(skill.G("notes").Default_("").Eq(""), skill.G("description"),
+                                    sprintf "%O (%O)" (skill.G("description")) (skill.G("notes"))))))
+                .With("continent", it.G("name"))))
+          .Pluck("continent", "region", "skills", "remoteWork")
+          .RunResultAsync<PublicSearchResult list> conn)
 
 
 /// Citizen data access functions

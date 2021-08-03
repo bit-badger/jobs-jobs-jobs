@@ -135,6 +135,7 @@ type ProfileForView = {
 
 
 /// The parameters for a public job search
+[<CLIMutable>]
 type PublicSearch = {
   /// Retrieve citizens from this continent
   continentId : string option

@@ -13,6 +13,18 @@ import LogOn from '@/views/citizen/LogOn.vue'
 /** The URL to which the user should be pointed once they have authorized with NAS */
 export const AFTER_LOG_ON_URL = 'jjj-after-log-on-url'
 
+/**
+ * Get a value from the query string
+ *
+ * @param route The current route
+ * @param key The key of the query string value to obtain
+ * @returns The string value, the first of many (if included multiple times), or `undefined` if not present
+ */
+export function queryValue (route: RouteLocationNormalizedLoaded, key : string) : string | undefined {
+  const value = route.query[key]
+  if (value) return Array.isArray(value) && value.length > 0 ? value[0]?.toString() : value.toString()
+}
+
 const routes: Array<RouteRecordRaw> = [
   {
     path: '/',

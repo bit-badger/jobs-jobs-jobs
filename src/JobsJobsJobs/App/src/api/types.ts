@@ -25,6 +25,12 @@ export interface Continent {
   name : string
 }
 
+/** A count */
+export interface Count {
+  /** The count being returned */
+  count : number
+}
+
 /** A successful logon */
 export interface LogOnSuccess {
   /** The JSON Web Token (JWT) to use for API access */
@@ -109,10 +115,28 @@ export interface ProfileSearchResult {
   lastUpdatedOn : string
 }
 
-/** A count */
-export interface Count {
-  /** The count being returned */
-  count : number
+/** The parameters for a public job search */
+export interface PublicSearch {
+  /** Retrieve citizens from this continent */
+  continentId : string | undefined
+  /** Retrieve citizens from this region */
+  region : string | undefined
+  /** Text for a search within a citizen's skills */
+  skill : string | undefined
+  /** Whether to retrieve citizens who do or do not want remote work */
+  remoteWork : string
+}
+
+/** A public profile search result */
+export interface PublicSearchResult {
+  /** The name of the continent on which the citizen resides */
+  continent : string
+  /** The region in which the citizen resides */
+  region : string
+  /** Whether this citizen is seeking remote work */
+  remoteWork : boolean
+  /** The skills this citizen has identified */
+  skills : string[]
 }
 
 /** An entry in the list of success stories */
