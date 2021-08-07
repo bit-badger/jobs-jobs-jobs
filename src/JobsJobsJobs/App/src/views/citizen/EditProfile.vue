@@ -8,7 +8,7 @@
           <v-row>
             <v-col cols="12" sm="10" md="8" lg="6">
               <label for="realName">Real Name</label>
-              <input type="text" id="realName" v-model="realName" maxlength="255"
+              <input type="text" id="realName" v-model="profile.realName" maxlength="255"
                      placeholder="Leave blank to use your NAS display name">
             </v-col>
           </v-row>
@@ -60,12 +60,10 @@
           <hr>
           <h4>
             Skills &nbsp;
-            <button type="button" class="btn btn-outline-primary" @onclick="AddNewSkill">Add a Skill</button>
+            <v-btn color="primary" variant="outlined" @click="addSkill">Add a Skill</v-btn>
           </h4>
-          @foreach (var skill in ProfileForm.Skills)
-          {
-            [SkillEdit Skill=@skill OnRemove=@RemoveSkill /]
-          }
+          <profile-skill-edit v-for="(skill, idx) in profile.skills" :key="skill.id" v-model="profile.skills[idx]"
+                              @remove="removeSkill(skill.id)" />
           <hr>
           <h4>Experience</h4>
           <p>
@@ -111,16 +109,19 @@
 <script lang="ts">
 import { computed, defineComponent, Ref, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import api, { LogOnSuccess, Profile } from '@/api'
+import api, { Citizen, LogOnSuccess, Profile, ProfileForm } from '@/api'
+import { useStore } from '@/store'
+
 import MarkdownEditor from '@/components/MarkdownEditor.vue'
 import LoadData from '@/components/LoadData.vue'
-import { useStore } from '@/store'
+import ProfileSkillEdit from '@/components/profile/SkillEdit.vue'
 
 export default defineComponent({
   name: 'EditProfile',
   components: {
     LoadData,
-    MarkdownEditor
+    MarkdownEditor,
+    ProfileSkillEdit
   },
   setup () {
     const store = useStore()
@@ -132,11 +133,23 @@ export default defineComponent({
     /** Whether this is a new profile */
     const isNew = ref(false)
 
-    /** The user's current profile */
-    const profile : Ref<Profile | undefined> = ref(undefined)
+    /** The starting values for a new employment profile */
+    const newProfile : Profile = {
+      id: user.citizenId,
+      seekingEmployment: false,
+      isPublic: false,
+      continentId: '',
+      region: '',
+      remoteWork: false,
+      fullTime: false,
+      biography: '',
+      lastUpdatedOn: '',
+      experience: undefined,
+      skills: []
+    }
 
-    /** The user's real name */
-    const realName : Ref<string | undefined> = ref(undefined)
+    /** The user's current profile (plus a few items, adapted for editing) */
+    const profile : Ref<ProfileForm | undefined> = ref(undefined)
 
     /** Retrieve the user's profile and their real name */
     const retrieveData = async (errors : string[]) => {
@@ -146,16 +159,43 @@ export default defineComponent({
         errors.push(profileResult)
       } else if (typeof profileResult === 'undefined') {
         isNew.value = true
-      } else {
-        profile.value = profileResult
-        // console.info(JSON.stringify(profile))
       }
       const nameResult = await api.citizen.retrieve(user.citizenId, user)
       if (typeof nameResult === 'string') {
         errors.push(nameResult)
-      } else if (typeof nameResult !== 'undefined') {
-        realName.value = nameResult.realName || ''
       }
+      if (errors.length > 0) return
+      const p = isNew.value ? newProfile : profileResult as Profile
+      profile.value = {
+        isSeekingEmployment: p.seekingEmployment,
+        isPublic: p.isPublic,
+        continentId: p.continentId,
+        region: p.region,
+        remoteWork: p.remoteWork,
+        fullTime: p.fullTime,
+        biography: p.biography,
+        experience: p.experience,
+        skills: p.skills,
+        realName: typeof nameResult !== 'undefined' ? (nameResult as Citizen).realName || '' : ''
+      }
+    }
+
+    /** The ID for new skills */
+    let newSkillId = 0
+
+    /** Add a skill to the profile */
+    const addSkill = () => {
+      const form = profile.value as ProfileForm
+      form.skills.push({ id: `new${newSkillId}`, description: '', notes: undefined })
+      newSkillId++
+      profile.value = form
+    }
+
+    /** Remove the given skill from the profile */
+    const removeSkill = (skillId : string) => {
+      const form = profile.value as ProfileForm
+      form.skills = form.skills.filter(s => s.id !== skillId)
+      profile.value = form
     }
 
     return {
@@ -163,8 +203,9 @@ export default defineComponent({
       user,
       isNew,
       profile,
-      realName,
       continents: computed(() => store.state.continents),
+      addSkill,
+      removeSkill,
       viewProfile: () => router.push(`/profile/view/${user.citizenId}`)
     }
   }

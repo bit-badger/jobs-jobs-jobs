@@ -77,6 +77,30 @@ export interface Profile {
   skills : Skill[]
 }
 
+/** The data required to update a profile */
+export interface ProfileForm {
+  /** Whether the citizen to whom this profile belongs is actively seeking employment */
+  isSeekingEmployment : boolean
+  /** Whether this profile should appear in the public search */
+  isPublic : boolean
+  /** The user's real name */
+  realName : string
+  /** The ID of the continent on which the citizen is located */
+  continentId : string
+  /** The area within that continent where the citizen is located */
+  region : string
+  /** If the citizen is available for remote work */
+  remoteWork : boolean
+  /** If the citizen is seeking full-time employment */
+  fullTime : boolean
+  /** The user's professional biography */
+  biography : string
+  /** The user's past experience */
+  experience : string | undefined
+  /** The skills for the user */
+  skills : Skill[]
+}
+
 /** The data required to show a viewable profile */
 export interface ProfileForView {
   /** The profile itself */
