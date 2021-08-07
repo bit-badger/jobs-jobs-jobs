@@ -1,14 +1,16 @@
 <template>
   <article class="container">
     <page-title title="Dashboard" />
-    <h3>Welcome, {{user.name}}</h3>
+    <h3 class="pb-4">Welcome, {{user.name}}</h3>
     <load-data :load="retrieveData">
       <div class="row row-cols-1 row-cols-md-2">
         <div class="col">
           <div class="card h-100">
             <h5 class="card-header">Your Profile</h5>
             <div class="card-body">
-              <h6 class="card-subtitle mb-3 text-muted">Last updated <full-date :date="profile.lastUpdatedOn" /></h6>
+              <h6 class="card-subtitle mb-3 text-muted fst-italic">
+                Last updated <full-date :date="profile.lastUpdatedOn" />
+              </h6>
               <p v-if="profile" class="card-text">
                 Your profile currently lists {{profile.skills.length}}
                 skill<template v-if="profile.skills.length !== 1">s</template>.
@@ -36,7 +38,7 @@
           <div class="card h-100">
             <h5 class="card-header">Other Citizens</h5>
             <div class="card-body">
-              <h6 class="card-subtitle mb-3 text-muted">
+              <h6 class="card-subtitle mb-3 text-muted fst-italic">
                 <template v-if="profileCount === 0">No</template><template v-else>{{profileCount}} Total</template>
                 Employment Profile<template v-if="profileCount !== 1">s</template>
               </h6>

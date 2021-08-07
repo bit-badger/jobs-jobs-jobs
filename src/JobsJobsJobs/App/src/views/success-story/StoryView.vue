@@ -3,8 +3,8 @@
   <page-title title="Success Story" />
     <load-data :load="retrieveStory">
       <h3>{{citizenName}}&rsquo;s Success Story</h3>
-      <h4><full-date-time :date="story.recordedOn" /></h4>
-      <p v-if="story.fromHere"><em><strong>Found via Jobs, Jobs, Jobs</strong></em></p>
+      <h4 class="text-muted"><full-date-time :date="story.recordedOn" /></h4>
+      <p v-if="story.fromHere" class="fst-italic"><strong>Found via Jobs, Jobs, Jobs</strong></p>
       <hr>
       <div v-if="story.story" v-html="successStory"></div>
     </load-data>

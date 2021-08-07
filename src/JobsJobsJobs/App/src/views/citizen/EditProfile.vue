@@ -111,8 +111,8 @@ import { useRouter } from 'vue-router'
 import api, { Citizen, LogOnSuccess, Profile, ProfileForm } from '@/api'
 import { useStore } from '@/store'
 
-import MarkdownEditor from '@/components/MarkdownEditor.vue'
 import LoadData from '@/components/LoadData.vue'
+import MarkdownEditor from '@/components/MarkdownEditor.vue'
 import ProfileSkillEdit from '@/components/profile/SkillEdit.vue'
 
 export default defineComponent({
@@ -197,6 +197,11 @@ export default defineComponent({
       profile.value = form
     }
 
+    /** Save the current profile values */
+    const saveProfile = async () => {
+      // TODO
+    }
+
     return {
       retrieveData,
       user,
@@ -205,6 +210,7 @@ export default defineComponent({
       continents: computed(() => store.state.continents),
       addSkill,
       removeSkill,
+      saveProfile,
       viewProfile: () => router.push(`/profile/view/${user.citizenId}`)
     }
   }

@@ -9,14 +9,19 @@
             <component :is="Component" />
           </transition>
         </router-view>
+        <button @click.prevent="showToast('howdy', 'danger')">Show toast</button>
       </main>
       <app-footer />
+      <div aria-live="polite" aria-atomic="true">
+        <div class="toast-container position-absolute p-3 bottom-0 start-50 translate-middle-x" id="toasts"></div>
+      </div>
     </div>
   </div>
 </template>
 
 <script lang="ts">
 import { defineComponent } from 'vue'
+import { Toast } from 'bootstrap'
 import AppFooter from './components/layout/AppFooter.vue'
 import AppNav from './components/layout/AppNav.vue'
 import TitleBar from './components/layout/TitleBar.vue'
@@ -30,6 +35,11 @@ export default defineComponent({
     AppFooter,
     AppNav,
     TitleBar
+  },
+  setup () {
+    return {
+      showToast
+    }
   }
 })
 
@@ -41,6 +51,33 @@ export default defineComponent({
  */
 export function yesOrNo (cond : boolean) : string {
   return cond ? 'Yes' : 'No'
+}
+
+/**
+ * Show a toast notification
+ *
+ * @param text The text of the notification
+ * @param type The type of notification to show (defaults to 'success')
+ * @param heading The optional text to use for the heading
+ */
+export function showToast (text : string, type = 'success', heading : string | undefined) : void {
+  let header : HTMLDivElement | undefined
+  if (heading) {
+    header = document.createElement('div')
+    header.className = 'toast-header'
+    header.innerHTML = 'The Header'
+  }
+  const body = document.createElement('div')
+  body.className = 'toast-body'
+  body.innerHTML = text
+
+  const toast = document.createElement('div')
+  if (header) toast.appendChild(header)
+  toast.appendChild(body)
+  toast.className = `toast bg-${type} text-white`
+
+  ;(document.getElementById('toasts') as HTMLDivElement).appendChild(toast)
+  new Toast(toast).show()
 }
 </script>
 
