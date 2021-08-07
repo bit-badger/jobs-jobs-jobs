@@ -3,8 +3,6 @@
     <page-title title="Account Deletion Options" />
     <h3>Account Deletion Options</h3>
 
-    <p v-if="error !== ''">{{error}}</p>
-
     <h4>Option 1 &ndash; Delete Your Profile</h4>
     <p>
       Utilizing this option will remove your current employment profile and skills. This will preserve any success
@@ -38,9 +36,10 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from 'vue'
+import { defineComponent } from 'vue'
 import { useRouter } from 'vue-router'
 import api, { LogOnSuccess } from '@/api'
+import { toastError, toastSuccess } from '@/components/layout/AppToaster.vue'
 import { useStore } from '@/store'
 
 export default defineComponent({
@@ -49,16 +48,13 @@ export default defineComponent({
     const store = useStore()
     const router = useRouter()
 
-    /** Error message encountered during actions */
-    const error = ref('')
-
     /** Delete the profile only; redirect to home page on success */
     const deleteProfile = async () => {
       const resp = await api.profile.delete(store.state.user as LogOnSuccess)
       if (typeof resp === 'string') {
-        error.value = resp
+        toastError(resp, 'Deleting Profile')
       } else {
-        // TODO: notify
+        toastSuccess('Profile Deleted Successfully')
         router.push('/citizen/dashboard')
       }
     }
@@ -67,16 +63,15 @@ export default defineComponent({
     const deleteAccount = async () => {
       const resp = await api.citizen.delete(store.state.user as LogOnSuccess)
       if (typeof resp === 'string') {
-        error.value = resp
+        toastError(resp, 'Deleting Account')
       } else {
         store.commit('clearUser')
-        // TODO: notify
+        toastSuccess('Account Deleted Successfully')
         router.push('/so-long/success')
       }
     }
 
     return {
-      error,
       deleteProfile,
       deleteAccount
     }

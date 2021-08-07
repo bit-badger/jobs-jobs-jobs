@@ -9,6 +9,7 @@
 <script lang="ts">
 import { defineComponent, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { toastSuccess } from '@/components/layout/AppToaster.vue'
 import { useStore } from '@/store'
 
 export default defineComponent({
@@ -19,8 +20,8 @@ export default defineComponent({
 
     onMounted(() => {
       store.commit('clearUser')
+      toastSuccess('Log Off Successful &nbsp; | &nbsp; <strong>Have a Nice Day!</strong>')
       router.push('/')
-      // TODO: toast
     })
 
     return { }
