@@ -1,12 +1,19 @@
 <template>
-  <nav class="nav nav-pills">
-    <v-btn rounded="pill" :color="sourceColor" @click="showMarkdown">Markdown</v-btn> &nbsp;
-    <v-btn rounded="pill" :color="previewColor" @click="showPreview">Preview</v-btn>
-  </nav>
-  <section v-if="preview" class="preview" v-html="previewHtml">
-  </section>
-  <textarea v-else :id="id" class="form-control" rows="10" v-text="text"
-            @input="$emit('update:text', $event.target.value)"></textarea>
+  <div class="row pb-3">
+    <div class="col col-xs-12">
+      <nav class="nav nav-pills pb-1">
+        <button :class="sourceClass" @click.prevent="showMarkdown">Markdown</button> &nbsp;
+        <button :class="previewClass" @click.prevent="showPreview">Preview</button>
+      </nav>
+      <section v-if="preview" class="preview" v-html="previewHtml">
+      </section>
+      <div v-else class="form-floating">
+        <textarea :id="id" class="form-control md-edit" rows="10" v-text="text"
+                  @input="$emit('update:text', $event.target.value)"></textarea>
+        <label :for="id">{{label}}</label>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script lang="ts">
@@ -22,6 +29,10 @@ export default defineComponent({
       required: true
     },
     text: {
+      type: String,
+      required: true
+    },
+    label: {
       type: String,
       required: true
     }
@@ -45,19 +56,28 @@ export default defineComponent({
       preview.value = true
     }
 
+    /** Button classes for the selected button */
+    const selected = 'btn btn-primary btn-sm rounded-pill'
+
+    /** Button classes for the unselected button */
+    const unselected = 'btn btn-outline-secondary btn-sm rounded-pill'
+
     return {
       preview,
       previewHtml,
       showMarkdown,
       showPreview,
-      sourceColor: computed(() => preview.value ? '' : 'primary'),
-      previewColor: computed(() => preview.value ? 'primary' : '')
+      sourceClass: computed(() => preview.value ? unselected : selected),
+      previewClass: computed(() => preview.value ? selected : unselected)
     }
   }
 })
 </script>
 
 <style lang="sass" scoped>
-textarea
+.md-edit
   width: 100%
+  // When wrapping this with Bootstrap's floating label, it shrinks the input down to what a normal one-line input
+  // would be; this overrides that for the textarea in this component specifically
+  height: inherit !important
 </style>

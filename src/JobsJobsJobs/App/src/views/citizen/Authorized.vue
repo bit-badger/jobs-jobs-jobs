@@ -1,6 +1,7 @@
 <template>
   <article>
     <page-title title="Logging on..." />
+    <p>&nbsp;</p>
     <p v-html="message"></p>
   </article>
 </template>

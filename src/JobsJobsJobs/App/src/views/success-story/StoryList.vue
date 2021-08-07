@@ -39,14 +39,15 @@
 import { defineComponent, ref, Ref } from 'vue'
 import api, { LogOnSuccess, StoryEntry } from '@/api'
 import { useStore } from '@/store'
+
 import FullDate from '@/components/FullDate.vue'
 import LoadData from '@/components/LoadData.vue'
 
 export default defineComponent({
   name: 'StoryList',
   components: {
-    LoadData,
-    FullDate
+    FullDate,
+    LoadData
   },
   setup () {
     const store = useStore()

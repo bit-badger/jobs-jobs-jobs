@@ -1,5 +1,8 @@
 <template>
-  <p><em>Sending you over to No Agenda Social to log on; see you back in just a second&hellip;</em></p>
+  <article>
+    <p>&nbsp;</p>
+    <p class="fst-italic">Sending you over to No Agenda Social to log on; see you back in just a second&hellip;</p>
+  </article>
 </template>
 
 <script lang="ts">

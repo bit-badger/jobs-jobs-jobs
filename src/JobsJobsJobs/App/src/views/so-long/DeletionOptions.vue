@@ -12,7 +12,7 @@
       use if you want to clear out your profile and start again (and remove the current one from others&rsquo; view).
     </p>
     <p class="text-center">
-      <v-btn color="error" @click="deleteProfile">Delete Your Profile</v-btn>
+      <button class="btn btn-danger" @click.prevent="deleteProfile">Delete Your Profile</button>
     </p>
 
     <hr>
@@ -32,7 +32,7 @@
       </em>
     </p>
     <p class="text-center">
-      <v-btn color="error" @click="deleteAccount">Delete Your Entire Account</v-btn>
+      <button class="btn btn-danger" @click.prevent="deleteAccount">Delete Your Entire Account</button>
     </p>
   </article>
 </template>

@@ -1,6 +1,7 @@
 <template>
   <article>
     <page-title title="Welcome!" />
+    <p>&nbsp;</p>
     <p>
       Welcome to Jobs, Jobs, Jobs (AKA No Agenda Careers), where citizens of Gitmo Nation can assist one another in
       finding employment. This will enable them to continue providing value-for-value to Adam and John, as they continue

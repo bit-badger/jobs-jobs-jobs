@@ -1,16 +1,12 @@
 <template>
-  <v-card>
-    <v-card-header>
-      <v-card-header-text>
-        <v-card-title>
+  <div class="card">
+    <div class="card-body">
+      <h6 class="card-title">
           <a href="#" :class="{ 'cp-c': isCollapsed, 'cp-o': !isCollapsed }" @click.prevent="toggle">{{headerText}}</a>
-        </v-card-title>
-      </v-card-header-text>
-    </v-card-header>
-    <v-card-text v-if="!isCollapsed">
-      <slot></slot>
-    </v-card-text>
-  </v-card>
+      </h6>
+      <slot v-if="!isCollapsed"></slot>
+    </div>
+  </div>
 </template>
 
 <script lang="ts">

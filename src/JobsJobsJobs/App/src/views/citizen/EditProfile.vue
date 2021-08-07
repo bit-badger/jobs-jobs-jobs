@@ -4,104 +4,103 @@
     <h3>Employment Profile</h3>
     <load-data :load="retrieveData">
       <form>
-        <v-container>
-          <v-row>
-            <v-col cols="12" sm="10" md="8" lg="6">
-              <label for="realName">Real Name</label>
-              <input type="text" id="realName" v-model="profile.realName" maxlength="255"
+        <div class="row pb-3">
+          <div class="col col-xs-12 col-sm-10 col-md-8 col-lg-6">
+            <div class="form-floating">
+              <input type="text" id="realName" class="form-control" v-model="profile.realName" maxlength="255"
                      placeholder="Leave blank to use your NAS display name">
-            </v-col>
-          </v-row>
-          <v-row>
-            <v-col>
-              <label>
-                <input type="checkbox" v-model="profile.seekingEmployment">
-                I am currently seeking employment
-              </label>
-              <em v-if="profile?.seekingEmployment">&nbsp; &nbsp; If you have found employment, consider
-                <router-link to="/success-story/add">telling your fellow citizens about it</router-link>
-              </em>
-            </v-col>
-          </v-row>
-          <v-row>
-            <v-col cols="12" sm="6" md="4">
-              <label for="continentId" class="jjj-required">Continent</label>
-              <select id="continentId">
-                <option v-for="c in continents" :key="c.id" :value="c.id"
-                        :selected="c.id === profile?.continentId ? 'selected' : null">{{c.name}}</option>
+              <label for="realName">Real Name</label>
+            </div>
+            <div class="form-text">Leave blank to use your NAS display name</div>
+          </div>
+        </div>
+        <div class="row pb-3">
+          <div class="col col-xs-12">
+            <div class="form-check">
+              <input type="checkbox" class="form-check-input" v-model="profile.seekingEmployment">
+              <label class="form-check-label">I am currently seeking employment</label>
+            </div>
+            <p v-if="profile?.seekingEmployment">
+              <em>If you have found employment, consider <router-link to="/success-story/add">telling your fellow
+              citizens about it!</router-link></em>
+            </p>
+          </div>
+        </div>
+        <div class="row pb-3">
+          <div class="col col-xs-12 col-sm-6 col-md-4">
+            <div class="form-floating">
+              <select id="continentId" class="form-select" :value="profile.continentId">
+                <option v-for="c in continents" :key="c.id" :value="c.id">{{c.name}}</option>
               </select>
-            </v-col>
-            <v-col cols="12" sm="6" md="8">
-              <label for="region" class="jjj-required">Region</label>
-              <input type="text" id="region" v-model="profile.region" maxlength="255"
+              <label for="continentId" class="jjj-required">Continent</label>
+            </div>
+          </div>
+          <div class="col col-xs-12 col-sm-6 col-md-8">
+            <div class="form-floating">
+              <input type="text" id="region" class="form-control" v-model="profile.region" maxlength="255"
                      placeholder="Country, state, geographic area, etc.">
-            </v-col>
-          </v-row>
-          <v-row>
-            <v-col>
-              <label for="bio" class="jjj-required">Professional Biography</label>
-              <markdown-editor id="bio" v-model:text="profile.biography" />
-            </v-col>
-          </v-row>
-          <v-row>
-            <v-col cols="12" sm="12" offset-md="2" md="4">
-              <label>
-                <input type="checkbox" v-model="profile.remoteWork">
-                I am looking for remote work
-              </label>
-            </v-col>
-            <v-col cols="12" sm="12" md="4">
-              <label>
-                <input type="checkbox" v-model="profile.fullTime">
-                I am looking for full-time work
-              </label>
-            </v-col>
-          </v-row>
-          <hr>
-          <h4>
-            Skills &nbsp;
-            <v-btn color="primary" variant="outlined" @click="addSkill">Add a Skill</v-btn>
-          </h4>
-          <profile-skill-edit v-for="(skill, idx) in profile.skills" :key="skill.id" v-model="profile.skills[idx]"
-                              @remove="removeSkill(skill.id)" />
-          <hr>
-          <h4>Experience</h4>
-          <p>
-            This application does not have a place to individually list your chronological job history; however, you can
-            use this area to list prior jobs, their dates, and anything else you want to include that&rsquo;s not
-            already a part of your Professional Biography above.
-          </p>
-          <v-row>
-            <v-col>
-              <markdown-editor id="experience" v-model:text="profile.experience" />
-            </v-col>
-          </v-row>
-          <v-row>
-            <v-col>
-              <label>
-                <input type="checkbox" v-model="profile.isPublic">
+              <label for="region" class="jjj-required">Region</label>
+            </div>
+            <div class="form-text">Country, state, geographic area, etc.</div>
+          </div>
+        </div>
+        <markdown-editor id="bio" label="Professional Biography" v-model:text="profile.biography" />
+        <div class="row pb-3">
+          <div class="col col-xs-12 col-offset-md-2 col-md-4">
+            <div class="form-check">
+              <input type="checkbox" id="isRemote" class="form-check-input" v-model="profile.remoteWork">
+              <label class="form-check-label" for="isRemote">I am looking for remote work</label>
+            </div>
+          </div>
+          <div class="col col-xs-12 col-md-4">
+            <div class="form-check">
+              <input type="checkbox" id="isFullTime" class="form-check-input" v-model="profile.fullTime">
+              <label class="form-check-label" for="isFullTime">I am looking for full-time work</label>
+            </div>
+          </div>
+        </div>
+        <hr>
+        <h4 class="pb-2">
+          Skills &nbsp;
+          <button class="btn btn-sm btn-outline-primary rounded-pill" @click.prevent="addSkill">Add a Skill</button>
+        </h4>
+        <profile-skill-edit v-for="(skill, idx) in profile.skills" :key="skill.id" v-model="profile.skills[idx]"
+                            @remove="removeSkill(skill.id)" />
+        <hr>
+        <h4>Experience</h4>
+        <p>
+          This application does not have a place to individually list your chronological job history; however, you can
+          use this area to list prior jobs, their dates, and anything else you want to include that&rsquo;s not
+          already a part of your Professional Biography above.
+        </p>
+        <markdown-editor id="experience" label="Experience" v-model:text="profile.experience" />
+        <div class="row pb-3">
+          <div class="col col-xs-12">
+            <div class="form-check">
+              <input type="checkbox" id="isPublic" class="form-check-input" v-model="profile.isPublic">
+              <label class="form-check-label" for="isPublic">
                 Allow my profile to be searched publicly (outside NA Social)
               </label>
-            </v-col>
-          </v-row>
-          <v-row>
-            <v-col>
-              <br>
-              <v-btn text color="primary">Save</v-btn>
-            </v-col>
-          </v-row>
-        </v-container>
+            </div>
+          </div>
+        </div>
+        <div class="row pt-3">
+          <div class="col col-xs-12">
+            <button class="btn btn-primary">Save</button>
+            <template v-if="!isNew">
+              &nbsp; &nbsp;
+              <button class="btn btn-outline-secondary" @click.prevent="viewProfile">
+                <icon icon="file-account-outline" />&nbsp; View Your User Profile
+              </button>
+            </template>
+          </div>
+        </div>
       </form>
-      <p v-if="!isNew">
-        <br>
-        <v-btn color="primary" @click="viewProfile">
-          <v-icon icon="mdi-file-account-outline" />&nbsp; View Your User Profile
-        </v-btn>
-      </p>
     </load-data>
-    <p>
-      <br>If you want to delete your profile, or your entire account, <router-link to="/so-long/options">see your
-      deletion options here</router-link>.
+    <hr>
+    <p class="text-muted fst-italic">
+      (If you want to delete your profile, or your entire account, <router-link to="/so-long/options">see your deletion
+      options here</router-link>.)
     </p>
   </article>
 </template>

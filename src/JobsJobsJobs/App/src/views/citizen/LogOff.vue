@@ -1,7 +1,8 @@
 <template>
   <article>
     <page-title title="Logging off..." />
-    <p>Logging off&hellip;</p>
+    <p>&nbsp;</p>
+    <p class="fst-italic">Logging off&hellip;</p>
   </article>
 </template>
 

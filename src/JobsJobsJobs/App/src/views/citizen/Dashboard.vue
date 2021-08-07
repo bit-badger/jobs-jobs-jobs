@@ -1,19 +1,15 @@
 <template>
-  <article>
+  <article class="container">
     <page-title title="Dashboard" />
     <h3>Welcome, {{user.name}}</h3>
     <load-data :load="retrieveData">
-      <v-row class="spaced">
-        <v-col cols="12" md="6">
-          <v-card elevation="6">
-            <v-card-header>
-              <v-card-header-text>
-                <v-card-title>Your Profile</v-card-title>
-                <v-card-subtitle>Last updated <full-date-time :date="profile.lastUpdatedOn" /></v-card-subtitle>
-              </v-card-header-text>
-            </v-card-header>
-            <v-card-text>
-              <div v-if="profile">
+      <div class="row row-cols-1 row-cols-md-2">
+        <div class="col">
+          <div class="card h-100">
+            <h5 class="card-header">Your Profile</h5>
+            <div class="card-body">
+              <h6 class="card-subtitle mb-3 text-muted">Last updated <full-date :date="profile.lastUpdatedOn" /></h6>
+              <p v-if="profile" class="card-text">
                 Your profile currently lists {{profile.skills.length}}
                 skill<template v-if="profile.skills.length !== 1">s</template>.
                 <span v-if="profile.seekingEmployment">
@@ -21,51 +17,48 @@
                   Your profile indicates that you are seeking employment. Once you find it,
                   <router-link to="/success-story/add">tell your fellow citizens about it!</router-link>
                 </span>
-              </div>
-              <div v-else>
+              </p>
+              <p v-else class="card-text">
                 You do not have an employment profile established; click below (or &ldquo;Edit Profile&rdquo; in the
                 menu) to get started!
-              </div>
-            </v-card-text>
-            <v-card-actions>
+              </p>
+            </div>
+            <div class="card-footer">
               <template v-if="profile">
-                <v-btn v-if="profile" @click="viewProfile">View Profile</v-btn>
-                <v-btn @click="editProfile">Edit Profile</v-btn>
+                <button class="btn btn-outline-secondary" @click="viewProfile">View Profile</button> &nbsp; &nbsp;
+                <button class="btn btn-outline-secondary" @click="editProfile">Edit Profile</button>
               </template>
-              <v-btn v-else @click="editProfile">Create Profile</v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-col>
-        <v-col cols="12" md="6">
-          <v-card elevation="6">
-            <v-card-header>
-              <v-card-header-text>
-                <v-card-title>Other Citizens</v-card-title>
-                <v-card-subtitle>
-                  <template v-if="profileCount === 0">No</template><template v-else>{{profileCount}} Total</template>
-                  Employment Profile<template v-if="profileCount !== 1">s</template>
-                </v-card-subtitle>
-              </v-card-header-text>
-            </v-card-header>
-            <v-card-text>
-              <div v-if="profileCount === 1 && profile">
+              <button v-else class="btn btn-primary" @click="editProfile">Create Profile</button>
+            </div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="card h-100">
+            <h5 class="card-header">Other Citizens</h5>
+            <div class="card-body">
+              <h6 class="card-subtitle mb-3 text-muted">
+                <template v-if="profileCount === 0">No</template><template v-else>{{profileCount}} Total</template>
+                Employment Profile<template v-if="profileCount !== 1">s</template>
+              </h6>
+              <p v-if="profileCount === 1 && profile" class="card-text">
                 It looks like, for now, it&rsquo;s just you&hellip;
-              </div>
-              <div v-else-if="profileCount > 0">
+              </p>
+              <p v-else-if="profileCount > 0" class="card-text">
                 Take a look around and see if you can help them find work!
-              </div>
-              <div v-else>
+              </p>
+              <p v-else class="card-text">
                 You can click below, but you will not find anything&hellip;
-              </div>
-            </v-card-text>
-            <v-card-actions>
-              <v-btn @click="searchProfiles">Search Profiles</v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-col>
-      </v-row>
+              </p>
+            </div>
+            <div class="card-footer">
+              <button class="btn btn-outline-secondary" @click="searchProfiles">Search Profiles</button>
+            </div>
+          </div>
+        </div>
+      </div>
     </load-data>
-    <p class="spaced">
+    <p>&nbsp;</p>
+    <p>
       To see how this application works, check out &ldquo;How It Works&rdquo; in the sidebar (last updated June
       14<sup>th</sup>, 2021).
     </p>
@@ -77,14 +70,15 @@ import { defineComponent, Ref, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import api, { LogOnSuccess, Profile } from '@/api'
 import { useStore } from '@/store'
-import FullDateTime from '@/components/FullDateTime.vue'
+
+import FullDate from '@/components/FullDate.vue'
 import LoadData from '@/components/LoadData.vue'
 
 export default defineComponent({
   name: 'Dashboard',
   components: {
-    LoadData,
-    FullDateTime
+    FullDate,
+    LoadData
   },
   setup () {
     const store = useStore()
@@ -126,8 +120,3 @@ export default defineComponent({
   }
 })
 </script>
-
-<style lang="sass" scoped>
-.spaced
-  margin-top: 1rem
-</style>

@@ -1,8 +1,10 @@
 <template>
-  <p>
-    Jobs, Jobs, Jobs v{{appVersion}} &bull; <router-link to="/privacy-policy">Privacy Policy</router-link>
-    &bull; <router-link to="/terms-of-service">Terms of Service</router-link>
-  </p>
+  <footer>
+    <p class="text-muted">
+      Jobs, Jobs, Jobs v{{appVersion}} &bull; <router-link to="/privacy-policy">Privacy Policy</router-link>
+      &bull; <router-link to="/terms-of-service">Terms of Service</router-link>
+    </p>
+  </footer>
 </template>
 
 <script lang="ts">
@@ -24,15 +26,12 @@ export default defineComponent({
 </script>
 
 <style lang="sass" scoped>
+footer
+  display: flex
+  flex-direction: row-reverse
 p
   padding-top: 2rem
-  color: rgba(0, 0, 0, .4)
+  padding-right: .5rem
   font-style: italic
   font-size: .8rem
-  a:link,
-  a:visited
-    color: rgba(0, 0, 0, .4)
-    text-decoration: none
-  a:hover
-    text-decoration: underline
 </style>

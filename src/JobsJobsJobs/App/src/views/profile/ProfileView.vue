@@ -26,7 +26,7 @@
 
       <template v-if="user.citizenId === it.citizen.id">
         <br><br>
-        <v-btn color="primary" @click="editProfile"><v-icon icon="mdi-pencil" />&nbsp; Edit Your Profile</v-btn>
+        <button class="btn btn-primary" @click="editProfile"><icon icon="pencil" />&nbsp; Edit Your Profile</button>
       </template>
     </load-data>
   </article>

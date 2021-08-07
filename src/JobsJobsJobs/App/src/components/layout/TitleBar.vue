@@ -1,5 +1,10 @@
 <template>
-  <p>(...and Jobs &ndash; <audio-clip clip="pelosi-jobs">Let's Vote for Jobs!</audio-clip>)</p>
+  <nav class="navbar navbar-light bg-light">
+    <span></span>
+    <span class="navbar-text">
+      (...and Jobs &ndash; <audio-clip clip="pelosi-jobs">Let's Vote for Jobs!</audio-clip>)
+    </span>
+  </nav>
 </template>
 
 <script lang="ts">
@@ -15,9 +20,8 @@ export default defineComponent({
 </script>
 
 <style lang="sass" scoped>
-p
-  width: 100%
-  text-align: right
+span
   font-style: italic
-  padding: 0 .5rem 0 0
+  padding-right: 1rem
+  // padding: 0 .5rem 0 0
 </style>

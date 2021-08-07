@@ -1,24 +1,18 @@
 <template>
-  <v-app>
-    <v-navigation-drawer app>
-      <app-nav />
-    </v-navigation-drawer>
-    <v-app-bar color="secondary" app>
+  <div class="jjj-app">
+    <app-nav />
+    <div class="jjj-main">
       <title-bar />
-    </v-app-bar>
-    <v-main>
-      <v-container fluid>
+      <main class="container-fluid">
         <router-view v-slot="{ Component }">
           <transition name="fade" mode="out-in">
             <component :is="Component" />
           </transition>
         </router-view>
-      </v-container>
-    </v-main>
-    <v-footer app>
+      </main>
       <app-footer />
-    </v-footer>
-  </v-app>
+    </div>
+  </div>
 </template>
 
 <script lang="ts">
@@ -26,6 +20,9 @@ import { defineComponent } from 'vue'
 import AppFooter from './components/layout/AppFooter.vue'
 import AppNav from './components/layout/AppNav.vue'
 import TitleBar from './components/layout/TitleBar.vue'
+
+import 'bootstrap/dist/css/bootstrap.min.css'
+import '@mdi/font/css/materialdesignicons.css'
 
 export default defineComponent({
   name: 'App',
@@ -51,32 +48,20 @@ export function yesOrNo (cond : boolean) : string {
 // Overall app styles
 html
   scroll-behavior: smooth
-h3
-  font-size: 1.75rem
-h4
-  font-size: 1.5rem
-h1, h2, h3, h4, h5
-  margin-bottom: .5rem
-  font-weight: 500
-  line-height: 1.2
-p
-  padding-bottom: 1rem
-ul
-  padding-bottom: 1rem
-  margin-left: 1.5rem
-  li
-    list-style-type: disc
+a:link,
+a:visited
+  text-decoration: none
+a:hover
+  text-decoration: underline
+label.jjj-required::after
+  color: red
+  content: ' *'
 // Styles for this component
-.v-navigation-drawer
-  background-image: linear-gradient(180deg, darkgreen 0%, green 70%)
-  height: 100vh
-.v-app-bar
-  height: 3.5rem !important
+.jjj-app
   display: flex
-  align-items: center
-  justify-content: center
-.v-footer
-  flex-direction: row-reverse
+  flex-direction: row
+.jjj-main
+  flex-grow: 1
 // Route transitions
 .fade-enter-active,
 .fade-leave-active
