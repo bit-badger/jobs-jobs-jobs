@@ -258,7 +258,9 @@ module Profile =
                 experience        = noneIfBlank form.experience |> Option.map Text
                 skills            = form.skills
                                     |> List.map (fun s ->
-                                        { id          = SkillId.ofString s.id
+                                        { id          = match s.id.StartsWith "new" with
+                                                        | true -> SkillId.create ()
+                                                        | false -> SkillId.ofString s.id
                                           description = s.description
                                           notes       = noneIfBlank s.notes
                                           })

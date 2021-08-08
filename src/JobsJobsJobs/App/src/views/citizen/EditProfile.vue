@@ -1,12 +1,12 @@
 <template>
   <article>
     <page-title title="Edit Profile" />
-    <h3>Employment Profile</h3>
+    <h3 class="pb-3">Employment Profile</h3>
     <load-data :load="retrieveData">
       <form class="row g-3">
         <div class="col-12 col-sm-10 col-md-8 col-lg-6">
           <div class="form-floating">
-            <input type="text" id="realName" class="form-control" v-model="profile.realName" maxlength="255"
+            <input type="text" id="realName" class="form-control" v-model="v$.realName.$model" maxlength="255"
                     placeholder="Leave blank to use your NAS display name">
             <label for="realName">Real Name</label>
           </div>
@@ -14,8 +14,8 @@
         </div>
         <div class="col-12">
           <div class="form-check">
-            <input type="checkbox" class="form-check-input" v-model="profile.seekingEmployment">
-            <label class="form-check-label">I am currently seeking employment</label>
+            <input type="checkbox" id="isSeeking" class="form-check-input" v-model="v$.isSeekingEmployment.$model">
+            <label for="isSeeking" class="form-check-label">I am currently seeking employment</label>
           </div>
           <p v-if="profile?.seekingEmployment">
             <em>If you have found employment, consider <router-link to="/success-story/add">telling your fellow
@@ -25,7 +25,7 @@
         <div class="col-12 col-sm-6 col-md-4">
           <div class="form-floating">
             <select id="continentId" :class="{ 'form-select': true, 'is-invalid': v$.continentId.$error }"
-                    :value="v$.continentId.$model">
+                    :value="v$.continentId.$model" @change="continentChanged">
               <option v-for="c in continents" :key="c.id" :value="c.id">{{c.name}}</option>
             </select>
             <label for="continentId" class="jjj-required">Continent</label>
@@ -41,17 +41,17 @@
           </div>
           <div class="form-text">Country, state, geographic area, etc.</div>
         </div>
-        <markdown-editor id="bio" label="Professional Biography" v-model:text="profile.biography"
+        <markdown-editor id="bio" label="Professional Biography" v-model:text="v$.biography.$model"
                          :isInvalid="v$.biography.$error" />
         <div class="col-12 col-offset-md-2 col-md-4">
           <div class="form-check">
-            <input type="checkbox" id="isRemote" class="form-check-input" v-model="profile.remoteWork">
+            <input type="checkbox" id="isRemote" class="form-check-input" v-model="v$.remoteWork.$model">
             <label class="form-check-label" for="isRemote">I am looking for remote work</label>
           </div>
         </div>
         <div class="col-12 col-md-4">
           <div class="form-check">
-            <input type="checkbox" id="isFullTime" class="form-check-input" v-model="profile.fullTime">
+            <input type="checkbox" id="isFullTime" class="form-check-input" v-model="v$.fullTime.$model">
             <label class="form-check-label" for="isFullTime">I am looking for full-time work</label>
           </div>
         </div>
@@ -63,7 +63,7 @@
           </h4>
         </div>
         <profile-skill-edit v-for="(skill, idx) in profile.skills" :key="skill.id" v-model="profile.skills[idx]"
-                            @remove="removeSkill(skill.id)" />
+                            @remove="removeSkill(skill.id)" @input="v$.skills.$touch" />
         <div class="col-12">
           <hr>
           <h4>Experience</h4>
@@ -73,10 +73,10 @@
             already a part of your Professional Biography above.
           </p>
         </div>
-        <markdown-editor id="experience" label="Experience" v-model:text="profile.experience" />
+        <markdown-editor id="experience" label="Experience" v-model:text="v$.experience.$model" />
         <div class="col-12">
           <div class="form-check">
-            <input type="checkbox" id="isPublic" class="form-check-input" v-model="profile.isPublic">
+            <input type="checkbox" id="isPublic" class="form-check-input" v-model="v$.isPublic.$model">
             <label class="form-check-label" for="isPublic">
               Allow my profile to be searched publicly (outside NA Social)
             </label>
@@ -104,7 +104,7 @@
 
 <script lang="ts">
 import { computed, defineComponent, ref, reactive } from 'vue'
-import { useRouter } from 'vue-router'
+import { onBeforeRouteLeave, useRouter } from 'vue-router'
 import useVuelidate from '@vuelidate/core'
 import { required } from '@vuelidate/validators'
 import api, { Citizen, LogOnSuccess, Profile, ProfileForm } from '@/api'
@@ -151,14 +151,21 @@ export default defineComponent({
     const profile = reactive(new ProfileForm())
 
     /** The validation rules for the form */
-    const rules = {
+    const rules = computed(() => ({
+      realName: { },
+      isSeekingEmployment: { },
+      isPublic: { },
       continentId: { required },
       region: { required },
-      biography: { required }
-    }
+      remoteWork: { },
+      fullTime: { },
+      biography: { required },
+      experience: { },
+      skills: { }
+    }))
 
     /** Initialize form validation */
-    const v$ = useVuelidate(rules, profile /*, { $lazy: true } */)
+    const v$ = useVuelidate(rules, profile, { $lazy: true })
 
     /** Retrieve the user's profile and their real name */
     const retrieveData = async (errors : string[]) => {
@@ -188,14 +195,35 @@ export default defineComponent({
       profile.realName = typeof nameResult !== 'undefined' ? (nameResult as Citizen).realName || '' : ''
     }
 
+    /**
+     * Mark the continent field as changed
+     *
+     * (This works around a really strange sequence where, if the "touch" call is directly wired up to the onChange
+     * event, the first time a value is selected, it doesn't stick (although the field is marked as touched). On second
+     * and subsequent times, it worked. The solution here is to grab the value and update the reactive source for the
+     * form, then manually set the field to touched; this restores the expected behavior. This is probably why the
+     * library doesn't hook into the onChange event to begin with...)
+     */
+    const continentChanged = (e : Event) : boolean => {
+      profile.continentId = (e.target as HTMLSelectElement).value
+      v$.value.continentId.$touch()
+      return true
+    }
+
     /** The ID for new skills */
     let newSkillId = 0
 
     /** Add a skill to the profile */
-    const addSkill = () => { profile.skills.push({ id: `new${newSkillId++}`, description: '', notes: undefined }) }
+    const addSkill = () => {
+      profile.skills.push({ id: `new${newSkillId++}`, description: '', notes: undefined })
+      v$.value.skills.$touch()
+    }
 
     /** Remove the given skill from the profile */
-    const removeSkill = (skillId : string) => { profile.skills = profile.skills.filter(s => s.id !== skillId) }
+    const removeSkill = (skillId : string) => {
+      profile.skills = profile.skills.filter(s => s.id !== skillId)
+      v$.value.skills.$touch()
+    }
 
     /** Save the current profile values */
     const saveProfile = async () => {
@@ -212,14 +240,15 @@ export default defineComponent({
       }
     }
 
-    /** View the profile, prompting for save if data has changed */
-    const viewProfile = async () => {
-      alert(v$.value.$dirty)
-      if (v$.value.$dirty && confirm('There are unsaved changes; save before viewing?')) {
+    /** If the user has unsaved changes, give them an opportunity to save before moving on */
+    onBeforeRouteLeave(async (to, from) => { // eslint-disable-line
+      if (!v$.value.$anyDirty) return true
+      if (confirm('There are unsaved changes; save before viewing?')) {
         await saveProfile()
-        router.push(`/profile/view/${user.citizenId}`)
+        return true
       }
-    }
+      return false
+    })
 
     return {
       v$,
@@ -228,10 +257,11 @@ export default defineComponent({
       isNew,
       profile,
       continents: computed(() => store.state.continents),
+      continentChanged,
       addSkill,
       removeSkill,
       saveProfile,
-      viewProfile
+      viewProfile: () => router.push(`/profile/view/${user.citizenId}`)
     }
   }
 })

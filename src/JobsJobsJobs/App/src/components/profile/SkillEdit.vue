@@ -38,7 +38,7 @@ export default defineComponent({
       required: true
     }
   },
-  emits: ['remove', 'update:modelValue'],
+  emits: ['input', 'remove', 'update:modelValue'],
   setup (props, { emit }) {
     /** The skill being edited */
     const skill : Ref<Skill> = ref({ ...props.modelValue as Skill })
@@ -48,6 +48,7 @@ export default defineComponent({
       updateValue: (key : string, value : string) => {
         skill.value = { ...skill.value, [key]: value }
         emit('update:modelValue', skill.value)
+        emit('input')
       }
     }
   }

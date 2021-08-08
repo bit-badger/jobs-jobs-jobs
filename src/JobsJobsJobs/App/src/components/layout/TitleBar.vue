@@ -20,8 +20,7 @@ export default defineComponent({
 </script>
 
 <style lang="sass" scoped>
-span
+.navbar-text
   font-style: italic
   padding-right: 1rem
-  // padding: 0 .5rem 0 0
 </style>

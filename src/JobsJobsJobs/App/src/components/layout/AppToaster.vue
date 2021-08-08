@@ -1,5 +1,5 @@
 <template>
-  <div aria-live="polite" aria-atomic="true">
+  <div aria-live="polite" aria-atomic="true" id="toastHost">
     <div class="toast-container position-absolute p-3 bottom-0 start-50 translate-middle-x" id="toasts"></div>
   </div>
 </template>
@@ -81,3 +81,9 @@ export default defineComponent({
   name: 'AppToaster'
 })
 </script>
+
+<style lang="sass" scoped>
+#toastHost
+  position: sticky
+  bottom: 0
+</style>
