@@ -78,27 +78,27 @@ export interface Profile {
 }
 
 /** The data required to update a profile */
-export interface ProfileForm {
+export class ProfileForm {
   /** Whether the citizen to whom this profile belongs is actively seeking employment */
-  isSeekingEmployment : boolean
+  isSeekingEmployment = false
   /** Whether this profile should appear in the public search */
-  isPublic : boolean
+  isPublic = false
   /** The user's real name */
-  realName : string
+  realName = ''
   /** The ID of the continent on which the citizen is located */
-  continentId : string
+  continentId = ''
   /** The area within that continent where the citizen is located */
-  region : string
+  region = ''
   /** If the citizen is available for remote work */
-  remoteWork : boolean
+  remoteWork = false
   /** If the citizen is seeking full-time employment */
-  fullTime : boolean
+  fullTime = false
   /** The user's professional biography */
-  biography : string
+  biography = ''
   /** The user's past experience */
   experience : string | undefined
   /** The skills for the user */
-  skills : Skill[]
+  skills : Skill[] = []
 }
 
 /** The data required to show a viewable profile */

@@ -1,17 +1,16 @@
 <template>
-  <div class="row pb-3">
-    <div class="col col-xs-12">
-      <nav class="nav nav-pills pb-1">
-        <button :class="sourceClass" @click.prevent="showMarkdown">Markdown</button> &nbsp;
-        <button :class="previewClass" @click.prevent="showPreview">Preview</button>
-      </nav>
-      <section v-if="preview" class="preview" v-html="previewHtml">
-      </section>
-      <div v-else class="form-floating">
-        <textarea :id="id" class="form-control md-edit" rows="10" v-text="text"
-                  @input="$emit('update:text', $event.target.value)"></textarea>
-        <label :for="id">{{label}}</label>
-      </div>
+  <div class="col-12">
+    <nav class="nav nav-pills pb-1">
+      <button :class="sourceClass" @click.prevent="showMarkdown">Markdown</button> &nbsp;
+      <button :class="previewClass" @click.prevent="showPreview">Preview</button>
+    </nav>
+    <section v-if="preview" class="preview" v-html="previewHtml">
+    </section>
+    <div v-else class="form-floating">
+      <textarea :id="id" :class="{ 'form-control': true, 'md-edit': true, 'is-invalid': isInvalid }" rows="10"
+                v-text="text" @input="$emit('update:text', $event.target.value)"></textarea>
+      <div class="invalid-feedback">Please enter some text for {{label}}</div>
+      <label :for="id">{{label}}</label>
     </div>
   </div>
 </template>
@@ -35,7 +34,8 @@ export default defineComponent({
     label: {
       type: String,
       required: true
-    }
+    },
+    isInvalid: { type: Boolean }
   },
   emits: ['update:text'],
   setup (props) {

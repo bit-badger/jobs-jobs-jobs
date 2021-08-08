@@ -5,6 +5,7 @@ import {
   Count,
   LogOnSuccess,
   Profile,
+  ProfileForm,
   ProfileForView,
   ProfileSearch,
   ProfileSearchResult,
@@ -28,13 +29,22 @@ const apiUrl = (url : string) : string => `http://localhost:5000/api/${url}`
  * @param user The currently logged-on user
  * @returns RequestInit parameters
  */
-const reqInit = (method : string, user : LogOnSuccess) : RequestInit => {
+// eslint-disable-next-line
+const reqInit = (method : string, user : LogOnSuccess, body : any | undefined = undefined) : RequestInit => {
   const headers = new Headers()
   headers.append('Authorization', `Bearer ${user.jwt}`)
+  if (body) {
+    headers.append('Content-Type', 'application/json')
+    return {
+      headers,
+      method,
+      cache: 'no-cache',
+      body: JSON.stringify(body)
+    }
+  }
   return {
     headers,
     method
-    // mode: 'cors'
   }
 }
 
@@ -49,6 +59,18 @@ async function apiResult<T> (resp : Response, action : string) : Promise<T | und
   if (resp.status === 200) return await resp.json() as T
   if (resp.status === 404) return undefined
   return `Error ${action} - ${await resp.text()}`
+}
+
+/**
+ * Send an update via the API
+ *
+ * @param resp The response received from the API
+ * @param action The action being performed (used in error messages)
+ * @returns True (if the response is a success) or an error string
+ */
+async function apiSend (resp : Response, action : string) : Promise<boolean | string> {
+  if (resp.status === 200) return true
+  return `Error ${action} - (${resp.status}) ${await resp.text()}`
 }
 
 /**
@@ -155,6 +177,15 @@ export default {
      */
     retreiveForView: async (id : string, user : LogOnSuccess) : Promise<ProfileForView | string | undefined> =>
       apiResult<ProfileForView>(await fetch(apiUrl(`profile/view/${id}`), reqInit('GET', user)), 'retrieving profile'),
+
+    /**
+     * Save a user's profile data
+     *
+     * @param data The profile data to be saved
+     * @param user The currently logged-on user
+     */
+    save: async (data : ProfileForm, user : LogOnSuccess) : Promise<boolean | string> =>
+      apiSend(await fetch(apiUrl('profile/save'), reqInit('POST', user, data)), 'saving profile'),
 
     /**
      * Search for profiles using the given parameters

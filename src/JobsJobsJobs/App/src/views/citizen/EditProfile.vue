@@ -3,97 +3,94 @@
     <page-title title="Edit Profile" />
     <h3>Employment Profile</h3>
     <load-data :load="retrieveData">
-      <form>
-        <div class="row pb-3">
-          <div class="col col-xs-12 col-sm-10 col-md-8 col-lg-6">
-            <div class="form-floating">
-              <input type="text" id="realName" class="form-control" v-model="profile.realName" maxlength="255"
-                     placeholder="Leave blank to use your NAS display name">
-              <label for="realName">Real Name</label>
-            </div>
-            <div class="form-text">Leave blank to use your NAS display name</div>
+      <form class="row g-3">
+        <div class="col-12 col-sm-10 col-md-8 col-lg-6">
+          <div class="form-floating">
+            <input type="text" id="realName" class="form-control" v-model="profile.realName" maxlength="255"
+                    placeholder="Leave blank to use your NAS display name">
+            <label for="realName">Real Name</label>
+          </div>
+          <div class="form-text">Leave blank to use your NAS display name</div>
+        </div>
+        <div class="col-12">
+          <div class="form-check">
+            <input type="checkbox" class="form-check-input" v-model="profile.seekingEmployment">
+            <label class="form-check-label">I am currently seeking employment</label>
+          </div>
+          <p v-if="profile?.seekingEmployment">
+            <em>If you have found employment, consider <router-link to="/success-story/add">telling your fellow
+            citizens about it!</router-link></em>
+          </p>
+        </div>
+        <div class="col-12 col-sm-6 col-md-4">
+          <div class="form-floating">
+            <select id="continentId" :class="{ 'form-select': true, 'is-invalid': v$.continentId.$error }"
+                    :value="v$.continentId.$model">
+              <option v-for="c in continents" :key="c.id" :value="c.id">{{c.name}}</option>
+            </select>
+            <label for="continentId" class="jjj-required">Continent</label>
+          </div>
+          <div class="invalid-feedback">Please select a continent</div>
+        </div>
+        <div class="col-12 col-sm-6 col-md-8">
+          <div class="form-floating">
+            <input type="text" id="region" :class="{ 'form-control': true, 'is-invalid': v$.region.$error }"
+                   v-model="v$.region.$model" maxlength="255" placeholder="Country, state, geographic area, etc.">
+            <div id="regionFeedback" class="invalid-feedback">Please enter a region</div>
+            <label for="region" class="jjj-required">Region</label>
+          </div>
+          <div class="form-text">Country, state, geographic area, etc.</div>
+        </div>
+        <markdown-editor id="bio" label="Professional Biography" v-model:text="profile.biography"
+                         :isInvalid="v$.biography.$error" />
+        <div class="col-12 col-offset-md-2 col-md-4">
+          <div class="form-check">
+            <input type="checkbox" id="isRemote" class="form-check-input" v-model="profile.remoteWork">
+            <label class="form-check-label" for="isRemote">I am looking for remote work</label>
           </div>
         </div>
-        <div class="row pb-3">
-          <div class="col col-xs-12">
-            <div class="form-check">
-              <input type="checkbox" class="form-check-input" v-model="profile.seekingEmployment">
-              <label class="form-check-label">I am currently seeking employment</label>
-            </div>
-            <p v-if="profile?.seekingEmployment">
-              <em>If you have found employment, consider <router-link to="/success-story/add">telling your fellow
-              citizens about it!</router-link></em>
-            </p>
+        <div class="col-12 col-md-4">
+          <div class="form-check">
+            <input type="checkbox" id="isFullTime" class="form-check-input" v-model="profile.fullTime">
+            <label class="form-check-label" for="isFullTime">I am looking for full-time work</label>
           </div>
         </div>
-        <div class="row pb-3">
-          <div class="col col-xs-12 col-sm-6 col-md-4">
-            <div class="form-floating">
-              <select id="continentId" class="form-select" :value="profile.continentId">
-                <option v-for="c in continents" :key="c.id" :value="c.id">{{c.name}}</option>
-              </select>
-              <label for="continentId" class="jjj-required">Continent</label>
-            </div>
-          </div>
-          <div class="col col-xs-12 col-sm-6 col-md-8">
-            <div class="form-floating">
-              <input type="text" id="region" class="form-control" v-model="profile.region" maxlength="255"
-                     placeholder="Country, state, geographic area, etc.">
-              <label for="region" class="jjj-required">Region</label>
-            </div>
-            <div class="form-text">Country, state, geographic area, etc.</div>
-          </div>
+        <div class="col-12">
+          <hr>
+          <h4 class="pb-2">
+            Skills &nbsp;
+            <button class="btn btn-sm btn-outline-primary rounded-pill" @click.prevent="addSkill">Add a Skill</button>
+          </h4>
         </div>
-        <markdown-editor id="bio" label="Professional Biography" v-model:text="profile.biography" />
-        <div class="row pb-3">
-          <div class="col col-xs-12 col-offset-md-2 col-md-4">
-            <div class="form-check">
-              <input type="checkbox" id="isRemote" class="form-check-input" v-model="profile.remoteWork">
-              <label class="form-check-label" for="isRemote">I am looking for remote work</label>
-            </div>
-          </div>
-          <div class="col col-xs-12 col-md-4">
-            <div class="form-check">
-              <input type="checkbox" id="isFullTime" class="form-check-input" v-model="profile.fullTime">
-              <label class="form-check-label" for="isFullTime">I am looking for full-time work</label>
-            </div>
-          </div>
-        </div>
-        <hr>
-        <h4 class="pb-2">
-          Skills &nbsp;
-          <button class="btn btn-sm btn-outline-primary rounded-pill" @click.prevent="addSkill">Add a Skill</button>
-        </h4>
         <profile-skill-edit v-for="(skill, idx) in profile.skills" :key="skill.id" v-model="profile.skills[idx]"
                             @remove="removeSkill(skill.id)" />
-        <hr>
-        <h4>Experience</h4>
-        <p>
-          This application does not have a place to individually list your chronological job history; however, you can
-          use this area to list prior jobs, their dates, and anything else you want to include that&rsquo;s not
-          already a part of your Professional Biography above.
-        </p>
+        <div class="col-12">
+          <hr>
+          <h4>Experience</h4>
+          <p>
+            This application does not have a place to individually list your chronological job history; however, you can
+            use this area to list prior jobs, their dates, and anything else you want to include that&rsquo;s not
+            already a part of your Professional Biography above.
+          </p>
+        </div>
         <markdown-editor id="experience" label="Experience" v-model:text="profile.experience" />
-        <div class="row pb-3">
-          <div class="col col-xs-12">
-            <div class="form-check">
-              <input type="checkbox" id="isPublic" class="form-check-input" v-model="profile.isPublic">
-              <label class="form-check-label" for="isPublic">
-                Allow my profile to be searched publicly (outside NA Social)
-              </label>
-            </div>
+        <div class="col-12">
+          <div class="form-check">
+            <input type="checkbox" id="isPublic" class="form-check-input" v-model="profile.isPublic">
+            <label class="form-check-label" for="isPublic">
+              Allow my profile to be searched publicly (outside NA Social)
+            </label>
           </div>
         </div>
-        <div class="row pt-3">
-          <div class="col col-xs-12">
-            <button class="btn btn-primary">Save</button>
-            <template v-if="!isNew">
-              &nbsp; &nbsp;
-              <button class="btn btn-outline-secondary" @click.prevent="viewProfile">
-                <icon icon="file-account-outline" />&nbsp; View Your User Profile
-              </button>
-            </template>
-          </div>
+        <div class="col-12">
+          <p v-if="v$.$error" class="text-danger">Please correct the errors above</p>
+          <button class="btn btn-primary" @click.prevent="saveProfile">Save</button>
+          <template v-if="!isNew">
+            &nbsp; &nbsp;
+            <button class="btn btn-outline-secondary" @click.prevent="viewProfile">
+              <icon icon="file-account-outline" />&nbsp; View Your User Profile
+            </button>
+          </template>
         </div>
       </form>
     </load-data>
@@ -106,13 +103,16 @@
 </template>
 
 <script lang="ts">
-import { computed, defineComponent, Ref, ref } from 'vue'
+import { computed, defineComponent, ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
+import useVuelidate from '@vuelidate/core'
+import { required } from '@vuelidate/validators'
 import api, { Citizen, LogOnSuccess, Profile, ProfileForm } from '@/api'
 import { useStore } from '@/store'
 
 import LoadData from '@/components/LoadData.vue'
 import MarkdownEditor from '@/components/MarkdownEditor.vue'
+import { toastError, toastSuccess } from '@/components/layout/AppToaster.vue'
 import ProfileSkillEdit from '@/components/profile/SkillEdit.vue'
 
 export default defineComponent({
@@ -148,7 +148,17 @@ export default defineComponent({
     }
 
     /** The user's current profile (plus a few items, adapted for editing) */
-    const profile : Ref<ProfileForm | undefined> = ref(undefined)
+    const profile = reactive(new ProfileForm())
+
+    /** The validation rules for the form */
+    const rules = {
+      continentId: { required },
+      region: { required },
+      biography: { required }
+    }
+
+    /** Initialize form validation */
+    const v$ = useVuelidate(rules, profile /*, { $lazy: true } */)
 
     /** Retrieve the user's profile and their real name */
     const retrieveData = async (errors : string[]) => {
@@ -164,45 +174,55 @@ export default defineComponent({
         errors.push(nameResult)
       }
       if (errors.length > 0) return
+      // Update the empty form with appropriate values
       const p = isNew.value ? newProfile : profileResult as Profile
-      profile.value = {
-        isSeekingEmployment: p.seekingEmployment,
-        isPublic: p.isPublic,
-        continentId: p.continentId,
-        region: p.region,
-        remoteWork: p.remoteWork,
-        fullTime: p.fullTime,
-        biography: p.biography,
-        experience: p.experience,
-        skills: p.skills,
-        realName: typeof nameResult !== 'undefined' ? (nameResult as Citizen).realName || '' : ''
-      }
+      profile.isSeekingEmployment = p.seekingEmployment
+      profile.isPublic = p.isPublic
+      profile.continentId = p.continentId
+      profile.region = p.region
+      profile.remoteWork = p.remoteWork
+      profile.fullTime = p.fullTime
+      profile.biography = p.biography
+      profile.experience = p.experience
+      profile.skills = p.skills
+      profile.realName = typeof nameResult !== 'undefined' ? (nameResult as Citizen).realName || '' : ''
     }
 
     /** The ID for new skills */
     let newSkillId = 0
 
     /** Add a skill to the profile */
-    const addSkill = () => {
-      const form = profile.value as ProfileForm
-      form.skills.push({ id: `new${newSkillId}`, description: '', notes: undefined })
-      newSkillId++
-      profile.value = form
-    }
+    const addSkill = () => { profile.skills.push({ id: `new${newSkillId++}`, description: '', notes: undefined }) }
 
     /** Remove the given skill from the profile */
-    const removeSkill = (skillId : string) => {
-      const form = profile.value as ProfileForm
-      form.skills = form.skills.filter(s => s.id !== skillId)
-      profile.value = form
-    }
+    const removeSkill = (skillId : string) => { profile.skills = profile.skills.filter(s => s.id !== skillId) }
 
     /** Save the current profile values */
     const saveProfile = async () => {
-      // TODO
+      v$.value.$touch()
+      if (v$.value.$error) return
+      // Remove any blank skills before submitting
+      profile.skills = profile.skills.filter(s => !(s.description.trim() === '' && (s.notes || '').trim() === ''))
+      const saveResult = await api.profile.save(profile, user)
+      if (typeof saveResult === 'string') {
+        toastError(saveResult, 'saving profile')
+      } else {
+        toastSuccess('Profile Saved Successfuly')
+        v$.value.$reset()
+      }
+    }
+
+    /** View the profile, prompting for save if data has changed */
+    const viewProfile = async () => {
+      alert(v$.value.$dirty)
+      if (v$.value.$dirty && confirm('There are unsaved changes; save before viewing?')) {
+        await saveProfile()
+        router.push(`/profile/view/${user.citizenId}`)
+      }
     }
 
     return {
+      v$,
       retrieveData,
       user,
       isNew,
@@ -211,7 +231,7 @@ export default defineComponent({
       addSkill,
       removeSkill,
       saveProfile,
-      viewProfile: () => router.push(`/profile/view/${user.citizenId}`)
+      viewProfile
     }
   }
 })
