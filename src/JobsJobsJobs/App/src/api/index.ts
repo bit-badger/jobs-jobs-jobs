@@ -146,7 +146,7 @@ export default {
     publicSearch: async (query : PublicSearch) : Promise<PublicSearchResult[] | string | undefined> => {
       const params = new URLSearchParams()
       if (query.continentId) params.append('continentId', query.continentId)
-      if (query.region) params.append('bioExperience', query.region)
+      if (query.region) params.append('region', query.region)
       if (query.skill) params.append('skill', query.skill)
       params.append('remoteWork', query.remoteWork)
       return apiResult<PublicSearchResult[]>(

@@ -2,17 +2,19 @@
   <div class="card">
     <div class="card-body">
       <h6 class="card-title">
-          <a href="#" :class="{ 'cp-c': isCollapsed, 'cp-o': !isCollapsed }" @click.prevent="toggle">{{headerText}}</a>
+          <a href="#" :class="{ 'cp-c': collapsed, 'cp-o': !collapsed }" @click.prevent="toggle">{{headerText}}</a>
       </h6>
-      <slot v-if="!isCollapsed"></slot>
+      <slot v-if="!collapsed"></slot>
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from 'vue'
+import { defineComponent } from 'vue'
+
 export default defineComponent({
   name: 'CollapsePanel',
+  emits: ['toggle'],
   props: {
     headerText: {
       type: String,
@@ -23,13 +25,9 @@ export default defineComponent({
       default: false
     }
   },
-  setup (props) {
-    /** Whether the panel is collapsed or not */
-    const isCollapsed = ref(props.collapsed)
-
+  setup (props, { emit }) {
     return {
-      isCollapsed,
-      toggle: () => { isCollapsed.value = !isCollapsed.value }
+      toggle: () => emit('toggle', !props.collapsed)
     }
   }
 })

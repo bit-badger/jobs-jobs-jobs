@@ -1,19 +1,18 @@
 <template>
   <article>
     <page-title title="Search Profiles" />
-    <h3>Search Profiles</h3>
+    <h3 class="pb-3">Search Profiles</h3>
 
+    <p v-if="!searched">
+      Enter one or more criteria to filter results, or just click &ldquo;Search&rdquo; to list all profiles.
+    </p>
+    <collapse-panel headerText="Search Criteria" :collapsed="isCollapsed" @toggle="toggleCollapse">
+      <profile-search-form v-model="criteria" @search="doSearch" />
+    </collapse-panel>
     <error-list :errors="errors">
-      <p v-if="searching">Searching profiles...</p>
+      <p v-if="searching" class="pt-3">Searching profiles...</p>
       <template v-else>
-        <p v-if="!searched">
-          Enter one or more criteria to filter results, or just click &ldquo;Search&rdquo; to list all profiles.
-        </p>
-        <collapse-panel headerText="Search Criteria" :collapsed="searched && results.length > 0">
-          <profile-search-form v-model="criteria" @search="doSearch" />
-        </collapse-panel>
-        <br>
-        <table v-if="results.length > 0" class="table table-sm table-hover">
+        <table v-if="results.length > 0" class="table table-sm table-hover pt-3">
           <thead>
             <tr>
               <th scope="col">Profile</th>
@@ -35,7 +34,7 @@
             </tr>
           </tbody>
         </table>
-        <p v-else-if="searched">No results found for the specified criteria</p>
+        <p v-else-if="searched" class="pt-3">No results found for the specified criteria</p>
       </template>
     </error-list>
   </article>
@@ -90,6 +89,9 @@ export default defineComponent({
     /** The current search results */
     const results : Ref<ProfileSearchResult[]> = ref([])
 
+    /** Whether the search criteria should be collapsed */
+    const isCollapsed = ref(searched.value && results.value.length > 0)
+
     /** Set up the page to match its requested state */
     const setUpPage = async () => {
       if (queryValue(route, 'searched') === 'true') {
@@ -114,6 +116,7 @@ export default defineComponent({
         } finally {
           searching.value = false
         }
+        isCollapsed.value = searched.value && results.value.length > 0
       } else {
         searched.value = false
         criteria.value = emptyCriteria
@@ -127,6 +130,8 @@ export default defineComponent({
     return {
       errors,
       criteria,
+      isCollapsed,
+      toggleCollapse: (it : boolean) => { isCollapsed.value = it },
       doSearch: () => router.push({ query: { searched: 'true', ...criteria.value } }),
       searching,
       searched,

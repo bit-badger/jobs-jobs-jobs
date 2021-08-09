@@ -188,6 +188,11 @@ let withReconn (conn : IConnection) =
             (conn :?> Connection).Reconnect()
         | false -> ()))
 
+/// Sanitize user input, and create a "contains" pattern for use with RethinkDB queries
+let regexContains (it : string) =
+  System.Text.RegularExpressions.Regex.Escape it
+  |> sprintf "(?i).*%s.*"
+
 open JobsJobsJobs.Domain.SharedTypes
 open RethinkDb.Driver.Ast
 
@@ -251,14 +256,14 @@ module Profile =
           match srch.skill with
           | Some skl ->
               yield (fun q -> q.Filter(ReqlFunction1(fun it ->
-                  upcast it.G("skills.description").Downcase().Match(skl.ToLowerInvariant ()))) :> ReqlExpr)
+                  upcast it.G("skills").Contains(ReqlFunction1(fun s ->
+                      upcast s.G("description").Match(regexContains skl))))) :> ReqlExpr)
           | None -> ()
           match srch.bioExperience with
           | Some text ->
-              let txt = text.ToLowerInvariant ()
+              let txt = regexContains text
               yield (fun q -> q.Filter(ReqlFunction1(fun it ->
-                  upcast it.G("biography" ).Downcase().Match(txt)
-                     .Or(it.G("experience").Downcase().Match(txt)))) :> ReqlExpr)
+                  upcast it.G("biography").Match(txt).Or(it.G("experience").Match(txt)))) :> ReqlExpr)
           | None -> ()
           }
         |> Seq.toList
@@ -290,8 +295,7 @@ module Profile =
           match srch.region with
           | Some reg ->
               yield (fun q ->
-                  q.Filter(ReqlFunction1(fun it ->
-                      upcast it.G("region").Downcase().Match(reg.ToLowerInvariant ()))) :> ReqlExpr)
+                  q.Filter(ReqlFunction1(fun it -> upcast it.G("region").Match(regexContains reg))) :> ReqlExpr)
           | None -> ()
           match srch.remoteWork with
           | "" -> ()
@@ -299,7 +303,8 @@ module Profile =
           match srch.skill with
           | Some skl ->
               yield (fun q -> q.Filter(ReqlFunction1(fun it ->
-                  upcast it.G("skills.description").Downcase().Match(skl.ToLowerInvariant ()))) :> ReqlExpr)
+                  upcast it.G("skills").Contains(ReqlFunction1(fun s ->
+                      upcast s.G("description").Match(regexContains skl))))) :> ReqlExpr)
           | None -> ()
           }
         |> Seq.toList
@@ -315,7 +320,7 @@ module Profile =
                 .HashMap("skills", 
                   it.G("skills").Map(ReqlFunction1(fun skill ->
                     upcast r.Branch(skill.G("notes").Default_("").Eq(""), skill.G("description"),
-                                    sprintf "%O (%O)" (skill.G("description")) (skill.G("notes"))))))
+                                    skill.G("description").Add(" (").Add(skill.G("notes")).Add(")")))))
                 .With("continent", it.G("name"))))
           .Pluck("continent", "region", "skills", "remoteWork")
           .RunResultAsync<PublicSearchResult list> conn)
