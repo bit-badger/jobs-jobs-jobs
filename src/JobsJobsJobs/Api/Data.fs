@@ -468,9 +468,10 @@ module Success =
           .Zip()
           .Merge(ReqlFunction1(fun it ->
               upcast r
-                .HashMap("displayName",
+                .HashMap("citizenName",
                   r.Branch(it.G("realName"   ).Default_("").Ne(""), it.G("realName"),
                            it.G("displayName").Default_("").Ne(""), it.G("displayName"),
-                                                                    it.G("naUser")))))
+                                                                    it.G("naUser")))
+                .With("hasStory", it.G("story").Default_("").Gt(""))))
           .Pluck("id", "citizenId", "citizenName", "recordedOn", "fromHere", "hasStory")
           .RunResultAsync<StoryEntry list> conn)

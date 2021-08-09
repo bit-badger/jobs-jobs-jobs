@@ -1,9 +1,9 @@
 <template>
   <article>
     <page-title title="Account Deletion Options" />
-    <h3>Account Deletion Options</h3>
+    <h3 class="pb-3">Account Deletion Options</h3>
 
-    <h4>Option 1 &ndash; Delete Your Profile</h4>
+    <h4 class="pb-3">Option 1 &ndash; Delete Your Profile</h4>
     <p>
       Utilizing this option will remove your current employment profile and skills. This will preserve any success
       stories you may have written, and preserves this application&rsquo;s knowledge of you. This is what you want to
@@ -15,7 +15,7 @@
 
     <hr>
 
-    <h4>Option 2 &ndash; Delete Your Account</h4>
+    <h4 class="pb-3">Option 2 &ndash; Delete Your Account</h4>
     <p>
       This option will make it like you never visited this site. It will delete your profile, skills, success stories,
       and account. This is what you want to use if you want to disappear from this application. Clicking the button

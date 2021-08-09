@@ -1,7 +1,7 @@
 <template>
   <article>
     <page-title title="Account Deletion Success" />
-    <h3>Account Deletion Success</h3>
+    <h3 class="pb-3">Account Deletion Success</h3>
     <p>
       Your account has been successfully deleted. To revoke the permissions you have previously granted to this
       application, find it in <a href="https://noagendasocial.com/oauth/authorized_applications">this list</a> and click

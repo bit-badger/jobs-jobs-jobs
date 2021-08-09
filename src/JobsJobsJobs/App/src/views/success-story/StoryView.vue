@@ -2,7 +2,7 @@
   <article>
   <page-title title="Success Story" />
     <load-data :load="retrieveStory">
-      <h3>{{citizenName}}&rsquo;s Success Story</h3>
+      <h3 class="pb-3">{{citizenName}}&rsquo;s Success Story</h3>
       <h4 class="text-muted"><full-date-time :date="story.recordedOn" /></h4>
       <p v-if="story.fromHere" class="fst-italic"><strong>Found via Jobs, Jobs, Jobs</strong></p>
       <hr>
@@ -17,6 +17,7 @@ import { useRoute } from 'vue-router'
 import marked from 'marked'
 import api, { LogOnSuccess, markedOptions, Success } from '@/api'
 import { useStore } from '@/store'
+
 import FullDateTime from '@/components/FullDateTime.vue'
 import LoadData from '@/components/LoadData.vue'
 

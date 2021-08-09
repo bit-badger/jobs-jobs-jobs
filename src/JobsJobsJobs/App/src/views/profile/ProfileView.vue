@@ -3,14 +3,14 @@
     <page-title :title="pageTitle" />
     <load-data :load="retrieveProfile">
       <h2><a :href="it.citizen.profileUrl" target="_blank">{{citizenName}}</a></h2>
-      <h4>{{it.continent.name}}, {{it.profile.region}}</h4>
+      <h4 class="pb-3">{{it.continent.name}}, {{it.profile.region}}</h4>
       <p v-html="workTypes"></p>
       <hr>
       <div v-html="bioHtml"></div>
 
       <template v-if="it.profile.skills.length > 0">
         <hr>
-        <h4>Skills</h4>
+        <h4 class="pb-3">Skills</h4>
         <ul>
           <li v-for="(skill, idx) in it.profile.skills" :key="idx">
             {{skill.description}}<template v-if="skill.notes"> ({{skill.notes}})</template>
@@ -20,7 +20,7 @@
 
       <template v-if="it.profile.experience">
         <hr>
-        <h4>Experience / Employment History</h4>
+        <h4 class="pb-3">Experience / Employment History</h4>
         <div v-html="expHtml"></div>
       </template>
 

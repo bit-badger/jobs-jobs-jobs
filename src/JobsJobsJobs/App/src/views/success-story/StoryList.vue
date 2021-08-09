@@ -1,7 +1,7 @@
 <template>
   <article>
     <page-title title="Success Stories" />
-    <h3>Success Stories</h3>
+    <h3 class="pb-3">Success Stories</h3>
     <load-data :load="retrieveStories">
       <table v-if="stories?.length > 0" class="table table-sm table-hover">
         <thead>

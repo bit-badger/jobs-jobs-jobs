@@ -17,8 +17,8 @@
             <input type="checkbox" id="isSeeking" class="form-check-input" v-model="v$.isSeekingEmployment.$model">
             <label for="isSeeking" class="form-check-label">I am currently seeking employment</label>
           </div>
-          <p v-if="profile?.seekingEmployment">
-            <em>If you have found employment, consider <router-link to="/success-story/add">telling your fellow
+          <p v-if="profile.isSeekingEmployment">
+            <em>If you have found employment, consider <router-link to="/success-story/edit/new">telling your fellow
             citizens about it!</router-link></em>
           </p>
         </div>

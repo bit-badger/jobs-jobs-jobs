@@ -341,7 +341,7 @@ module Success =
       let! success = task {
         match form.id with
         | "new" ->
-            return Some { id         = (Guid.NewGuid >> SuccessId) ()
+            return Some { id         = SuccessId.create ()
                           citizenId  = citizenId
                           recordedOn = now
                           fromHere   = form.fromHere
@@ -397,8 +397,8 @@ let allEndpoints = [
       ]
     subRoute "/success" [
       GET_HEAD [
-        routef "/get/%O" Success.get
-        route  "/list"   Success.all
+        routef "/%O"   Success.get
+        route  "/list" Success.all
         ]
       POST [ route "/save" Success.save ]
       ]

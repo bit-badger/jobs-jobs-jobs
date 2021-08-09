@@ -12,6 +12,7 @@ import {
   PublicSearch,
   PublicSearchResult,
   StoryEntry,
+  StoryForm,
   Success
 } from './types'
 
@@ -138,6 +139,18 @@ export default {
   profile: {
 
     /**
+     * Clear the "seeking employment" flag on the current citizen's profile
+     *
+     * @param user The currently logged-on user
+     * @returns True if the action was successful, or an error string if not
+     */
+    markEmploymentFound: async (user : LogOnSuccess) : Promise<boolean | string> => {
+      const result = await fetch(apiUrl('profile/employment-found'), reqInit('PATCH', user))
+      if (result.ok) return true
+      return `${result.status} - ${result.statusText} (${await result.text()})`
+    },
+
+    /**
      * Search for public profile data using the given parameters
      *
      * @param query The public profile search parameters
@@ -183,6 +196,7 @@ export default {
      *
      * @param data The profile data to be saved
      * @param user The currently logged-on user
+     * @returns True if the save was successful, an error string if not
      */
     save: async (data : ProfileForm, user : LogOnSuccess) : Promise<boolean | string> =>
       apiSend(await fetch(apiUrl('profile/save'), reqInit('POST', user, data)), 'saving profile'),
@@ -249,7 +263,17 @@ export default {
      * @returns The success story, or an error
      */
     retrieve: async (id : string, user : LogOnSuccess) : Promise<Success | string | undefined> =>
-      apiResult<Success>(await fetch(apiUrl(`success/${id}`), reqInit('GET', user)), `retrieving success story ${id}`)
+      apiResult<Success>(await fetch(apiUrl(`success/${id}`), reqInit('GET', user)), `retrieving success story ${id}`),
+
+    /**
+     * Save a success story
+     *
+     * @param data The data to be saved
+     * @param user The currently logged-on user
+     * @returns True if successful, an error string if not
+     */
+    save: async (data : StoryForm, user : LogOnSuccess) : Promise<boolean | string> =>
+      apiSend(await fetch(apiUrl('success/save'), reqInit('POST', user, data)), 'saving success story')
   }
 }
 

@@ -179,6 +179,16 @@ export interface StoryEntry {
   hasStory : boolean
 }
 
+/** The data required to provide a success story */
+export class StoryForm {
+  /** The ID of this story */
+  id = ''
+  /** Whether the employment was obtained from Jobs, Jobs, Jobs */
+  fromHere = false
+  /** The success story */
+  story = ''
+}
+
 /** A record of success finding employment */
 export interface Success {
   /** The ID of the success report */
