@@ -83,6 +83,11 @@ const routes: Array<RouteRecordRaw> = [
     name: 'MyListings',
     component: () => import(/* webpackChunkName: "joblist" */ '../views/listing/MyListings.vue')
   },
+  {
+    path: '/listings/search',
+    name: 'SearchListings',
+    component: () => import(/* webpackChunkName: "joblist" */ '../views/listing/ListingSearch.vue')
+  },
   // Profile URLs
   {
     path: '/profile/:id/view',

@@ -3,7 +3,7 @@
     <page-title title="My Job Listings" />
     <h3 class="pb-3">My Job Listings</h3>
     <p>
-      <router-link class="btn btn-primary-outline" to="/listing/new/edit">Add a New Job Listing</router-link>
+      <router-link class="btn btn-outline-primary" to="/listing/new/edit">Add a New Job Listing</router-link>
     </p>
     <load-data :load="getListings">
       <table v-if="listings.length > 0">

@@ -1,21 +1,27 @@
 <template>
   <aside class="collapse show p-3">
-    <p class="home-link"><router-link to="/">Jobs, Jobs, Jobs</router-link></p>
+    <p class="home-link pb-3"><router-link to="/">Jobs, Jobs, Jobs</router-link></p>
     <p>&nbsp;</p>
     <nav>
       <template v-if="isLoggedOn">
-        <router-link to="/citizen/dashboard"><icon icon="view-dashboard-variant" /> Dashboard</router-link>
-        <router-link to="/citizen/profile"><icon icon="pencil" /> Edit Your Profile</router-link>
-        <router-link to="/profile/search"><icon icon="view-list-outline" /> View Profiles</router-link>
-        <router-link to="/success-story/list"><icon icon="thumb-up" /> Success Stories</router-link>
-        <router-link to="/citizen/log-off"><icon icon="logout-variant" /> Log Off</router-link>
+        <router-link to="/citizen/dashboard"><icon icon="view-dashboard-variant" />&nbsp; Dashboard</router-link>
+        <router-link to="/citizen/profile"><icon icon="pencil" />&nbsp; My Profile</router-link>
+        <router-link to="/profile/search" class="separator">
+          <icon icon="view-list-outline" />&nbsp; View Profiles
+        </router-link>
+        <router-link to="/listings/mine"><icon icon="sign-text" />&nbsp; My Job Listings</router-link>
+        <router-link to="/listings/search" class="separator">
+          <icon icon="newspaper-variant-multiple-outline" />&nbsp; View Listings
+        </router-link>
+        <router-link to="/success-story/list"><icon icon="thumb-up" />&nbsp; Success Stories</router-link>
+        <router-link to="/citizen/log-off"><icon icon="logout-variant" />&nbsp; Log Off</router-link>
       </template>
       <template v-else>
-        <router-link to="/"><icon icon="home" /> Home</router-link>
-        <router-link to="/profile/seeking"><icon icon="view-list-outline" /> Job Seekers</router-link>
-        <router-link to="/citizen/log-on"><icon icon="login-variant" /> Log On</router-link>
+        <router-link to="/"><icon icon="home" />&nbsp; Home</router-link>
+        <router-link to="/profile/seeking"><icon icon="view-list-outline" />&nbsp; Job Seekers</router-link>
+        <router-link to="/citizen/log-on"><icon icon="login-variant" />&nbsp; Log On</router-link>
       </template>
-      <router-link to="/how-it-works"><icon icon="help-circle-outline" /> How It Works</router-link>
+      <router-link to="/how-it-works"><icon icon="help-circle-outline" />&nbsp; How It Works</router-link>
     </nav>
   </aside>
 </template>
@@ -42,7 +48,7 @@ aside
   background-image: linear-gradient(180deg, darkgreen 0%, green 70%)
   color: white
   font-size: 1.2rem
-  height: 100vh
+  min-height: 100vh
   width: 250px
   min-width: 250px
   position: sticky
@@ -72,4 +78,7 @@ nav > a
   &:hover
     background-color: rgba(255, 255, 255, .5)
     color: black
+    text-decoration: none
+nav > a.separator
+  border-bottom: solid 1px white
 </style>
