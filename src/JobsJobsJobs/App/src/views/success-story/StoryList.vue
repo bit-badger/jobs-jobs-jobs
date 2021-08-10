@@ -15,10 +15,10 @@
         <tbody>
           <tr v-for="story in stories" :key="story.id">
             <td>
-              <router-link v-if="story.hasStory" :to="`/success-story/view/${story.id}`">View</router-link>
+              <router-link v-if="story.hasStory" :to="`/success-story/${story.id}/view`">View</router-link>
               <em v-else>None</em>
               <template v-if="story.citizenId === user.citizenId">
-                ~ <router-link :to="`/success-story/edit/${story.id}`">Edit</router-link>
+                ~ <router-link :to="`/success-story/${story.id}/edit`">Edit</router-link>
               </template>
             </td>
             <td>{{story.citizenName}}</td>

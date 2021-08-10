@@ -54,7 +54,7 @@ html
 a:link,
 a:visited
   text-decoration: none
-a:hover
+a:not(.btn):hover
   text-decoration: underline
 label.jjj-required::after
   color: red

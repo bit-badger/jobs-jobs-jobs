@@ -18,7 +18,7 @@
             <label for="isSeeking" class="form-check-label">I am currently seeking employment</label>
           </div>
           <p v-if="profile.isSeekingEmployment">
-            <em>If you have found employment, consider <router-link to="/success-story/edit/new">telling your fellow
+            <em>If you have found employment, consider <router-link to="/success-story/new/edit">telling your fellow
             citizens about it!</router-link></em>
           </p>
         </div>
@@ -84,12 +84,14 @@
         </div>
         <div class="col-12">
           <p v-if="v$.$error" class="text-danger">Please correct the errors above</p>
-          <button class="btn btn-primary" @click.prevent="saveProfile">Save</button>
+          <button class="btn btn-primary" @click.prevent="saveProfile">
+            <icon icon="content-save-outline" />&nbsp; Save
+          </button>
           <template v-if="!isNew">
             &nbsp; &nbsp;
-            <button class="btn btn-outline-secondary" @click.prevent="viewProfile">
+            <router-link class="btn btn-outline-secondary" :to="`/profile/${user.citizenId}/view`">
               <icon icon="file-account-outline" />&nbsp; View Your User Profile
-            </button>
+            </router-link>
           </template>
         </div>
       </form>
@@ -99,20 +101,24 @@
       (If you want to delete your profile, or your entire account, <router-link to="/so-long/options">see your deletion
       options here</router-link>.)
     </p>
+    <maybe-save :isShown="confirmNavShown" :toRoute="nextRoute" :saveAction="saveProfile" :validator="v$"
+                @close="confirmClose" />
   </article>
 </template>
 
 <script lang="ts">
-import { computed, defineComponent, ref, reactive } from 'vue'
-import { onBeforeRouteLeave, useRouter } from 'vue-router'
+import { computed, defineComponent, ref, reactive, Ref } from 'vue'
+import { onBeforeRouteLeave, RouteLocationNormalized } from 'vue-router'
 import useVuelidate from '@vuelidate/core'
 import { required } from '@vuelidate/validators'
+
 import api, { Citizen, LogOnSuccess, Profile, ProfileForm } from '@/api'
+import { toastError, toastSuccess } from '@/components/layout/AppToaster.vue'
 import { useStore } from '@/store'
 
 import LoadData from '@/components/LoadData.vue'
 import MarkdownEditor from '@/components/MarkdownEditor.vue'
-import { toastError, toastSuccess } from '@/components/layout/AppToaster.vue'
+import MaybeSave from '@/components/MaybeSave.vue'
 import ProfileSkillEdit from '@/components/profile/SkillEdit.vue'
 
 export default defineComponent({
@@ -120,11 +126,11 @@ export default defineComponent({
   components: {
     LoadData,
     MarkdownEditor,
+    MaybeSave,
     ProfileSkillEdit
   },
   setup () {
     const store = useStore()
-    const router = useRouter()
 
     /** The currently logged-on user */
     const user = store.state.user as LogOnSuccess
@@ -240,13 +246,17 @@ export default defineComponent({
       }
     }
 
+    /** Whether the navigation confirmation is shown  */
+    const confirmNavShown = ref(false)
+
+    /** The "next" route (will be navigated or cleared) */
+    const nextRoute : Ref<RouteLocationNormalized | undefined> = ref(undefined)
+
     /** If the user has unsaved changes, give them an opportunity to save before moving on */
     onBeforeRouteLeave(async (to, from) => { // eslint-disable-line
       if (!v$.value.$anyDirty) return true
-      if (confirm('There are unsaved changes; save before viewing?')) {
-        await saveProfile()
-        return true
-      }
+      nextRoute.value = to
+      confirmNavShown.value = true
       return false
     })
 
@@ -261,7 +271,9 @@ export default defineComponent({
       addSkill,
       removeSkill,
       saveProfile,
-      viewProfile: () => router.push(`/profile/view/${user.citizenId}`)
+      confirmNavShown,
+      nextRoute,
+      confirmClose: () => { confirmNavShown.value = false }
     }
   }
 })

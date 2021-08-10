@@ -31,6 +31,34 @@ export interface Count {
   count : number
 }
 
+/** A job listing */
+export interface Listing {
+  /** The ID of the job listing */
+  id : string
+  /** The ID of the citizen who posted the job listing */
+  citizenId : string
+  /** When this job listing was created (date) */
+  createdOn : string
+  /** The short title of the job listing */
+  title : string
+  /** The ID of the continent on which the job is located */
+  continentId : string
+  /** The region in which the job is located */
+  region : string
+  /** Whether this listing is for remote work */
+  remoteWork : boolean
+  /** Whether this listing has expired */
+  isExpired : boolean
+  /** When this listing was last updated (date) */
+  updatedOn : string
+  /** The details of this job */
+  text : string
+  /** When this job needs to be filled (date) */
+  neededBy : string | undefined
+  /** Was this job filled as part of its appearance on Jobs, Jobs, Jobs? */
+  wasFilledHere : boolean | undefined
+}
+
 /** A successful logon */
 export interface LogOnSuccess {
   /** The JSON Web Token (JWT) to use for API access */

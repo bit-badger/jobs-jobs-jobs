@@ -27,10 +27,11 @@
             </div>
             <div class="card-footer">
               <template v-if="profile">
-                <button class="btn btn-outline-secondary" @click="viewProfile">View Profile</button> &nbsp; &nbsp;
-                <button class="btn btn-outline-secondary" @click="editProfile">Edit Profile</button>
+                <router-link class="btn btn-outline-secondary"
+                             :to="`/profile/${user.citizenId}/view`">View Profile</router-link> &nbsp; &nbsp;
+                <router-link class="btn btn-outline-secondary" to="/citizen/profile">Edit Profile</router-link>
               </template>
-              <button v-else class="btn btn-primary" @click="editProfile">Create Profile</button>
+              <router-link v-else class="btn btn-primary" to="/citizen/profile">Create Profile</router-link>
             </div>
           </div>
         </div>
@@ -53,7 +54,7 @@
               </p>
             </div>
             <div class="card-footer">
-              <button class="btn btn-outline-secondary" @click="searchProfiles">Search Profiles</button>
+              <router-link class="btn btn-outline-secondary" to="/profile/search">Search Profiles</router-link>
             </div>
           </div>
         </div>
@@ -69,7 +70,6 @@
 
 <script lang="ts">
 import { defineComponent, Ref, ref } from 'vue'
-import { useRouter } from 'vue-router'
 import api, { LogOnSuccess, Profile } from '@/api'
 import { useStore } from '@/store'
 
@@ -84,7 +84,6 @@ export default defineComponent({
   },
   setup () {
     const store = useStore()
-    const router = useRouter()
 
     /** The currently logged-in user */
     const user = store.state.user as LogOnSuccess
@@ -114,10 +113,7 @@ export default defineComponent({
       retrieveData,
       user,
       profile,
-      profileCount,
-      viewProfile: () => router.push(`/profile/view/${user.citizenId}`),
-      editProfile: () => router.push('/citizen/profile'),
-      searchProfiles: () => router.push('/profile/search')
+      profileCount
     }
   }
 })

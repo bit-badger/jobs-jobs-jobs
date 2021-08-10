@@ -25,7 +25,7 @@
           </thead>
           <tbody>
             <tr v-for="profile in results" :key="profile.citzenId">
-              <td><router-link :to="`/profile/view/${profile.citizenId}`">View</router-link></td>
+              <td><router-link :to="`/profile/${profile.citizenId}/view`">View</router-link></td>
               <td :class="{ 'font-weight-bold' : profile.seekingEmployment }">{{profile.displayName}}</td>
               <td class="text-center">{{yesOrNo(profile.seekingEmployment)}}</td>
               <td class="text-center">{{yesOrNo(profile.remoteWork)}}</td>

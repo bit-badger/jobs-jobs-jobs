@@ -72,9 +72,20 @@ const routes: Array<RouteRecordRaw> = [
     name: 'LogOff',
     component: () => import(/* webpackChunkName: "logoff" */ '../views/citizen/LogOff.vue')
   },
+  // Job Listing URLs
+  {
+    path: '/listing/:id/edit',
+    name: 'EditListing',
+    component: () => import(/* webpackChunkName: "jobedit" */ '../views/listing/ListingEdit.vue')
+  },
+  {
+    path: '/listings/mine',
+    name: 'MyListings',
+    component: () => import(/* webpackChunkName: "joblist" */ '../views/listing/MyListings.vue')
+  },
   // Profile URLs
   {
-    path: '/profile/view/:id',
+    path: '/profile/:id/view',
     name: 'ViewProfile',
     component: () => import(/* webpackChunkName: "profview" */ '../views/profile/ProfileView.vue')
   },
@@ -106,12 +117,12 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import(/* webpackChunkName: "success" */ '../views/success-story/StoryList.vue')
   },
   {
-    path: '/success-story/edit/:id',
+    path: '/success-story/:id/edit',
     name: 'EditStory',
     component: () => import(/* webpackChunkName: "succedit" */ '../views/success-story/StoryEdit.vue')
   },
   {
-    path: '/success-story/view/:id',
+    path: '/success-story/:id/view',
     name: 'ViewStory',
     component: () => import(/* webpackChunkName: "success" */ '../views/success-story/StoryView.vue')
   }

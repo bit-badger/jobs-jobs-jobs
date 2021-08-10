@@ -17,19 +17,23 @@
         </div>
         <markdown-editor id="story" label="The Success Story" v-model:text="v$.story.$model" />
         <div class="col-12">
-          <button type="submit" class="btn btn-primary" @click.prevent="saveStory(true)"><icon icon="" /> Save</button>
+          <button type="submit" class="btn btn-primary" @click.prevent="saveStory(true)">
+            <icon icon="content-save-outline" />&nbsp; Save
+          </button>
           <p v-if="isNew">
             <em>(Saving this will set &ldquo;Seeking Employment&rdquo; to &ldquo;No&rdquo; on your profile.)</em>
           </p>
         </div>
       </form>
     </load-data>
+    <maybe-save :isShown="confirmNavShown" :toRoute="nextRoute" :saveAction="doSave" :validator="v$"
+                @close="confirmClose" />
   </article>
 </template>
 
 <script lang="ts">
-import { computed, defineComponent, reactive } from 'vue'
-import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
+import { computed, defineComponent, reactive, ref, Ref } from 'vue'
+import { onBeforeRouteLeave, RouteLocationNormalized, useRoute, useRouter } from 'vue-router'
 import useVuelidate from '@vuelidate/core'
 import api, { LogOnSuccess, StoryForm } from '@/api'
 import { toastError, toastSuccess } from '@/components/layout/AppToaster.vue'
@@ -37,12 +41,14 @@ import { useStore } from '@/store'
 
 import LoadData from '@/components/LoadData.vue'
 import MarkdownEditor from '@/components/MarkdownEditor.vue'
+import MaybeSave from '@/components/MaybeSave.vue'
 
 export default defineComponent({
   name: 'StoryEdit',
   components: {
     LoadData,
-    MarkdownEditor
+    MarkdownEditor,
+    MaybeSave
   },
   setup () {
     const store = useStore()
@@ -105,28 +111,32 @@ export default defineComponent({
             toastError(foundResult, 'clearing employment flag')
           } else {
             toastSuccess('Success Story saved and Seeking Employment flag cleared successfully')
+            v$.value.$reset()
             if (navigate) {
               router.push('/success-story/list')
-              v$.value.$reset()
             }
           }
         } else {
           toastSuccess('Success Story saved successfully')
+          v$.value.$reset()
           if (navigate) {
             router.push('/success-story/list')
-            v$.value.$reset()
           }
         }
       }
     }
 
+    /** Whether the navigation confirmation is shown  */
+    const confirmNavShown = ref(false)
+
+    /** The "next" route (will be navigated or cleared) */
+    const nextRoute : Ref<RouteLocationNormalized | undefined> = ref(undefined)
+
     /** Prompt for save if the user navigates away with unsaved changes */
     onBeforeRouteLeave(async (to, from) => { // eslint-disable-line
       if (!v$.value.$anyDirty) return true
-      if (confirm('There are unsaved changes; save before leaving?')) {
-        await saveStory(false)
-        return true
-      }
+      nextRoute.value = to
+      confirmNavShown.value = true
       return false
     })
 
@@ -135,7 +145,11 @@ export default defineComponent({
       isNew,
       retrieveStory,
       v$,
-      saveStory
+      saveStory,
+      confirmNavShown,
+      nextRoute,
+      doSave: async () => await saveStory(false),
+      confirmClose: () => { confirmNavShown.value = false }
     }
   }
 })

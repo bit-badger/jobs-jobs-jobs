@@ -26,7 +26,9 @@
 
       <template v-if="user.citizenId === it.citizen.id">
         <br><br>
-        <button class="btn btn-primary" @click="editProfile"><icon icon="pencil" />&nbsp; Edit Your Profile</button>
+        <router-link class="btn btn-primary" to="/citizen/profile">
+          <icon icon="pencil" />&nbsp; Edit Your Profile
+        </router-link>
       </template>
     </load-data>
   </article>
@@ -34,7 +36,7 @@
 
 <script lang="ts">
 import { computed, defineComponent, ref, Ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import marked from 'marked'
 import api, { LogOnSuccess, markedOptions, ProfileForView } from '@/api'
 import { useStore } from '@/store'
@@ -46,7 +48,6 @@ export default defineComponent({
   setup () {
     const store = useStore()
     const route = useRoute()
-    const router = useRouter()
 
     /** The currently logged-on user */
     const user = store.state.user as LogOnSuccess
@@ -96,8 +97,7 @@ export default defineComponent({
       workTypes,
       citizenName,
       bioHtml: computed(() => marked(it.value?.profile.biography || '', markedOptions)),
-      expHtml: computed(() => marked(it.value?.profile.experience || '', markedOptions)),
-      editProfile: () => router.push('/citizen/profile')
+      expHtml: computed(() => marked(it.value?.profile.experience || '', markedOptions))
     }
   }
 })

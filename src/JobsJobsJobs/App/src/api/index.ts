@@ -3,6 +3,7 @@ import {
   Citizen,
   Continent,
   Count,
+  Listing,
   LogOnSuccess,
   Profile,
   ProfileForm,
@@ -133,6 +134,19 @@ export default {
      */
     all: async () : Promise<Continent[] | string | undefined> =>
       apiResult<Continent[]>(await fetch(apiUrl('continent/all'), { method: 'GET' }), 'retrieving continents')
+  },
+
+  /** API functions for job listings */
+  listings: {
+
+    /**
+     * Retrieve the job listings posted by the current citizen
+     *
+     * @param user The currently logged-on user
+     * @returns The job listings the user has posted, or an error string
+     */
+    mine: async (user : LogOnSuccess) : Promise<Listing[] | string | undefined> =>
+      apiResult<Listing[]>(await fetch(apiUrl('listings/mine'), reqInit('GET', user)), 'retrieving your job listings')
   },
 
   /** API functions for profiles */
