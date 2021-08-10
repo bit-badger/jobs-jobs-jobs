@@ -5,7 +5,7 @@ open System
 open System.Linq
 open JobsJobsJobs.Api.Data
 open JobsJobsJobs.Domain
-open JobsJobsJobs.Server.Data
+open JobsJobsJobs.DataMigrate
 open Microsoft.EntityFrameworkCore
 open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.DependencyInjection
