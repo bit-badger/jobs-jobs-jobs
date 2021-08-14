@@ -2,14 +2,8 @@
   <form class="container">
     <div class="row">
       <div class="col col-xs-12 col-sm-6 col-md-4 col-lg-3">
-        <div class="form-floating">
-          <select id="continentId" class="form-select" :value="criteria.continentId"
-                  @change="updateValue('continentId', $event.target.value)">
-            <option value="">&ndash; Any &ndash;</option>
-            <option v-for="c in continents" :key="c.id" :value="c.id">{{c.name}}</option>
-          </select>
-          <label for="continentId">Continent</label>
-        </div>
+        <continent-list v-model="criteria.continentId" topLabel="Any"
+                        @update:modelValue="(c) => updateValue('continentId', c)" />
       </div>
       <div class="col col-xs-12 col-sm-6 col-md-4 col-lg-3">
         <div class="form-floating">
@@ -56,12 +50,13 @@
 </template>
 
 <script lang="ts">
-import { computed, defineComponent, onMounted, ref, Ref } from 'vue'
+import { defineComponent, ref, Ref } from 'vue'
 import { PublicSearch } from '@/api'
-import { useStore } from '@/store'
+import ContinentList from '../ContinentList.vue'
 
 export default defineComponent({
   name: 'ProfilePublicSearchForm',
+  components: { ContinentList },
   props: {
     modelValue: {
       type: Object,
@@ -70,17 +65,11 @@ export default defineComponent({
   },
   emits: ['search', 'update:modelValue'],
   setup (props, { emit }) {
-    const store = useStore()
-
     /** The initial search criteria passed; this is what we'll update and emit when data changes */
     const criteria : Ref<PublicSearch> = ref({ ...props.modelValue as PublicSearch })
 
-    /** Make sure we have continents */
-    onMounted(async () => await store.dispatch('ensureContinents'))
-
     return {
       criteria,
-      continents: computed(() => store.state.continents),
       updateValue: (key : string, value : string) => {
         criteria.value = { ...criteria.value, [key]: value }
         emit('update:modelValue', criteria.value)

@@ -76,7 +76,7 @@ export default defineComponent({
 
     /** An empty set of search criteria */
     const emptyCriteria = {
-      continentId: undefined,
+      continentId: '',
       region: undefined,
       skill: undefined,
       remoteWork: ''
@@ -97,8 +97,9 @@ export default defineComponent({
         searched.value = true
         try {
           searching.value = true
+          const contId = queryValue(route, 'continentId')
           const searchParams : PublicSearch = {
-            continentId: queryValue(route, 'continentId'),
+            continentId: contId === '' ? undefined : contId,
             region: queryValue(route, 'region'),
             skill: queryValue(route, 'skill'),
             remoteWork: queryValue(route, 'remoteWork') || ''
@@ -110,6 +111,7 @@ export default defineComponent({
             errors.value.push('The server returned a "Not Found" response (this should not happen)')
           } else {
             results.value = searchResult
+            searchParams.continentId = searchParams.continentId || ''
             criteria.value = searchParams
           }
         } finally {

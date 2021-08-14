@@ -23,14 +23,8 @@
           </p>
         </div>
         <div class="col-12 col-sm-6 col-md-4">
-          <div class="form-floating">
-            <select id="continentId" :class="{ 'form-select': true, 'is-invalid': v$.continentId.$error }"
-                    :value="v$.continentId.$model" @change="continentChanged">
-              <option v-for="c in continents" :key="c.id" :value="c.id">{{c.name}}</option>
-            </select>
-            <label for="continentId" class="jjj-required">Continent</label>
-          </div>
-          <div class="invalid-feedback">Please select a continent</div>
+          <continent-list v-model="v$.continentId.$model" :isInvalid="v$.continentId.$error"
+                          @touch="v$.continentId.$touch() || true" />
         </div>
         <div class="col-12 col-sm-6 col-md-8">
           <div class="form-floating">
@@ -116,6 +110,7 @@ import api, { Citizen, LogOnSuccess, Profile, ProfileForm } from '@/api'
 import { toastError, toastSuccess } from '@/components/layout/AppToaster.vue'
 import { useStore } from '@/store'
 
+import ContinentList from '@/components/ContinentList.vue'
 import LoadData from '@/components/LoadData.vue'
 import MarkdownEditor from '@/components/MarkdownEditor.vue'
 import MaybeSave from '@/components/MaybeSave.vue'
@@ -124,6 +119,7 @@ import ProfileSkillEdit from '@/components/profile/SkillEdit.vue'
 export default defineComponent({
   name: 'EditProfile',
   components: {
+    ContinentList,
     LoadData,
     MarkdownEditor,
     MaybeSave,
@@ -175,7 +171,6 @@ export default defineComponent({
 
     /** Retrieve the user's profile and their real name */
     const retrieveData = async (errors : string[]) => {
-      await store.dispatch('ensureContinents')
       const profileResult = await api.profile.retreive(undefined, user)
       if (typeof profileResult === 'string') {
         errors.push(profileResult)
@@ -199,21 +194,6 @@ export default defineComponent({
       profile.experience = p.experience
       profile.skills = p.skills
       profile.realName = typeof nameResult !== 'undefined' ? (nameResult as Citizen).realName || '' : ''
-    }
-
-    /**
-     * Mark the continent field as changed
-     *
-     * (This works around a really strange sequence where, if the "touch" call is directly wired up to the onChange
-     * event, the first time a value is selected, it doesn't stick (although the field is marked as touched). On second
-     * and subsequent times, it worked. The solution here is to grab the value and update the reactive source for the
-     * form, then manually set the field to touched; this restores the expected behavior. This is probably why the
-     * library doesn't hook into the onChange event to begin with...)
-     */
-    const continentChanged = (e : Event) : boolean => {
-      profile.continentId = (e.target as HTMLSelectElement).value
-      v$.value.continentId.$touch()
-      return true
     }
 
     /** The ID for new skills */
@@ -266,8 +246,6 @@ export default defineComponent({
       user,
       isNew,
       profile,
-      continents: computed(() => store.state.continents),
-      continentChanged,
       addSkill,
       removeSkill,
       saveProfile,

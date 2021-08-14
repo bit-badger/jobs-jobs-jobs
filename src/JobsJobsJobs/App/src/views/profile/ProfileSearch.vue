@@ -77,7 +77,7 @@ export default defineComponent({
 
     /** An empty set of search criteria */
     const emptyCriteria = {
-      continentId: undefined,
+      continentId: '',
       skill: undefined,
       bioExperience: undefined,
       remoteWork: ''
@@ -98,8 +98,10 @@ export default defineComponent({
         searched.value = true
         try {
           searching.value = true
+          // Hold variable for ensuring continent ID is not undefined here, but excluded from search payload
+          const contId = queryValue(route, 'continentId')
           const searchParams : ProfileSearch = {
-            continentId: queryValue(route, 'continentId'),
+            continentId: contId === '' ? undefined : contId,
             skill: queryValue(route, 'skill'),
             bioExperience: queryValue(route, 'bioExperience'),
             remoteWork: queryValue(route, 'remoteWork') || ''
@@ -111,6 +113,7 @@ export default defineComponent({
             errors.value.push('The server returned a "Not Found" response (this should not happen)')
           } else {
             results.value = searchResult
+            searchParams.continentId = searchParams.continentId || ''
             criteria.value = searchParams
           }
         } finally {
