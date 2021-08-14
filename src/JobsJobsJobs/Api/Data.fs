@@ -201,7 +201,6 @@ open RethinkDb.Driver.Ast
 module Profile =
 
   open JobsJobsJobs.Domain
-  open RethinkDb.Driver.Ast
 
   let count conn =
     withReconn(conn).ExecuteAsync(fun () ->
@@ -210,14 +209,14 @@ module Profile =
           .RunResultAsync<int64> conn)
 
   /// Find a profile by citizen ID
-  let findById (citizenId : CitizenId) conn = task {
-    let! profile =
-      withReconn(conn).ExecuteAsync(fun () ->
+  let findById (citizenId : CitizenId) conn =
+    withReconn(conn).ExecuteAsync(fun () -> task {
+      let! profile =
           r.Table(Table.Profile)
             .Get(citizenId)
-            .RunResultAsync<Profile> conn)
-    return toOption profile
-    }
+            .RunResultAsync<Profile> conn
+      return toOption profile
+      })
   
   /// Insert or update a profile
   let save (profile : Profile) conn =
@@ -331,24 +330,24 @@ module Profile =
 module Citizen =
   
   /// Find a citizen by their ID
-  let findById (citizenId : CitizenId) conn = task {
-    let! citizen =
-      withReconn(conn).ExecuteAsync(fun () ->
+  let findById (citizenId : CitizenId) conn =
+    withReconn(conn).ExecuteAsync(fun () -> task {
+        let! citizen =
           r.Table(Table.Citizen)
             .Get(citizenId)
-            .RunResultAsync<Citizen> conn)
-    return toOption citizen
-    }
+            .RunResultAsync<Citizen> conn
+        return toOption citizen
+      })
 
   /// Find a citizen by their No Agenda Social username
-  let findByNaUser (naUser : string) conn = task {
-    let! citizen =
-      withReconn(conn).ExecuteAsync(fun () ->
+  let findByNaUser (naUser : string) conn =
+    withReconn(conn).ExecuteAsync(fun () -> task {
+        let! citizen =
           r.Table(Table.Citizen)
             .GetAll(naUser).OptArg("index", "naUser").Nth(0)
-            .RunResultAsync<Citizen> conn)
-    return toOption citizen
-    }
+            .RunResultAsync<Citizen> conn
+        return toOption citizen
+      })
   
   /// Add a citizen
   let add (citizen : Citizen) conn =
@@ -378,6 +377,11 @@ module Citizen =
         do! Profile.delete citizenId conn
         let! _ =
           r.Table(Table.Success)
+            .GetAll(citizenId).OptArg("index", "citizenId")
+            .Delete()
+            .RunWriteAsync conn
+        let! _ =
+          r.Table(Table.Listing)
             .GetAll(citizenId).OptArg("index", "citizenId")
             .Delete()
             .RunWriteAsync conn
@@ -412,26 +416,70 @@ module Continent =
           .RunResultAsync<Continent list> conn)
   
   /// Get a continent by its ID
-  let findById (contId : ContinentId) conn = task {
-    let! continent =
-      withReconn(conn).ExecuteAsync(fun () ->
+  let findById (contId : ContinentId) conn =
+    withReconn(conn).ExecuteAsync(fun () -> task {
+        let! continent =
           r.Table(Table.Continent)
             .Get(contId)
-            .RunResultAsync<Continent> conn)
-    return toOption continent
-  }
+            .RunResultAsync<Continent> conn
+        return toOption continent
+      })
 
 
 /// Job listing data access functions
 [<RequireQualifiedAccess>]
 module Listing =  
 
+  /// This is how RethinkDB is going to return our listing/continent combo
+  // fsharplint:disable RecordFieldNames
+  [<CLIMutable; NoEquality; NoComparison>]
+  type ListingAndContinent = {
+    left  : Listing
+    right : Continent
+  }
+  // fsharplint:enable
+
   /// Find all job listings posted by the given citizen
   let findByCitizen (citizenId : CitizenId) conn =
-    withReconn(conn).ExecuteAsync(fun () ->
-        r.Table(Table.Listing)
-          .GetAll(citizenId).OptArg("index", nameof citizenId)
-          .RunResultAsync<Listing list> conn)
+    withReconn(conn).ExecuteAsync(fun () -> task {
+        let! both =
+          r.Table(Table.Listing)
+            .GetAll(citizenId).OptArg("index", nameof citizenId)
+            .EqJoin("continentId", r.Table(Table.Continent))
+            .RunResultAsync<ListingAndContinent list> conn
+        return both |> List.map (fun b -> { listing = b.left; continent = b.right})
+      })
+  
+  /// Find a listing by its ID
+  let findById (listingId : ListingId) conn =
+    withReconn(conn).ExecuteAsync(fun () -> task {
+        let! listing =
+          r.Table(Table.Listing)
+            .Get(listingId)
+            .RunResultAsync<Listing> conn
+        return toOption listing
+      })
+  
+  /// Add a listing
+  let add (listing : Listing) conn =
+    withReconn(conn).ExecuteAsync(fun () -> task {
+        let! _ =
+          r.Table(Table.Listing)
+            .Insert(listing)
+            .RunWriteAsync conn
+        ()
+      })
+  
+  /// Update a listing
+  let update (listing : Listing) conn =
+    withReconn(conn).ExecuteAsync(fun () -> task {
+        let! _ =
+          r.Table(Table.Listing)
+            .Get(listing.id)
+            .Replace(listing)
+            .RunWriteAsync conn
+        ()
+      })
 
 
 /// Success story data access functions
@@ -439,25 +487,25 @@ module Listing =
 module Success =
 
   /// Find a success report by its ID
-  let findById (successId : SuccessId) conn = task {
-    let! success =
-      withReconn(conn).ExecuteAsync(fun () ->
+  let findById (successId : SuccessId) conn =
+    withReconn(conn).ExecuteAsync(fun () -> task {
+        let! success =
           r.Table(Table.Success)
             .Get(successId)
-            .RunResultAsync<Success> conn)
-    return toOption success
-    }
+            .RunResultAsync<Success> conn
+        return toOption success
+      })
 
   /// Insert or update a success story
-  let save (success : Success) conn = task {
-    let! _ =
-      withReconn(conn).ExecuteAsync(fun () ->
+  let save (success : Success) conn =
+    withReconn(conn).ExecuteAsync(fun () -> task {
+        let! _ =
           r.Table(Table.Success)
             .Get(success.id)
             .Replace(success)
-            .RunWriteAsync conn)
-    ()
-    }
+            .RunWriteAsync conn
+        ()
+      })
 
   // Retrieve all success stories  
   let all conn =

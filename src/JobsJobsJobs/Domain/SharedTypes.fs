@@ -6,6 +6,34 @@ open NodaTime
 
 // fsharplint:disable FieldNames
 
+/// The data required to add or edit a job listing
+type ListingForm = {
+  /// The ID of the listing
+  id          : string
+  /// The listing title
+  title       : string
+  /// The ID of the continent on which this opportunity exists
+  continentId : string
+  /// The region in which this opportunity exists
+  region      : string
+  /// Whether this is a remote work opportunity
+  remoteWork  : bool
+  /// The text of the job listing
+  text        : string
+  /// The date by which this job listing is needed
+  neededBy    : string option
+  }
+
+
+/// The data needed to display a listing
+type ListingForView = {
+  /// The listing itself
+  listing   : Listing
+  /// The continent for that listing
+  continent : Continent
+}
+
+
 /// A successful logon
 type LogOnSuccess = {
   /// The JSON Web Token (JWT) to use for API access

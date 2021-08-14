@@ -17,7 +17,7 @@ export default defineComponent({
   },
   setup (props) {
     return {
-      formatted: format(parseToUtc(props.date), 'PPPppp')
+      formatted: format(parseToUtc(props.date), 'PPPp')
     }
   }
 })

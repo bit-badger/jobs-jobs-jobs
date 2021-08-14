@@ -59,6 +59,32 @@ export interface Listing {
   wasFilledHere : boolean | undefined
 }
 
+/** The data required to add or edit a job listing */
+export class ListingForm {
+  /** The ID of the listing */
+  id = ''
+  /** The listing title */
+  title = ''
+  /** The ID of the continent on which this opportunity exists */
+  continentId = ''
+  /** The region in which this opportunity exists */
+  region = ''
+  /** Whether this is a remote work opportunity */
+  remoteWork = false
+  /** The text of the job listing */
+  text = ''
+  /** The date by which this job listing is needed */
+  neededBy : string | undefined
+}
+
+/** The data required to view a listing */
+export interface ListingForView {
+  /** The listing itself */
+  listing : Listing
+  /** The continent for the listing */
+  continent : Continent
+}
+
 /** A successful logon */
 export interface LogOnSuccess {
   /** The JSON Web Token (JWT) to use for API access */

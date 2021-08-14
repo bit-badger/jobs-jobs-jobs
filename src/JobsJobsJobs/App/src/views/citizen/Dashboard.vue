@@ -9,7 +9,7 @@
             <h5 class="card-header">Your Profile</h5>
             <div class="card-body">
               <h6 class="card-subtitle mb-3 text-muted fst-italic">
-                Last updated <full-date :date="profile.lastUpdatedOn" />
+                Last updated <full-date-time :date="profile.lastUpdatedOn" />
               </h6>
               <p v-if="profile" class="card-text">
                 Your profile currently lists {{profile.skills.length}}
@@ -73,13 +73,13 @@ import { defineComponent, Ref, ref } from 'vue'
 import api, { LogOnSuccess, Profile } from '@/api'
 import { useStore } from '@/store'
 
-import FullDate from '@/components/FullDate.vue'
+import FullDateTime from '@/components/FullDateTime.vue'
 import LoadData from '@/components/LoadData.vue'
 
 export default defineComponent({
   name: 'Dashboard',
   components: {
-    FullDate,
+    FullDateTime,
     LoadData
   },
   setup () {

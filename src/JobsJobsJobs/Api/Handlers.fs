@@ -170,12 +170,73 @@ module Continent =
 [<RequireQualifiedAccess>]
 module Listing =
 
-  // GET: /api/listing/mine
+  open NodaTime
+  open System
+
+  /// Parse the string we receive from JSON into a NodaTime local date
+  let private parseDate = DateTime.Parse >> LocalDate.FromDateTime
+
+  // GET: /api/listings/mine
   let mine : HttpHandler =
     authorize
     >=> fun next ctx -> task {
       let! listings = Data.Listing.findByCitizen (currentCitizenId ctx) (conn ctx)
       return! json listings next ctx
+      }
+
+  // GET: /api/listing/[id]
+  let get listingId : HttpHandler =
+    authorize
+    >=> fun next ctx -> task {
+      match! Data.Listing.findById (ListingId listingId) (conn ctx) with
+      | Some listing -> return! json listing next ctx
+      | None -> return! Error.notFound next ctx
+      }
+  
+  // POST: /listings
+  let add : HttpHandler =
+    authorize
+    >=> fun next ctx -> task {
+      let! form = ctx.BindJsonAsync<ListingForm> ()
+      let  now  = (clock ctx).GetCurrentInstant ()
+      do! Data.Listing.add
+            { id            = ListingId.create ()
+              citizenId     = currentCitizenId ctx
+              createdOn     = now
+              title         = form.title
+              continentId   = ContinentId.ofString form.continentId
+              region        = form.region
+              remoteWork    = form.remoteWork
+              isExpired     = false
+              updatedOn     = now
+              text          = Text form.text
+              neededBy      = (form.neededBy |> Option.map parseDate)
+              wasFilledHere = None
+              } (conn ctx)
+      return! ok next ctx
+      }
+
+  // PUT: /api/listing/[id]
+  let update listingId : HttpHandler =
+    authorize
+    >=> fun next ctx -> task {
+      let dbConn = conn ctx
+      match! Data.Listing.findById (ListingId listingId) dbConn with
+      | Some listing when listing.citizenId <> (currentCitizenId ctx) -> return! Error.notAuthorized next ctx
+      | Some listing ->
+          let! form = ctx.BindJsonAsync<ListingForm> ()
+          do! Data.Listing.update
+                { listing with
+                    title       = form.title
+                    continentId = ContinentId.ofString form.continentId
+                    region      = form.region
+                    remoteWork  = form.remoteWork
+                    text        = Text form.text
+                    neededBy    = form.neededBy |> Option.map parseDate
+                    updatedOn   = (clock ctx).GetCurrentInstant ()
+                  } dbConn
+          return! ok next ctx
+      | None -> return! Error.notFound next ctx
       }
 
 /// Handlers for /api/profile routes
@@ -380,7 +441,14 @@ let allEndpoints = [
     GET_HEAD [ route "/continent/all" Continent.all ]
     subRoute "/listing" [
       GET_HEAD [
-        route "s/mine" Listing.mine
+        routef "/%O"    Listing.get
+        route  "s/mine" Listing.mine
+        ]
+      POST [
+        route "s" Listing.add
+        ]
+      PUT [
+        routef "/%O" Listing.update
         ]
       ]
     subRoute "/profile" [

@@ -6,21 +6,23 @@
       <router-link class="btn btn-outline-primary" to="/listing/new/edit">Add a New Job Listing</router-link>
     </p>
     <load-data :load="getListings">
-      <table v-if="listings.length > 0">
+      <table v-if="listings.length > 0" class="table table-sm table-hover pt-3">
         <thead>
           <tr>
             <th>Action</th>
             <th>Title</th>
+            <th>Continent / Region</th>
             <th>Created</th>
             <th>Updated</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="listing in listings" :key="listing.id">
-            <td><router-link :to="`/listing/${listing.Id}/edit`">Edit</router-link></td>
-            <td>{{listing.Title}}</td>
-            <td><full-date-time :date="listing.createdOn" /></td>
-            <td><full-date-time :date="listing.updatedOn" /></td>
+          <tr v-for="it in listings" :key="it.listing.id">
+            <td><router-link :to="`/listing/${it.listing.id}/edit`">Edit</router-link></td>
+            <td>{{it.listing.title}}</td>
+            <td>{{it.continent.name}} / {{it.listing.region}}</td>
+            <td><full-date-time :date="it.listing.createdOn" /></td>
+            <td><full-date-time :date="it.listing.updatedOn" /></td>
           </tr>
         </tbody>
       </table>
@@ -31,7 +33,7 @@
 
 <script lang="ts">
 import { defineComponent, Ref, ref } from 'vue'
-import api, { Listing, LogOnSuccess } from '@/api'
+import api, { ListingForView, LogOnSuccess } from '@/api'
 import { useStore } from '@/store'
 
 import FullDateTime from '@/components/FullDateTime.vue'
@@ -47,7 +49,7 @@ export default defineComponent({
     const store = useStore()
 
     /** The listings for the user */
-    const listings : Ref<Listing[]> = ref([])
+    const listings : Ref<ListingForView[]> = ref([])
 
     /** Retrieve the job listing posted by the current citizen */
     const getListings = async (errors : string[]) => {

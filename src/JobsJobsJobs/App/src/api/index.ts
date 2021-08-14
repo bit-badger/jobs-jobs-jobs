@@ -4,6 +4,8 @@ import {
   Continent,
   Count,
   Listing,
+  ListingForm,
+  ListingForView,
   LogOnSuccess,
   Profile,
   ProfileForm,
@@ -140,13 +142,44 @@ export default {
   listings: {
 
     /**
+     * Add a new job listing
+     *
+     * @param listing The profile data to be saved
+     * @param user The currently logged-on user
+     * @returns True if the addition was successful, an error string if not
+     */
+    add: async (listing : ListingForm, user : LogOnSuccess) : Promise<boolean | string> =>
+      apiSend(await fetch(apiUrl('listings'), reqInit('POST', user, listing)), 'adding job listing'),
+
+    /**
      * Retrieve the job listings posted by the current citizen
      *
      * @param user The currently logged-on user
      * @returns The job listings the user has posted, or an error string
      */
-    mine: async (user : LogOnSuccess) : Promise<Listing[] | string | undefined> =>
-      apiResult<Listing[]>(await fetch(apiUrl('listings/mine'), reqInit('GET', user)), 'retrieving your job listings')
+    mine: async (user : LogOnSuccess) : Promise<ListingForView[] | string | undefined> =>
+      apiResult<ListingForView[]>(await fetch(apiUrl('listings/mine'), reqInit('GET', user)),
+        'retrieving your job listings'),
+
+    /**
+     * Retrieve a job listing
+     *
+     * @param id The ID of the job listing to retrieve
+     * @param user The currently logged-on user
+     * @returns The job listing (if found), undefined (if not found), or an error string
+     */
+    retreive: async (id : string, user : LogOnSuccess) : Promise<Listing | undefined | string> =>
+      apiResult<Listing>(await fetch(apiUrl(`listing/${id}`), reqInit('GET', user)), 'retrieving job listing'),
+
+    /**
+     * Update an existing job listing
+     *
+     * @param listing The profile data to be saved
+     * @param user The currently logged-on user
+     * @returns True if the update was successful, an error string if not
+     */
+    update: async (listing : ListingForm, user : LogOnSuccess) : Promise<boolean | string> =>
+      apiSend(await fetch(apiUrl(`listing/${listing.id}`), reqInit('PUT', user, listing)), 'updating job listing')
   },
 
   /** API functions for profiles */
