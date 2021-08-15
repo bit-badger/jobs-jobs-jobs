@@ -9,10 +9,10 @@
         <router-link to="/profile/search" class="separator">
           <icon icon="view-list-outline" />&nbsp; View Profiles
         </router-link>
-        <router-link to="/listings/mine"><icon icon="sign-text" />&nbsp; My Job Listings</router-link>
-        <router-link to="/listings/search" class="separator">
-          <icon icon="newspaper-variant-multiple-outline" />&nbsp; View Listings
+        <router-link to="/help-wanted">
+          <icon icon="newspaper-variant-multiple-outline" />&nbsp; Help Wanted!
         </router-link>
+        <router-link to="/listings/mine" class="separator"><icon icon="sign-text" />&nbsp; My Job Listings</router-link>
         <router-link to="/success-story/list"><icon icon="thumb-up" />&nbsp; Success Stories</router-link>
         <router-link to="/citizen/log-off"><icon icon="logout-variant" />&nbsp; Log Off</router-link>
       </template>

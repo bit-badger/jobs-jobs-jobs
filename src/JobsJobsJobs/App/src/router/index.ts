@@ -74,19 +74,24 @@ const routes: Array<RouteRecordRaw> = [
   },
   // Job Listing URLs
   {
+    path: '/help-wanted',
+    name: 'HelpWanted',
+    component: () => import(/* webpackChunkName: "joblist" */ '../views/listing/HelpWanted.vue')
+  },
+  {
     path: '/listing/:id/edit',
     name: 'EditListing',
     component: () => import(/* webpackChunkName: "jobedit" */ '../views/listing/ListingEdit.vue')
   },
   {
+    path: '/listing/:id/view',
+    name: 'ViewListing',
+    component: () => import(/* webpackChunkName: "joblist" */ '../views/listing/ListingView.vue')
+  },
+  {
     path: '/listings/mine',
     name: 'MyListings',
     component: () => import(/* webpackChunkName: "joblist" */ '../views/listing/MyListings.vue')
-  },
-  {
-    path: '/listings/search',
-    name: 'SearchListings',
-    component: () => import(/* webpackChunkName: "joblist" */ '../views/listing/ListingSearch.vue')
   },
   // Profile URLs
   {

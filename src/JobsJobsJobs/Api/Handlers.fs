@@ -239,6 +239,16 @@ module Listing =
       | None -> return! Error.notFound next ctx
       }
 
+  // GET: /api/listing/search
+  let search : HttpHandler =
+    authorize
+    >=> fun next ctx -> task {
+      let  search  = ctx.BindQueryString<ListingSearch> ()
+      let! results = Data.Listing.search search (conn ctx)
+      return! json results next ctx
+      }
+  
+
 /// Handlers for /api/profile routes
 [<RequireQualifiedAccess>]
 module Profile =
@@ -441,8 +451,9 @@ let allEndpoints = [
     GET_HEAD [ route "/continent/all" Continent.all ]
     subRoute "/listing" [
       GET_HEAD [
-        routef "/%O"    Listing.get
-        route  "s/mine" Listing.mine
+        routef "/%O"     Listing.get
+        route  "/search" Listing.search
+        route  "s/mine"  Listing.mine
         ]
       POST [
         route "s" Listing.add

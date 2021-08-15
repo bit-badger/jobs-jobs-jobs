@@ -85,6 +85,18 @@ export interface ListingForView {
   continent : Continent
 }
 
+/** The various ways job listings can be searched */
+export interface ListingSearch {
+  /** Retrieve opportunities from this continent */
+  continentId : string | undefined
+  /** Text for a search for a specific region */
+  region : string | undefined
+  /** Whether to retrieve job listings for remote work */
+  remoteWork : string
+  /** Text to search with a job's full description */
+  text : string | undefined
+}
+
 /** A successful logon */
 export interface LogOnSuccess {
   /** The JSON Web Token (JWT) to use for API access */

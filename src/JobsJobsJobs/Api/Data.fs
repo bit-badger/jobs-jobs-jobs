@@ -193,14 +193,13 @@ let regexContains (it : string) =
   System.Text.RegularExpressions.Regex.Escape it
   |> sprintf "(?i).*%s.*"
 
+open JobsJobsJobs.Domain
 open JobsJobsJobs.Domain.SharedTypes
 open RethinkDb.Driver.Ast
 
 /// Profile data access functions
 [<RequireQualifiedAccess>]
 module Profile =
-
-  open JobsJobsJobs.Domain
 
   let count conn =
     withReconn(conn).ExecuteAsync(fun () ->
@@ -430,25 +429,15 @@ module Continent =
 [<RequireQualifiedAccess>]
 module Listing =  
 
-  /// This is how RethinkDB is going to return our listing/continent combo
-  // fsharplint:disable RecordFieldNames
-  [<CLIMutable; NoEquality; NoComparison>]
-  type ListingAndContinent = {
-    left  : Listing
-    right : Continent
-  }
-  // fsharplint:enable
-
   /// Find all job listings posted by the given citizen
   let findByCitizen (citizenId : CitizenId) conn =
-    withReconn(conn).ExecuteAsync(fun () -> task {
-        let! both =
-          r.Table(Table.Listing)
-            .GetAll(citizenId).OptArg("index", nameof citizenId)
-            .EqJoin("continentId", r.Table(Table.Continent))
-            .RunResultAsync<ListingAndContinent list> conn
-        return both |> List.map (fun b -> { listing = b.left; continent = b.right})
-      })
+    withReconn(conn).ExecuteAsync(fun () ->
+        r.Table(Table.Listing)
+          .GetAll(citizenId).OptArg("index", nameof citizenId)
+          .EqJoin("continentId", r.Table(Table.Continent))
+          .Merge(ReqlFunction1(fun it -> upcast r.HashMap("listing", it.G("left")).With("continent", it.G("right"))))
+          .Pluck("listing", "continent")
+          .RunResultAsync<ListingForView list> conn)
   
   /// Find a listing by its ID
   let findById (listingId : ListingId) conn =
@@ -480,6 +469,38 @@ module Listing =
             .RunWriteAsync conn
         ()
       })
+
+  /// Search job listings
+  let search (srch : ListingSearch) conn =
+    withReconn(conn).ExecuteAsync(fun () ->
+        (seq {
+          match srch.continentId with
+          | Some conId ->
+              yield (fun (q : ReqlExpr) ->
+                  q.Filter(r.HashMap(nameof srch.continentId, ContinentId.ofString conId)) :> ReqlExpr)
+          | None -> ()
+          match srch.region with
+          | Some rgn ->
+              yield (fun q ->
+                  q.Filter(ReqlFunction1(fun s -> upcast s.G("region").Match(regexContains rgn))) :> ReqlExpr)
+          | None -> ()
+          match srch.remoteWork with
+          | "" -> ()
+          | _ -> yield (fun q -> q.Filter(r.HashMap(nameof srch.remoteWork, srch.remoteWork = "yes")) :> ReqlExpr)
+          match srch.text with
+          | Some text ->
+              yield (fun q ->
+                  q.Filter(ReqlFunction1(fun it -> upcast it.G("text").Match(regexContains text))) :> ReqlExpr)
+          | None -> ()
+          }
+        |> Seq.toList
+        |> List.fold
+            (fun q f -> f q)
+            (r.Table(Table.Listing)
+              .EqJoin("continentId", r.Table(Table.Continent)) :> ReqlExpr))
+          .Merge(ReqlFunction1(fun it -> upcast r.HashMap("listing", it.G("left")).With("continent", it.G("right"))))
+          .Pluck("listing", "continent")
+          .RunResultAsync<ListingForView list> conn)
 
 
 /// Success story data access functions

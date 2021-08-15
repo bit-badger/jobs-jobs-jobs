@@ -6,6 +6,7 @@ import {
   Listing,
   ListingForm,
   ListingForView,
+  ListingSearch,
   LogOnSuccess,
   Profile,
   ProfileForm,
@@ -170,6 +171,23 @@ export default {
      */
     retreive: async (id : string, user : LogOnSuccess) : Promise<Listing | undefined | string> =>
       apiResult<Listing>(await fetch(apiUrl(`listing/${id}`), reqInit('GET', user)), 'retrieving job listing'),
+
+    /**
+     * Search for job listings using the given parameters
+     *
+     * @param query The listing search parameters
+     * @param user The currently logged-on user
+     * @returns The matching job listings (if found), undefined (if API returns 404), or an error string
+     */
+    search: async (query : ListingSearch, user : LogOnSuccess) : Promise<ListingForView[] | string | undefined> => {
+      const params = new URLSearchParams()
+      if (query.continentId) params.append('continentId', query.continentId)
+      if (query.region) params.append('skill', query.region)
+      params.append('remoteWork', query.remoteWork)
+      if (query.text) params.append('text', query.text)
+      return apiResult<ListingForView[]>(await fetch(apiUrl(`listing/search?${params.toString()}`),
+        reqInit('GET', user)), 'searching job listings')
+    },
 
     /**
      * Update an existing job listing

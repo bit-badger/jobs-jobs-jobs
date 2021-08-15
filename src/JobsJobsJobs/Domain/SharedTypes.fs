@@ -34,6 +34,20 @@ type ListingForView = {
 }
 
 
+/// The various ways job listings can be searched
+[<CLIMutable>]
+type ListingSearch = {
+  /// Retrieve job listings for this continent
+  continentId : string option
+  /// Text for a search within a region
+  region      : string option
+  /// Whether to retrieve job listings for remote work
+  remoteWork  : string
+  /// Text for a search with the job listing description
+  text        : string option
+  }
+
+
 /// A successful logon
 type LogOnSuccess = {
   /// The JSON Web Token (JWT) to use for API access
@@ -121,17 +135,6 @@ type ProfileSearch = {
   /// Whether to retrieve citizens who do or do not want remote work
   remoteWork    : string
   }
-
-/// Support functions for profile searches
-module ProfileSearch =
-  /// Is the search empty?
-  let isEmptySearch search =
-    [ search.continentId
-      search.skill
-      search.bioExperience
-      match search.remoteWork with "" -> Some search.remoteWork | _ -> None
-      ]
-    |> List.exists Option.isSome
 
 
 /// A user matching the profile search
