@@ -463,16 +463,16 @@ let allEndpoints = [
     subRoute "/citizen" [
       GET_HEAD [
         routef "/log-on/%s" Citizen.logOn
-        routef "/get/%O"    Citizen.get
+        routef "/%O"        Citizen.get
         ]
       DELETE [ route "" Citizen.delete ]
       ]
-    GET_HEAD [ route "/continent/all" Continent.all ]
+    GET_HEAD [ route "/continents" Continent.all ]
     subRoute "/listing" [
       GET_HEAD [
         routef "/%O"      Listing.get
         route  "/search"  Listing.search
-        routef "/view/%O" Listing.view
+        routef "/%O/view" Listing.view
         route  "s/mine"   Listing.mine
         ]
       POST [
@@ -486,20 +486,20 @@ let allEndpoints = [
       GET_HEAD [
         route  ""               Profile.current
         route  "/count"         Profile.count
-        routef "/get/%O"        Profile.get
-        routef "/view/%O"       Profile.view
+        routef "/%O"            Profile.get
+        routef "/%O/view"       Profile.view
         route  "/public-search" Profile.publicSearch
         route  "/search"        Profile.search
         ]
       PATCH [ route "/employment-found" Profile.employmentFound ]
-      POST [ route "/save" Profile.save ]
+      POST [ route "" Profile.save ]
       ]
     subRoute "/success" [
       GET_HEAD [
-        routef "/%O"   Success.get
-        route  "/list" Success.all
+        routef "/%O" Success.get
+        route  "es"  Success.all
         ]
-      POST [ route "/save" Success.save ]
+      POST [ route "" Success.save ]
       ]
     ]
   ]

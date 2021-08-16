@@ -117,7 +117,7 @@ export default {
      * @returns The citizen, or an error
      */
     retrieve: async (id : string, user : LogOnSuccess) : Promise<Citizen | string | undefined> =>
-      apiResult<Citizen>(await fetch(apiUrl(`citizen/get/${id}`), reqInit('GET', user)), `retrieving citizen ${id}`),
+      apiResult<Citizen>(await fetch(apiUrl(`citizen/${id}`), reqInit('GET', user)), `retrieving citizen ${id}`),
 
     /**
      * Delete the current citizen's entire Jobs, Jobs, Jobs record
@@ -138,7 +138,7 @@ export default {
      * @returns All continents, or an error
      */
     all: async () : Promise<Continent[] | string | undefined> =>
-      apiResult<Continent[]>(await fetch(apiUrl('continent/all'), { method: 'GET' }), 'retrieving continents')
+      apiResult<Continent[]>(await fetch(apiUrl('continents'), { method: 'GET' }), 'retrieving continents')
   },
 
   /** API functions for job listings */
@@ -182,7 +182,7 @@ export default {
      * @returns The job listing (if found), undefined (if not found), or an error string
      */
     retreiveForView: async (id : string, user : LogOnSuccess) : Promise<ListingForView | undefined | string> =>
-      apiResult<ListingForView>(await fetch(apiUrl(`listing/view/${id}`), reqInit('GET', user)),
+      apiResult<ListingForView>(await fetch(apiUrl(`listing/${id}/view`), reqInit('GET', user)),
         'retrieving job listing'),
 
     /**
@@ -253,7 +253,7 @@ export default {
      * @returns The profile (if found), undefined (if not found), or an error string
      */
     retreive: async (id : string | undefined, user : LogOnSuccess) : Promise<Profile | undefined | string> => {
-      const url = id ? `profile/get/${id}` : 'profile'
+      const url = id ? `profile/${id}` : 'profile'
       const resp = await fetch(apiUrl(url), reqInit('GET', user))
       if (resp.status === 200) return await resp.json() as Profile
       if (resp.status !== 204) return `Error retrieving profile - ${await resp.text()}`
@@ -267,7 +267,7 @@ export default {
      * @returns The profile (if found), undefined (if not found), or an error string
      */
     retreiveForView: async (id : string, user : LogOnSuccess) : Promise<ProfileForView | string | undefined> =>
-      apiResult<ProfileForView>(await fetch(apiUrl(`profile/view/${id}`), reqInit('GET', user)), 'retrieving profile'),
+      apiResult<ProfileForView>(await fetch(apiUrl(`profile/${id}/view`), reqInit('GET', user)), 'retrieving profile'),
 
     /**
      * Save a user's profile data
@@ -277,7 +277,7 @@ export default {
      * @returns True if the save was successful, an error string if not
      */
     save: async (data : ProfileForm, user : LogOnSuccess) : Promise<boolean | string> =>
-      apiSend(await fetch(apiUrl('profile/save'), reqInit('POST', user, data)), 'saving profile'),
+      apiSend(await fetch(apiUrl('profile'), reqInit('POST', user, data)), 'saving profile'),
 
     /**
      * Search for profiles using the given parameters
@@ -331,7 +331,7 @@ export default {
      * @returns All success stories (if any exist), undefined (if none exist), or an error
      */
     list: async (user : LogOnSuccess) : Promise<StoryEntry[] | string | undefined> =>
-      apiResult<StoryEntry[]>(await fetch(apiUrl('success/list'), reqInit('GET', user)), 'retrieving success stories'),
+      apiResult<StoryEntry[]>(await fetch(apiUrl('successes'), reqInit('GET', user)), 'retrieving success stories'),
 
     /**
      * Retrieve a success story by its ID
@@ -351,7 +351,7 @@ export default {
      * @returns True if successful, an error string if not
      */
     save: async (data : StoryForm, user : LogOnSuccess) : Promise<boolean | string> =>
-      apiSend(await fetch(apiUrl('success/save'), reqInit('POST', user, data)), 'saving success story')
+      apiSend(await fetch(apiUrl('success'), reqInit('POST', user, data)), 'saving success story')
   }
 }
 
