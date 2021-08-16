@@ -2,7 +2,7 @@
   <template v-if="errors.length > 0">
     <p>The following error<template v-if="errors.length !== 1">s</template> occurred:</p>
     <ul>
-      <li v-for="(error, idx) in errors" :key="idx"><pre>{{error}}</pre></li>
+      <li v-for="(error, idx) in errors" :key="idx">{{error}}</li>
     </ul>
   </template>
   <slot v-else></slot>
@@ -21,3 +21,8 @@ export default defineComponent({
   }
 })
 </script>
+
+<style lang="sass" scoped>
+ul li
+  font-family: monospace
+</style>

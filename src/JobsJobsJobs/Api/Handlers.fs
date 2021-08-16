@@ -21,17 +21,22 @@ module Error =
   
   open System.Threading.Tasks
 
+  /// URL prefixes for the Vue app
+  let vueUrls = [
+    "/"; "/how-it-works"; "/privacy-policy"; "/terms-of-service"; "/citizen"; "/help-wanted"; "/listing"; "/profile"
+    "/so-long"; "/success-story"
+    ]
+
   /// Handler that will return a status code 404 and the text "Not Found"
   let notFound : HttpHandler =
     fun next ctx -> task {
       let fac = ctx.GetService<ILoggerFactory>()
       let log = fac.CreateLogger("Handler")
       match [ "GET"; "HEAD" ] |> List.contains ctx.Request.Method with
-      | true ->
+      | true when vueUrls |> List.exists (fun url -> ctx.Request.Path.ToString().StartsWith url) ->
           log.LogInformation "Returning Vue app"
-          // TODO: check for valid URL prefixes
           return! Vue.app next ctx
-      | false ->
+      | _ ->
           log.LogInformation "Returning 404"
           return! RequestErrors.NOT_FOUND $"The URL {string ctx.Request.Path} was not recognized as a valid URL" next
                     ctx
@@ -41,6 +46,11 @@ module Error =
   let notAuthorized : HttpHandler =
     setStatusCode 403 >=> fun _ _ -> Task.FromResult<HttpContext option> None
 
+  /// Handler to log 500s and return a message we can display in the application
+  let unexpectedError (ex: exn) (log : ILogger) =
+    log.LogError(ex, "An unexpected error occurred")
+    clearResponse >=> ServerErrors.INTERNAL_ERROR ex.Message
+  
 
 /// Helper functions
 [<AutoOpen>]
@@ -193,6 +203,15 @@ module Listing =
       | None -> return! Error.notFound next ctx
       }
   
+  // GET: /api/listing/view/[id]
+  let view listingId : HttpHandler =
+    authorize
+    >=> fun next ctx -> task {
+      match! Data.Listing.findByIdForView (ListingId listingId) (conn ctx) with
+      | Some listing -> return! json listing next ctx
+      | None -> return! Error.notFound next ctx
+      }
+
   // POST: /listings
   let add : HttpHandler =
     authorize
@@ -451,9 +470,10 @@ let allEndpoints = [
     GET_HEAD [ route "/continent/all" Continent.all ]
     subRoute "/listing" [
       GET_HEAD [
-        routef "/%O"     Listing.get
-        route  "/search" Listing.search
-        route  "s/mine"  Listing.mine
+        routef "/%O"      Listing.get
+        route  "/search"  Listing.search
+        routef "/view/%O" Listing.view
+        route  "s/mine"   Listing.mine
         ]
       POST [
         route "s" Listing.add

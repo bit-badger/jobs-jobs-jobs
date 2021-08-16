@@ -2,7 +2,7 @@
   <article>
     <page-title :title="pageTitle" />
     <load-data :load="retrieveProfile">
-      <h2><a :href="it.citizen.profileUrl" target="_blank">{{citizenName}}</a></h2>
+      <h2><a :href="it.citizen.profileUrl" target="_blank">{{it.citizen.citizenName()}}</a></h2>
       <h4 class="pb-3">{{it.continent.name}}, {{it.profile.region}}</h4>
       <p v-html="workTypes"></p>
       <hr>
@@ -38,12 +38,14 @@
 import { computed, defineComponent, ref, Ref } from 'vue'
 import { useRoute } from 'vue-router'
 import marked from 'marked'
+
 import api, { LogOnSuccess, markedOptions, ProfileForView } from '@/api'
+import { citizenName } from '@/App.vue'
 import { useStore } from '@/store'
 import LoadData from '@/components/LoadData.vue'
 
 export default defineComponent({
-  name: 'ProfileEdit',
+  name: 'ProfileView',
   components: { LoadData },
   setup () {
     const store = useStore()
@@ -54,12 +56,6 @@ export default defineComponent({
 
     /** The requested profile */
     const it : Ref<ProfileForView | undefined> = ref(undefined)
-
-    /** The citizen's name (real, display, or NAS, whichever is found first) */
-    const citizenName = computed(() => {
-      const c = it.value?.citizen
-      return c?.realName || c?.displayName || c?.naUser || ''
-    })
 
     /** The work types for the top of the page */
     const workTypes = computed(() => {
@@ -90,12 +86,12 @@ export default defineComponent({
     }
 
     return {
-      pageTitle: computed(() => it.value ? `Employment profile for ${citizenName.value}` : 'Loading Profile...'),
+      pageTitle: computed(() =>
+        it.value ? `Employment profile for ${citizenName(it.value.citizen)}` : 'Loading Profile...'),
       user,
       retrieveProfile,
       it,
       workTypes,
-      citizenName,
       bioHtml: computed(() => marked(it.value?.profile.biography || '', markedOptions)),
       expHtml: computed(() => marked(it.value?.profile.experience || '', markedOptions))
     }

@@ -18,6 +18,7 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue'
+import { Citizen } from './api'
 import AppFooter from './components/layout/AppFooter.vue'
 import AppNav from './components/layout/AppNav.vue'
 import AppToaster from './components/layout/AppToaster.vue'
@@ -44,6 +45,16 @@ export default defineComponent({
  */
 export function yesOrNo (cond : boolean) : string {
   return cond ? 'Yes' : 'No'
+}
+
+/**
+ * Get the display name for a citizen (the first available among real, display, or NAS handle)
+ *
+ * @param cit The citizen
+ * @returns The citizen's display name
+ */
+export function citizenName (cit : Citizen) : string {
+  return cit.realName || cit.displayName || cit.naUser
 }
 </script>
 

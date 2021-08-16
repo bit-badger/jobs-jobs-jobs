@@ -191,7 +191,7 @@ let withReconn (conn : IConnection) =
 /// Sanitize user input, and create a "contains" pattern for use with RethinkDB queries
 let regexContains (it : string) =
   System.Text.RegularExpressions.Regex.Escape it
-  |> sprintf "(?i).*%s.*"
+  |> sprintf "(?i)%s"
 
 open JobsJobsJobs.Domain
 open JobsJobsJobs.Domain.SharedTypes
@@ -435,8 +435,7 @@ module Listing =
         r.Table(Table.Listing)
           .GetAll(citizenId).OptArg("index", nameof citizenId)
           .EqJoin("continentId", r.Table(Table.Continent))
-          .Merge(ReqlFunction1(fun it -> upcast r.HashMap("listing", it.G("left")).With("continent", it.G("right"))))
-          .Pluck("listing", "continent")
+          .Map(ReqlFunction1(fun it -> upcast r.HashMap("listing", it.G("left")).With("continent", it.G("right"))))
           .RunResultAsync<ListingForView list> conn)
   
   /// Find a listing by its ID
@@ -447,6 +446,18 @@ module Listing =
             .Get(listingId)
             .RunResultAsync<Listing> conn
         return toOption listing
+      })
+  
+  /// Find a listing by its ID for viewing (includes continent information)
+  let findByIdForView (listingId : ListingId) conn =
+    withReconn(conn).ExecuteAsync(fun () -> task {
+        let! listing =
+          r.Table(Table.Listing)
+            .Filter(r.HashMap("id", listingId))
+            .EqJoin("continentId", r.Table(Table.Continent))
+            .Map(ReqlFunction1(fun it -> upcast r.HashMap("listing", it.G("left")).With("continent", it.G("right"))))
+            .RunResultAsync<ListingForView list> conn
+        return List.tryHead listing
       })
   
   /// Add a listing
@@ -482,24 +493,26 @@ module Listing =
           match srch.region with
           | Some rgn ->
               yield (fun q ->
-                  q.Filter(ReqlFunction1(fun s -> upcast s.G("region").Match(regexContains rgn))) :> ReqlExpr)
+                  q.Filter(ReqlFunction1(fun it ->
+                      upcast it.G(nameof srch.region).Match(regexContains rgn))) :> ReqlExpr)
           | None -> ()
           match srch.remoteWork with
           | "" -> ()
-          | _ -> yield (fun q -> q.Filter(r.HashMap(nameof srch.remoteWork, srch.remoteWork = "yes")) :> ReqlExpr)
+          | _ ->
+              yield (fun q -> q.Filter(r.HashMap(nameof srch.remoteWork, srch.remoteWork = "yes")) :> ReqlExpr)
           match srch.text with
           | Some text ->
               yield (fun q ->
-                  q.Filter(ReqlFunction1(fun it -> upcast it.G("text").Match(regexContains text))) :> ReqlExpr)
+                  q.Filter(ReqlFunction1(fun it ->
+                      upcast it.G(nameof srch.text).Match(regexContains text))) :> ReqlExpr)
           | None -> ()
           }
         |> Seq.toList
         |> List.fold
             (fun q f -> f q)
-            (r.Table(Table.Listing)
-              .EqJoin("continentId", r.Table(Table.Continent)) :> ReqlExpr))
-          .Merge(ReqlFunction1(fun it -> upcast r.HashMap("listing", it.G("left")).With("continent", it.G("right"))))
-          .Pluck("listing", "continent")
+            (r.Table(Table.Listing) :> ReqlExpr))
+          .EqJoin("continentId", r.Table(Table.Continent))
+          .Map(ReqlFunction1(fun it -> upcast r.HashMap("listing", it.G("left")).With("continent", it.G("right"))))
           .RunResultAsync<ListingForView list> conn)
 
 

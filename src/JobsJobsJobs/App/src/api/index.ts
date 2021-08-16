@@ -75,6 +75,8 @@ async function apiResult<T> (resp : Response, action : string) : Promise<T | und
  */
 async function apiSend (resp : Response, action : string) : Promise<boolean | string> {
   if (resp.status === 200) return true
+  // HTTP 422 (Unprocessable Entity) is what the API returns for an expired JWT
+  if (resp.status === 422) return `Error ${action} - Your login has expired; refresh this page to renew it`
   return `Error ${action} - (${resp.status}) ${await resp.text()}`
 }
 
@@ -173,6 +175,17 @@ export default {
       apiResult<Listing>(await fetch(apiUrl(`listing/${id}`), reqInit('GET', user)), 'retrieving job listing'),
 
     /**
+     * Retrieve a job listing for viewing (also contains continent information)
+     *
+     * @param id The ID of the job listing to retrieve
+     * @param user The currently logged-on user
+     * @returns The job listing (if found), undefined (if not found), or an error string
+     */
+    retreiveForView: async (id : string, user : LogOnSuccess) : Promise<ListingForView | undefined | string> =>
+      apiResult<ListingForView>(await fetch(apiUrl(`listing/view/${id}`), reqInit('GET', user)),
+        'retrieving job listing'),
+
+    /**
      * Search for job listings using the given parameters
      *
      * @param query The listing search parameters
@@ -182,7 +195,7 @@ export default {
     search: async (query : ListingSearch, user : LogOnSuccess) : Promise<ListingForView[] | string | undefined> => {
       const params = new URLSearchParams()
       if (query.continentId) params.append('continentId', query.continentId)
-      if (query.region) params.append('skill', query.region)
+      if (query.region) params.append('region', query.region)
       params.append('remoteWork', query.remoteWork)
       if (query.text) params.append('text', query.text)
       return apiResult<ListingForView[]>(await fetch(apiUrl(`listing/search?${params.toString()}`),

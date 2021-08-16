@@ -28,7 +28,7 @@
               <td>{{it.listing.title}}</td>
               <td>{{it.continent.name}} / {{it.listing.region}}</td>
               <td class="text-center">{{yesOrNo(it.listing.remoteWork)}}</td>
-              <td v-if="it.listing.neededBy" class="text-center">{{format(Date.parse(it.listing.neededBy), 'PPP')}}</td>
+              <td v-if="it.listing.neededBy" class="text-center">{{formatNeededBy(it.listing.neededBy)}}</td>
               <td v-else class="text-center">N/A</td>
             </tr>
           </tbody>
@@ -43,7 +43,8 @@
 <script lang="ts">
 import { defineComponent, ref, Ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { format } from 'date-fns'
+
+import { formatNeededBy } from './ListingView.vue'
 import { yesOrNo } from '@/App.vue'
 import api, { ListingForView, ListingSearch, LogOnSuccess } from '@/api'
 import { queryValue } from '@/router'
@@ -138,7 +139,7 @@ export default defineComponent({
       searched,
       results,
       yesOrNo,
-      format
+      formatNeededBy
     }
   }
 })

@@ -17,6 +17,7 @@ let configureApp (app : IApplicationBuilder) =
     .UseRouting()
     .UseAuthentication()
     .UseAuthorization()
+    .UseGiraffeErrorHandler(Handlers.Error.unexpectedError)
     .UseEndpoints(fun e ->
         e.MapGiraffeEndpoints Handlers.allEndpoints
         e.MapFallbackToFile "index.html" |> ignore)
