@@ -6,10 +6,9 @@
       <h4 class="pb-3 text-muted">{{it.continent.name}} / {{it.listing.region}}</h4>
       <p>
         <template v-if="it.listing.neededBy">
-          <strong><em>NEEDED BY {{formatNeededBy(it.listing.neededBy)}}</em></strong> &bull;&nbsp;
+          <strong><em>NEEDED BY {{neededBy(it.listing.neededBy)}}</em></strong> &bull;
         </template>
-        Listed by {{citizenName(citizen)}} &ndash;
-        <a :href="`https://noagendasocial.com/@${citizen.naUser}`" target="_blank">View No Agenda Social profile</a>
+        Listed by <a :href="profileUrl" target="_blank">{{citizenName(citizen)}}</a>
       </p>
       <hr>
       <div v-html="details"></div>
@@ -80,8 +79,9 @@ export default defineComponent({
       it,
       details: computed(() => marked(it.value?.listing.text || '', markedOptions)),
       citizen,
+      profileUrl: computed(() => citizen.value ? `https://noagendasocial.com/@${citizen.value.naUser}` : ''),
       citizenName,
-      formatNeededBy
+      neededBy: (nb : string) => formatNeededBy(nb).toUpperCase()
     }
   }
 })
