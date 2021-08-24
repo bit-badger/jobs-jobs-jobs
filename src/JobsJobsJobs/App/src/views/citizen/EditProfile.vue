@@ -1,103 +1,71 @@
-<template>
-  <article>
-    <page-title title="Edit Profile" />
-    <h3 class="pb-3">My Employment Profile</h3>
-    <load-data :load="retrieveData">
-      <form class="row g-3">
-        <div class="col-12 col-sm-10 col-md-8 col-lg-6">
-          <div class="form-floating">
-            <input type="text" id="realName" class="form-control" v-model="v$.realName.$model" maxlength="255"
-                    placeholder="Leave blank to use your NAS display name">
-            <label for="realName">Real Name</label>
-          </div>
-          <div class="form-text">Leave blank to use your NAS display name</div>
-        </div>
-        <div class="col-12">
-          <div class="form-check">
-            <input type="checkbox" id="isSeeking" class="form-check-input" v-model="v$.isSeekingEmployment.$model">
-            <label for="isSeeking" class="form-check-label">I am currently seeking employment</label>
-          </div>
-          <p v-if="profile.isSeekingEmployment">
-            <em>If you have found employment, consider <router-link to="/success-story/new/edit">telling your fellow
-            citizens about it!</router-link></em>
-          </p>
-        </div>
-        <div class="col-12 col-sm-6 col-md-4">
-          <continent-list v-model="v$.continentId.$model" :isInvalid="v$.continentId.$error"
-                          @touch="v$.continentId.$touch() || true" />
-        </div>
-        <div class="col-12 col-sm-6 col-md-8">
-          <div class="form-floating">
-            <input type="text" id="region" :class="{ 'form-control': true, 'is-invalid': v$.region.$error }"
-                   v-model="v$.region.$model" maxlength="255" placeholder="Country, state, geographic area, etc.">
-            <div id="regionFeedback" class="invalid-feedback">Please enter a region</div>
-            <label for="region" class="jjj-required">Region</label>
-          </div>
-          <div class="form-text">Country, state, geographic area, etc.</div>
-        </div>
-        <markdown-editor id="bio" label="Professional Biography" v-model:text="v$.biography.$model"
-                         :isInvalid="v$.biography.$error" />
-        <div class="col-12 col-offset-md-2 col-md-4">
-          <div class="form-check">
-            <input type="checkbox" id="isRemote" class="form-check-input" v-model="v$.remoteWork.$model">
-            <label class="form-check-label" for="isRemote">I am looking for remote work</label>
-          </div>
-        </div>
-        <div class="col-12 col-md-4">
-          <div class="form-check">
-            <input type="checkbox" id="isFullTime" class="form-check-input" v-model="v$.fullTime.$model">
-            <label class="form-check-label" for="isFullTime">I am looking for full-time work</label>
-          </div>
-        </div>
-        <div class="col-12">
-          <hr>
-          <h4 class="pb-2">
-            Skills &nbsp;
-            <button class="btn btn-sm btn-outline-primary rounded-pill" @click.prevent="addSkill">Add a Skill</button>
-          </h4>
-        </div>
-        <profile-skill-edit v-for="(skill, idx) in profile.skills" :key="skill.id" v-model="profile.skills[idx]"
-                            @remove="removeSkill(skill.id)" @input="v$.skills.$touch" />
-        <div class="col-12">
-          <hr>
-          <h4>Experience</h4>
-          <p>
-            This application does not have a place to individually list your chronological job history; however, you can
-            use this area to list prior jobs, their dates, and anything else you want to include that&rsquo;s not
-            already a part of your Professional Biography above.
-          </p>
-        </div>
-        <markdown-editor id="experience" label="Experience" v-model:text="v$.experience.$model" />
-        <div class="col-12">
-          <div class="form-check">
-            <input type="checkbox" id="isPublic" class="form-check-input" v-model="v$.isPublic.$model">
-            <label class="form-check-label" for="isPublic">
-              Allow my profile to be searched publicly (outside NA Social)
-            </label>
-          </div>
-        </div>
-        <div class="col-12">
-          <p v-if="v$.$error" class="text-danger">Please correct the errors above</p>
-          <button class="btn btn-primary" @click.prevent="saveProfile">
-            <icon icon="content-save-outline" />&nbsp; Save
-          </button>
-          <template v-if="!isNew">
-            &nbsp; &nbsp;
-            <router-link class="btn btn-outline-secondary" :to="`/profile/${user.citizenId}/view`">
-              <icon icon="file-account-outline" />&nbsp; View Your User Profile
-            </router-link>
-          </template>
-        </div>
-      </form>
-    </load-data>
-    <hr>
-    <p class="text-muted fst-italic">
-      (If you want to delete your profile, or your entire account, <router-link to="/so-long/options">see your deletion
-      options here</router-link>.)
-    </p>
-    <maybe-save :isShown="confirmNavShown" :toRoute="nextRoute" :saveAction="saveProfile" :validator="v$"
-                @close="confirmClose" />
-  </article>
+<template lang="pug">
+article
+  page-title(title='Edit Profile')
+  h3.pb-3 My Employment Profile
+  load-data(:load='retrieveData'): form.row.g-3
+    .col-12.col-sm-10.col-md-8.col-lg-6
+      .form-floating
+        input.form-control(type='text' id='realName' v-model='v$.realName.$model' maxlength='255'
+                           placeholder='Leave blank to use your NAS display name')
+        label(for='realName') Real Name
+      .form-text Leave blank to use your NAS display name
+    .col-12
+      .form-check
+        input.form-check-input(type='checkbox' id='isSeeking' v-model='v$.isSeekingEmployment.$model')
+        label.form-check-label(for='isSeeking') I am currently seeking employment
+      p(v-if='profile.isSeekingEmployment'): em.
+        If you have found employment, consider
+        #[router-link(to='/success-story/new/edit') telling your fellow citizens about it!]
+    .col-12.col-sm-6.col-md-4
+      continent-list(v-model='v$.continentId.$model' :isInvalid='v$.continentId.$error'
+                     @touch='v$.continentId.$touch() || true')
+    .col-12.col-sm-6.col-md-8
+      .form-floating
+        input.form-control(type='text' id='region' :class="{ 'is-invalid': v$.region.$error }"
+                           v-model='v$.region.$model' maxlength='255'
+                           placeholder='Country, state, geographic area, etc.')
+        #regionFeedback.invalid-feedback Please enter a region
+        label.jjj-required(for='region') Region
+      .form-text Country, state, geographic area, etc.
+    markdown-editor(id='bio' label='Professional Biography' v-model:text='v$.biography.$model'
+                    :isInvalid='v$.biography.$error')
+    .col-12.col-offset-md-2.col-md-4
+      .form-check
+        input.form-check-input(type='checkbox' id='isRemote' v-model='v$.remoteWork.$model')
+        label.form-check-label(for='isRemote') I am looking for remote work
+    .col-12.col-md-4
+      .form-check
+        input.form-check-input(type='checkbox' id='isFullTime' v-model='v$.fullTime.$model')
+        label.form-check-label(for='isFullTime') I am looking for full-time work
+    .col-12
+      hr
+      h4.pb-2 Skills &nbsp;#[button.btn.btn-sm.btn-outline-primary.rounded-pill(@click.prevent='addSkill') Add a Skill]
+    profile-skill-edit(v-for='(skill, idx) in profile.skills' :key='skill.id' v-model='profile.skills[idx]'
+                       @remove='removeSkill(skill.id)' @input='v$.skills.$touch')
+    .col-12
+      hr
+      h4 Experience
+      p.
+        This application does not have a place to individually list your chronological job history; however, you can use
+        this area to list prior jobs, their dates, and anything else you want to include that&rsquo;s not already a part
+        of your Professional Biography above.
+    markdown-editor(id='experience' label='Experience' v-model:text='v$.experience.$model')
+    .col-12: .form-check
+      input.form-check-input(type='checkbox' id='isPublic' v-model='v$.isPublic.$model')
+      label.form-check-label(for='isPublic') Allow my profile to be searched publicly (outside NA Social)
+    .col-12
+      p.text-danger(v-if='v$.$error') Please correct the errors above
+      button.btn.btn-primary(@click.prevent='saveProfile') #[icon(icon='content-save-outline')]&nbsp; Save
+      template(v-if='!isNew')
+        | &nbsp; &nbsp;
+        router-link.btn.btn-outline-secondary(:to='`/profile/${user.citizenId}/view`').
+          #[icon(icon='file-account-outline')]&nbsp; View Your User Profile
+  hr
+  p.text-muted.fst-italic.
+    (If you want to delete your profile, or your entire account,
+    #[router-link(to='/so-long/options') see your deletion options here].)
+  maybe-save(:isShown='confirmNavShown' :toRoute='nextRoute' :saveAction='saveProfile' :validator='v$'
+             @close='confirmClose')
 </template>
 
 <script lang="ts">

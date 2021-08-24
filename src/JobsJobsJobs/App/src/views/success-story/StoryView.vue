@@ -1,14 +1,12 @@
-<template>
-  <article>
-  <page-title title="Success Story" />
-    <load-data :load="retrieveStory">
-      <h3 class="pb-3">{{citizenName}}&rsquo;s Success Story</h3>
-      <h4 class="text-muted"><full-date-time :date="story.recordedOn" /></h4>
-      <p v-if="story.fromHere" class="fst-italic"><strong>Found via Jobs, Jobs, Jobs</strong></p>
-      <hr>
-      <div v-if="story.story" v-html="successStory"></div>
-    </load-data>
-  </article>
+<template lang="pug">
+article
+  page-title(title='Success Story')
+  load-data(:load='retrieveStory')
+    h3.pb-3 {{citizenName}}&rsquo;s Success Story
+    h4.text-muted: full-date-time(:date='story.recordedOn')
+    p.fst-italic(v-if='story.fromHere'): strong Found via Jobs, Jobs, Jobs
+    hr
+    div(v-if='story.story' v-html='successStory')
 </template>
 
 <script lang="ts">

@@ -1,8 +1,7 @@
-<template>
-  <article>
-    <p>&nbsp;</p>
-    <p class="fst-italic">Sending you over to No Agenda Social to log on; see you back in just a second&hellip;</p>
-  </article>
+<template lang="pug">
+article
+  p &nbsp;
+  p.fst-italic Sending you over to No Agenda Social to log on; see you back in just a second&hellip;
 </template>
 
 <script lang="ts">

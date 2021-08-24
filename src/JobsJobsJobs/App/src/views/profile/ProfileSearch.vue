@@ -1,43 +1,30 @@
-<template>
-  <article>
-    <page-title title="Search Profiles" />
-    <h3 class="pb-3">Search Profiles</h3>
-
-    <p v-if="!searched">
-      Enter one or more criteria to filter results, or just click &ldquo;Search&rdquo; to list all profiles.
-    </p>
-    <collapse-panel headerText="Search Criteria" :collapsed="isCollapsed" @toggle="toggleCollapse">
-      <profile-search-form v-model="criteria" @search="doSearch" />
-    </collapse-panel>
-    <error-list :errors="errors">
-      <p v-if="searching" class="pt-3">Searching profiles...</p>
-      <template v-else>
-        <table v-if="results.length > 0" class="table table-sm table-hover pt-3">
-          <thead>
-            <tr>
-              <th scope="col">Profile</th>
-              <th scope="col">Name</th>
-              <th scope="col" class="text-center">Seeking?</th>
-              <th scope="col" class="text-center">Remote?</th>
-              <th scope="col" class="text-center">Full-Time?</th>
-              <th scope="col">Last Updated</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="profile in results" :key="profile.citzenId">
-              <td><router-link :to="`/profile/${profile.citizenId}/view`">View</router-link></td>
-              <td :class="{ 'font-weight-bold' : profile.seekingEmployment }">{{profile.displayName}}</td>
-              <td class="text-center">{{yesOrNo(profile.seekingEmployment)}}</td>
-              <td class="text-center">{{yesOrNo(profile.remoteWork)}}</td>
-              <td class="text-center">{{yesOrNo(profile.fullTime)}}</td>
-              <td><full-date :date="profile.lastUpdatedOn" /></td>
-            </tr>
-          </tbody>
-        </table>
-        <p v-else-if="searched" class="pt-3">No results found for the specified criteria</p>
-      </template>
-    </error-list>
-  </article>
+<template lang="pug">
+article
+  page-title(title='Search Profiles')
+  h3.pb-3 Search Profiles
+  p(v-if='!searched').
+    Enter one or more criteria to filter results, or just click &ldquo;Search&rdquo; to list all profiles.
+  collapse-panel(headerText='Search Criteria' :collapsed='isCollapsed' @toggle='toggleCollapse')
+    profile-search-form(v-model='criteria' @search='doSearch')
+  error-list(:errors='errors')
+    p.pt-3(v-if='searching') Searching profiles&hellip;
+    template(v-else)
+      table.table.table-sm.table-hover.pt-3(v-if='results.length > 0')
+        thead: tr
+          th(scope='col') Profile
+          th(scope='col') Name
+          th.text-center(scope='col') Seeking?
+          th.text-center(scope='col') Remote?
+          th.text-center(scope='col') Full-Time?
+          th(scope='col') Last Updated
+        tbody: tr(v-for='profile in results' :key='profile.citzenId')
+          td: router-link(:to='`/profile/${profile.citizenId}/view`') View
+          td(:class="{ 'font-weight-bold' : profile.seekingEmployment }") {{profile.displayName}}
+          td.text-center {{yesOrNo(profile.seekingEmployment)}}
+          td.text-center {{yesOrNo(profile.remoteWork)}}
+          td.text-center {{yesOrNo(profile.fullTime)}}
+          td: full-date(:date='profile.lastUpdatedOn')
+      p.pt-3(v-else-if='searched') No results found for the specified criteria
 </template>
 
 <script lang="ts">

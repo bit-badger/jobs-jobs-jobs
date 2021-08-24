@@ -1,9 +1,8 @@
-<template>
-  <article>
-    <page-title title="Logging on..." />
-    <p>&nbsp;</p>
-    <p v-html="message"></p>
-  </article>
+<template lang="pug">
+article
+  page-title(title='Logging on...')
+  p &nbsp;
+  p(v-html='message')
 </template>
 
 <script lang="ts">

@@ -1,19 +1,15 @@
-<template>
-  <article>
-    <page-title :title="pageTitle" />
-    <load-data :load="retrieveListing">
-      <h3>{{it.listing.title}}</h3>
-      <h4 class="pb-3 text-muted">{{it.continent.name}} / {{it.listing.region}}</h4>
-      <p>
-        <template v-if="it.listing.neededBy">
-          <strong><em>NEEDED BY {{neededBy(it.listing.neededBy)}}</em></strong> &bull;
-        </template>
-        Listed by <a :href="profileUrl" target="_blank">{{citizenName(citizen)}}</a>
-      </p>
-      <hr>
-      <div v-html="details"></div>
-    </load-data>
-  </article>
+<template lang="pug">
+article
+  page-title(:title='pageTitle')
+  load-data(:load='retrieveListing')
+    h3 {{it.listing.title}}
+    h4.pb-3.text-muted {{it.continent.name}} / {{it.listing.region}}
+    p
+      template(v-if='it.listing.neededBy').
+        #[strong #[em NEEDED BY {{neededBy(it.listing.neededBy)}}]] &bull;
+      |  Listed by #[a(:href='profileUrl' target='_blank') {{citizenName(citizen)}}]
+    hr
+    div(v-html='details')
 </template>
 
 <script lang="ts">

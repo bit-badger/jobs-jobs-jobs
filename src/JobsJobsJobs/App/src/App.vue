@@ -1,19 +1,12 @@
-<template>
-  <div class="jjj-app">
-    <app-nav />
-    <div class="jjj-main">
-      <title-bar />
-      <main class="container-fluid">
-        <router-view v-slot="{ Component }">
-          <transition name="fade" mode="out-in">
-            <component :is="Component" />
-          </transition>
-        </router-view>
-      </main>
-      <app-footer />
-      <app-toaster />
-    </div>
-  </div>
+<template lang="pug">
+.jjj-app
+  app-nav
+  .jjj-main
+    title-bar
+    main.container-fluid: router-view(v-slot="{ Component }"): transition(name='fade' mode='out-in')
+      component(:is='Component')
+    app-footer
+    app-toaster
 </template>
 
 <script lang="ts">

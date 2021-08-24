@@ -1,34 +1,23 @@
-<template>
-  <article>
-    <page-title title="My Job Listings" />
-    <h3 class="pb-3">My Job Listings</h3>
-    <p>
-      <router-link class="btn btn-outline-primary" to="/listing/new/edit">Add a New Job Listing</router-link>
-    </p>
-    <load-data :load="getListings">
-      <table v-if="listings.length > 0" class="table table-sm table-hover pt-3">
-        <thead>
-          <tr>
-            <th>Action</th>
-            <th>Title</th>
-            <th>Continent / Region</th>
-            <th>Created</th>
-            <th>Updated</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="it in listings" :key="it.listing.id">
-            <td><router-link :to="`/listing/${it.listing.id}/edit`">Edit</router-link></td>
-            <td>{{it.listing.title}}</td>
-            <td>{{it.continent.name}} / {{it.listing.region}}</td>
-            <td><full-date-time :date="it.listing.createdOn" /></td>
-            <td><full-date-time :date="it.listing.updatedOn" /></td>
-          </tr>
-        </tbody>
-      </table>
-      <p v-else class="fst-italic">No job listings found</p>
-    </load-data>
-  </article>
+<template lang="pug">
+article
+  page-title(title='My Job Listings')
+  h3.pb-3 My Job Listings
+  p: router-link.btn.btn-outline-primary(to='/listing/new/edit') Add a New Job Listing
+  load-data(:load="getListings")
+    table.table.table-sm.table-hover.pt-3(v-if='listings.length > 0')
+      thead: tr
+        th(scope='col') Action
+        th(scope='col') Title
+        th(scope='col') Continent / Region
+        th(scope='col') Created
+        th(scope='col') Updated
+      tbody: tr(v-for='it in listings' :key='it.listing.id')
+        td: router-link(:to='`/listing/${it.listing.id}/edit`') Edit
+        td {{it.listing.title}}
+        td {{it.continent.name}} / {{it.listing.region}}
+        td: full-date-time(:date='it.listing.createdOn')
+        td: full-date-time(:date='it.listing.updatedOn')
+    p.fst-italic(v-else) No job listings found
 </template>
 
 <script lang="ts">

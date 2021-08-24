@@ -1,37 +1,26 @@
-<template>
-  <article>
-    <page-title :title="pageTitle" />
-    <load-data :load="retrieveProfile">
-      <h2><a :href="it.citizen.profileUrl" target="_blank">{{it.citizen.citizenName()}}</a></h2>
-      <h4 class="pb-3">{{it.continent.name}}, {{it.profile.region}}</h4>
-      <p v-html="workTypes"></p>
-      <hr>
-      <div v-html="bioHtml"></div>
-
-      <template v-if="it.profile.skills.length > 0">
-        <hr>
-        <h4 class="pb-3">Skills</h4>
-        <ul>
-          <li v-for="(skill, idx) in it.profile.skills" :key="idx">
-            {{skill.description}}<template v-if="skill.notes"> ({{skill.notes}})</template>
-          </li>
-        </ul>
-      </template>
-
-      <template v-if="it.profile.experience">
-        <hr>
-        <h4 class="pb-3">Experience / Employment History</h4>
-        <div v-html="expHtml"></div>
-      </template>
-
-      <template v-if="user.citizenId === it.citizen.id">
-        <br><br>
-        <router-link class="btn btn-primary" to="/citizen/profile">
-          <icon icon="pencil" />&nbsp; Edit Your Profile
-        </router-link>
-      </template>
-    </load-data>
-  </article>
+<template lang="pug">
+article
+  page-title(:title='pageTitle')
+  load-data(:load='retrieveProfile')
+    h2: a(:href='it.citizen.profileUrl' target='_blank') {{citizenName(it.citizen)}}
+    h4.pb-3 {{it.continent.name}}, {{it.profile.region}}
+    p(v-html='workTypes')
+    hr
+    div(v-html='bioHtml')
+    template(v-if='it.profile.skills.length > 0')
+      hr
+      h4.pb-3 Skills
+      ul
+        li(v-for='(skill, idx) in it.profile.skills' :key='idx').
+          {{skill.description}}#[template(v-if='skill.notes') ({{skill.notes}})]
+    template(v-if='it.profile.experience')
+      hr
+      h4.pb-3 Experience / Employment History
+      div(v-html='expHtml')
+    template(v-if='user.citizenId === it.citizen.id')
+      br
+      br
+      router-link.btn.btn-primary(to='/citizen/profile') #[icon(icon='pencil')]&nbsp; Edit Your Profile
 </template>
 
 <script lang="ts">
@@ -90,6 +79,7 @@ export default defineComponent({
         it.value ? `Employment profile for ${citizenName(it.value.citizen)}` : 'Loading Profile...'),
       user,
       retrieveProfile,
+      citizenName,
       it,
       workTypes,
       bioHtml: computed(() => marked(it.value?.profile.biography || '', markedOptions)),

@@ -1,10 +1,8 @@
-<template>
-  <nav class="navbar navbar-light bg-light">
-    <span></span>
-    <span class="navbar-text">
-      (...and Jobs &ndash; <audio-clip clip="pelosi-jobs">Let's Vote for Jobs!</audio-clip>)
-    </span>
-  </nav>
+<template lang="pug">
+nav.navbar.navbar-light.bg-light
+  span &nbsp;
+  span.navbar-text.
+    (...and Jobs &ndash; #[audio-clip(clip='pelosi-jobs') Let's Vote for Jobs!])
 </template>
 
 <script lang="ts">

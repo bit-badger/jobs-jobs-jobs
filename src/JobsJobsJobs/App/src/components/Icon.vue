@@ -1,5 +1,5 @@
-<template>
-  <span :class="iconClass"></span>
+<template lang="pug">
+span(:class='iconClass')
 </template>
 
 <script lang="ts">

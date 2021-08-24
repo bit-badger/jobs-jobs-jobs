@@ -1,11 +1,8 @@
-<template>
-  <template v-if="errors.length > 0">
-    <p>The following error<template v-if="errors.length !== 1">s</template> occurred:</p>
-    <ul>
-      <li v-for="(error, idx) in errors" :key="idx">{{error}}</li>
-    </ul>
-  </template>
-  <slot v-else></slot>
+<template lang="pug">
+template(v-if='errors.length > 0')
+  p The following error#[template(v-if='errors.length !== 1') s] occurred:
+  ul: li(v-for='(error, idx) in errors' :key='idx') {{error}}
+slot(v-else)
 </template>
 
 <script lang="ts">

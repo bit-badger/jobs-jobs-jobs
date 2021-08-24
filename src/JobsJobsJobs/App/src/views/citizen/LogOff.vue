@@ -1,9 +1,8 @@
-<template>
-  <article>
-    <page-title title="Logging off..." />
-    <p>&nbsp;</p>
-    <p class="fst-italic">Logging off&hellip;</p>
-  </article>
+<template lang="pug">
+article
+  page-title(title='Logging off...')
+  p &nbsp;
+  p.fst-italic Logging off&hellip;
 </template>
 
 <script lang="ts">

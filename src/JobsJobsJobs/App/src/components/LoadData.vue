@@ -1,8 +1,7 @@
-<template>
-  <div v-if="loading">Loading&hellip;</div>
-  <error-list v-else :errors="errors">
-    <slot></slot>
-  </error-list>
+<template lang="pug">
+div(v-if='loading') Loading&hellip;
+error-list(v-else :errors='errors')
+  slot
 </template>
 
 <script lang="ts">

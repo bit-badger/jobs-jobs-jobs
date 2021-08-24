@@ -1,5 +1,5 @@
-<template>
-  <p v-if="false"></p>
+<template lang="pug">
+p(v-if='false')
 </template>
 
 <script lang="ts">

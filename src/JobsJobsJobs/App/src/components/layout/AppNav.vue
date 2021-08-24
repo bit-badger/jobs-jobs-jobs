@@ -1,29 +1,23 @@
-<template>
-  <aside class="collapse show p-3">
-    <p class="home-link pb-3"><router-link to="/">Jobs, Jobs, Jobs</router-link></p>
-    <p>&nbsp;</p>
-    <nav>
-      <template v-if="isLoggedOn">
-        <router-link to="/citizen/dashboard"><icon icon="view-dashboard-variant" />&nbsp; Dashboard</router-link>
-        <router-link to="/help-wanted">
-          <icon icon="newspaper-variant-multiple-outline" />&nbsp; Help Wanted!
-        </router-link>
-        <router-link to="/profile/search"><icon icon="view-list-outline" />&nbsp; Employment Profiles</router-link>
-        <router-link to="/success-story/list"><icon icon="thumb-up" />&nbsp; Success Stories</router-link>
-        <div class="separator"></div>
-        <router-link to="/listings/mine"><icon icon="sign-text" />&nbsp; My Job Listings</router-link>
-        <router-link to="/citizen/profile"><icon icon="pencil" />&nbsp; My Employment Profile</router-link>
-        <div class="separator"></div>
-        <router-link to="/citizen/log-off"><icon icon="logout-variant" />&nbsp; Log Off</router-link>
-      </template>
-      <template v-else>
-        <router-link to="/"><icon icon="home" />&nbsp; Home</router-link>
-        <router-link to="/profile/seeking"><icon icon="view-list-outline" />&nbsp; Job Seekers</router-link>
-        <router-link to="/citizen/log-on"><icon icon="login-variant" />&nbsp; Log On</router-link>
-      </template>
-      <router-link to="/how-it-works"><icon icon="help-circle-outline" />&nbsp; How It Works</router-link>
-    </nav>
-  </aside>
+<template lang="pug">
+aside.collapse.show.p-3
+  p.home-link.pb-3: router-link(to='/') Jobs, Jobs, Jobs
+  p &nbsp;
+  nav
+    template(v-if='isLoggedOn')
+      router-link(to='/citizen/dashboard') #[icon(icon='view-dashboard-variant')]&nbsp; Dashboard
+      router-link(to='/help-wanted') #[icon(icon='newspaper-variant-multiple-outline')]&nbsp; Help Wanted!
+      router-link(to='/profile/search') #[icon(icon='view-list-outline')]&nbsp; Employment Profiles
+      router-link(to='/success-story/list') #[icon(icon='thumb-up')]&nbsp; Success Stories
+      .separator
+      router-link(to='/listings/mine') #[icon(icon='sign-text')]&nbsp; My Job Listings
+      router-link(to='/citizen/profile') #[icon(icon='pencil')]&nbsp; My Employment Profile
+      .separator
+      router-link(to='/citizen/log-off') #[icon(icon='logout-variant')]&nbsp; Log Off
+    template(v-else)
+      router-link(to='/') #[icon(icon='home')]&nbsp; Home
+      router-link(to='/profile/seeking') #[icon(icon='view-list-outline')]&nbsp; Job Seekers
+      router-link(to='/citizen/log-on') #[icon(icon='login-variant')]&nbsp; Log On
+    router-link(to='/how-it-works') #[icon(icon='help-circle-outline')]&nbsp; How It Works
 </template>
 
 <script lang="ts">

@@ -1,43 +1,29 @@
-<template>
-  <article>
-    <page-title title="Help Wanted" />
-    <h3 class="pb-3">Help Wanted</h3>
-
-    <p v-if="!searched">
-      Enter relevant criteria to find results, or just click &ldquo;Search&rdquo; to see all current job listings.
-    </p>
-    <collapse-panel headerText="Search Criteria" :collapsed="isCollapsed" @toggle="toggleCollapse">
-      <listing-search-form v-model="criteria" @search="doSearch" />
-    </collapse-panel>
-    <error-list :errors="errors">
-      <p v-if="searching" class="pt-3">Searching job listings...</p>
-      <template v-else>
-        <table v-if="results.length > 0" class="table table-sm table-hover pt-3">
-          <thead>
-            <tr>
-              <th scope="col">Listing</th>
-              <th scope="col">Title</th>
-              <th scope="col">Location</th>
-              <th scope="col" class="text-center">Remote?</th>
-              <th scope="col" class="text-center">Needed By</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="it in results" :key="it.listing.id">
-              <td><router-link :to="`/listing/${it.listing.id}/view`">View</router-link></td>
-              <td>{{it.listing.title}}</td>
-              <td>{{it.continent.name}} / {{it.listing.region}}</td>
-              <td class="text-center">{{yesOrNo(it.listing.remoteWork)}}</td>
-              <td v-if="it.listing.neededBy" class="text-center">{{formatNeededBy(it.listing.neededBy)}}</td>
-              <td v-else class="text-center">N/A</td>
-            </tr>
-          </tbody>
-        </table>
-        <p v-else-if="searched" class="pt-3">No job listings found for the specified criteria</p>
-      </template>
-    </error-list>
-
-  </article>
+<template lang="pug">
+article
+  page-title(title='Help Wanted')
+  h3.pb-3 Help Wanted
+  p(v-if="!searched").
+    Enter relevant criteria to find results, or just click &ldquo;Search&rdquo; to see all current job listings.
+  collapse-panel(headerText='Search Criteria' :collapsed='isCollapsed' @toggle='toggleCollapse')
+    listing-search-form(v-model='criteria' @search='doSearch')
+  error-list(:errors='errors')
+    p.pt-3(v-if='searching') Searching job listings&hellip;
+    template(v-else)
+      table.table.table-sm.table-hover.pt-3(v-if='results.length > 0')
+        thead: tr
+          th(scope='col') Listing
+          th(scope='col') Title
+          th(scope='col') Location
+          th.text-center(scope='col') Remote?
+          th.text-center(scope='col') Needed By
+        tbody: tr(v-for='it in results' :key='it.listing.id')
+          td: router-link(:to='`/listing/${it.listing.id}/view`') View
+          td {{it.listing.title}}
+          td {{it.continent.name}} / {{it.listing.region}}
+          td.text-center {{yesOrNo(it.listing.remoteWork)}}
+          td.text-center(v-if='it.listing.neededBy') {{formatNeededBy(it.listing.neededBy)}}
+          td.text-center(v-else) N/A
+      p.pt-3(v-else-if='searched') No job listings found for the specified criteria
 </template>
 
 <script lang="ts">

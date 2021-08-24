@@ -1,52 +1,38 @@
-<template>
-  <form class="container">
-    <div class="row">
-      <div class="col col-xs-12 col-sm-6 col-md-4 col-lg-3">
-        <continent-list v-model="criteria.continentId" topLabel="Any"
-                        @update:modelValue="(c) => updateValue('continentId', c)" />
-      </div>
-      <div class="col col-xs-12 col-sm-6 col-md-4 col-lg-3">
-        <div class="form-floating">
-          <input type="text" id="region" class="form-control form-control-sm" placeholder="(free-form text)"
-                 :value="criteria.region" @input="updateValue('region', $event.target.value)">
-          <label for="region">Region</label>
-        </div>
-        <div class="form-text">(free-form text)</div>
-      </div>
-      <div class="col col-xs-12 col-sm-6 col-offset-md-2 col-lg-3 col-offset-lg-0">
-        <label class="jjj-label">Seeking Remote Work?</label><br>
-        <div class="form-check form-check-inline">
-          <input type="radio" id="remoteNull" name="remoteWork" class="form-check-input"
-                  :checked="criteria.remoteWork === ''" @click="updateValue('remoteWork', '')">
-          <label for="remoteNull" class="form-check-label">No Selection</label>
-        </div>
-        <div class="form-check form-check-inline">
-          <input type="radio" id="remoteYes" name="remoteWork" class="form-check-input"
-                  :checked="criteria.remoteWork === 'yes'" @click="updateValue('remoteWork', 'yes')">
-          <label for="remoteYes" class="form-check-label">Yes</label>
-        </div>
-        <div class="form-check form-check-inline">
-          <input type="radio" id="remoteNo" name="remoteWork" class="form-check-input"
-                  :checked="criteria.remoteWork === 'no'" @click="updateValue('remoteWork', 'no')">
-          <label for="remoteNo" class="form-check-label">No</label>
-        </div>
-      </div>
-      <div class="col col-xs-12 col-sm-6 col-lg-3">
-        <div class="form-floating">
-          <input type="text" id="skillSearch" class="form-control form-control-sm" placeholder="(free-form text)"
-                 :value="criteria.skill" @input="updateValue('skill', $event.target.value)">
-          <label for="skillSearch">Skill</label>
-        </div>
-        <div class="form-text">(free-form text)</div>
-      </div>
-    </div>
-    <div class="row">
-      <div class="col col-xs-12">
-        <br>
-        <button type="submit" class="btn btn-outline-primary" @click.prevent="$emit('search')">Search</button>
-      </div>
-    </div>
-  </form>
+<template lang="pug">
+form.container
+  .row
+    .col.col-xs-12.col-sm-6.col-md-4.col-lg-3
+      continent-list(v-model='criteria.continentId' topLabel='Any' @update:modelValue='updateContinent')
+    .col.col-xs-12.col-sm-6.col-md-4.col-lg-3
+      .form-floating
+        input.form-control.form-control-sm(type='text' id='region' placeholder='(free-form text)'
+                                           :value='criteria.region' @input="updateValue('region', $event.target.value)")
+        label(for='region') Region
+      .form-text (free-form text)
+    .col.col-xs-12.col-sm-6.col-offset-md-2.col-lg-3.col-offset-lg-0
+      label.jjj-label Seeking Remote Work?
+      br
+      .form-check.form-check-inline
+        input.form-check-input(type='radio' id='remoteNull' name='remoteWork' :checked="criteria.remoteWork === ''"
+                               @click="updateValue('remoteWork', '')")
+        label.form-check-label(for='remoteNull') No Selection
+      .form-check.form-check-inline
+        input.form-check-input(type='radio' id='remoteYes' name='remoteWork' :checked="criteria.remoteWork === 'yes'"
+                               @click="updateValue('remoteWork', 'yes')")
+        label.form-check-label(for='remoteYes') Yes
+      .form-check.form-check-inline
+        input.form-check-input(type='radio' id='remoteNo' name='remoteWork' :checked="criteria.remoteWork === 'no'"
+                               @click="updateValue('remoteWork', 'no')")
+        label.form-check-label(for='remoteNo') No
+    .col.col-xs-12.col-sm-6.col-lg-3
+      .form-floating
+        input.form-control.form-control-sm(type='text' id='skillSearch' placeholder="(free-form text)"
+                                           :value="criteria.skill" @input="updateValue('skill', $event.target.value)")
+        label(for='skillSearch') Skill
+      .form-text (free-form text)
+  .row: .col.col-xs-12
+    br
+    button.btn.btn-outline-primary(type='submit' @click.prevent="$emit('search')") Search
 </template>
 
 <script lang="ts">
@@ -68,12 +54,16 @@ export default defineComponent({
     /** The initial search criteria passed; this is what we'll update and emit when data changes */
     const criteria : Ref<PublicSearch> = ref({ ...props.modelValue as PublicSearch })
 
+    /** Emit a value update */
+    const updateValue = (key : string, value : string) => {
+      criteria.value = { ...criteria.value, [key]: value }
+      emit('update:modelValue', criteria.value)
+    }
+
     return {
       criteria,
-      updateValue: (key : string, value : string) => {
-        criteria.value = { ...criteria.value, [key]: value }
-        emit('update:modelValue', criteria.value)
-      }
+      updateContinent: (c : string) => updateValue('continentId', c),
+      updateValue
     }
   }
 })
