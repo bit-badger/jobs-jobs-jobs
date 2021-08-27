@@ -1,34 +1,20 @@
 <template lang="pug">
-span(@click='playFile') #[slot] #[audio(:id='clip'): source(:src='clipSource')]
+span(@click="playFile") #[slot] #[audio(:id="clip"): source(:src="clipSource")]
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue'
+<script setup lang="ts">
+const props = defineProps<{
+  clip: string
+}>()
 
-export default defineComponent({
-  name: 'AudioClip',
-  props: {
-    clip: {
-      type: String,
-      required: true
-    }
-  },
-  setup (props) {
-    /** The full relative URL for the audio clip */
-    const clipSource = `/audio/${props.clip}.mp3`
+/** The full relative URL for the audio clip */
+const clipSource = `/audio/${props.clip}.mp3`
 
-    /** Play the audio file */
-    const playFile = () => {
-      const audio = document.getElementById(props.clip) as HTMLAudioElement
-      audio.play()
-    }
-
-    return {
-      clipSource,
-      playFile
-    }
-  }
-})
+/** Play the audio file */
+const playFile = () => {
+  const audio = document.getElementById(props.clip) as HTMLAudioElement
+  audio.play()
+}
 </script>
 
 <style lang="sass" scoped>

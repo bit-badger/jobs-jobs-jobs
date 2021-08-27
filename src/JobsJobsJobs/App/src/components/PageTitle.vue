@@ -1,39 +1,28 @@
 <template lang="pug">
-p(v-if='false')
+p(v-if="false")
 </template>
 
-<script lang="ts">
-import { defineComponent, onMounted } from 'vue'
+<script setup lang="ts">
+import { onMounted, watch } from "vue"
 
-export default defineComponent({
-  name: 'PageTitle',
-  props: {
-    title: {
-      type: String,
-      required: true
-    }
-  },
-  setup (props) {
-    /** The name of the application */
-    const appName = 'Jobs, Jobs, Jobs'
+const props = defineProps<{
+  title: string
+}>()
 
-    /** Set the page title based on the input title attribute */
-    const setTitle = () => {
-      if (props.title === '') {
-        document.title = appName
-      } else {
-        document.title = `${props.title} | ${appName}`
-      }
-    }
+/** The name of the application */
+const appName = "Jobs, Jobs, Jobs"
 
-    onMounted(setTitle)
-
-    return {
-      setTitle
-    }
-  },
-  watch: {
-    title: 'setTitle'
+/** Set the page title based on the input title attribute */
+const setTitle = () => {
+  if (props.title === "") {
+    document.title = appName
+  } else {
+    document.title = `${props.title} | ${appName}`
   }
-})
+}
+
+onMounted(setTitle)
+
+/** Change the page title when the property changes */
+watch(() => props.title, setTitle)
 </script>

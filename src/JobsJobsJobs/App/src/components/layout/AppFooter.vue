@@ -1,25 +1,16 @@
 <template lang="pug">
 footer: p.text-muted.
-  Jobs, Jobs, Jobs v{{appVersion}} &bull; #[router-link(to='/privacy-policy') Privacy Policy]
-  &bull; #[router-link(to='/terms-of-service') Terms of Service]
+  Jobs, Jobs, Jobs v{{appVersion}} &bull; #[router-link(to="/privacy-policy") Privacy Policy]
+  &bull; #[router-link(to="/terms-of-service") Terms of Service]
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue'
-import { version } from '../../../package.json'
+<script setup lang="ts">
+import { version } from "../../../package.json"
 
-export default defineComponent({
-  name: 'AppFooter',
-  setup () {
-    let appVersion : string = version
-    while (appVersion.endsWith('.0')) {
-      appVersion = appVersion.substring(0, appVersion.length - 2)
-    }
-    return {
-      appVersion
-    }
-  }
-})
+let appVersion : string = version
+while (appVersion.endsWith(".0")) {
+  appVersion = appVersion.substring(0, appVersion.length - 2)
+}
 </script>
 
 <style lang="sass" scoped>

@@ -2,19 +2,11 @@
 nav.navbar.navbar-light.bg-light
   span &nbsp;
   span.navbar-text.
-    (...and Jobs &ndash; #[audio-clip(clip='pelosi-jobs') Let's Vote for Jobs!])
+    (&hellip;and Jobs &ndash; #[audio-clip(clip="pelosi-jobs") Let's Vote for Jobs!])
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue'
-import AudioClip from '@/components/AudioClip.vue'
-
-export default defineComponent({
-  name: 'TitleBar',
-  components: {
-    AudioClip
-  }
-})
+<script setup lang="ts">
+import AudioClip from "@/components/AudioClip.vue"
 </script>
 
 <style lang="sass" scoped>

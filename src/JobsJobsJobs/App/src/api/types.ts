@@ -62,17 +62,17 @@ export interface Listing {
 /** The data required to add or edit a job listing */
 export class ListingForm {
   /** The ID of the listing */
-  id = ''
+  id = ""
   /** The listing title */
-  title = ''
+  title = ""
   /** The ID of the continent on which this opportunity exists */
-  continentId = ''
+  continentId = ""
   /** The region in which this opportunity exists */
-  region = ''
+  region = ""
   /** Whether this is a remote work opportunity */
   remoteWork = false
   /** The text of the job listing */
-  text = ''
+  text = ""
   /** The date by which this job listing is needed */
   neededBy : string | undefined
 }
@@ -150,17 +150,17 @@ export class ProfileForm {
   /** Whether this profile should appear in the public search */
   isPublic = false
   /** The user's real name */
-  realName = ''
+  realName = ""
   /** The ID of the continent on which the citizen is located */
-  continentId = ''
+  continentId = ""
   /** The area within that continent where the citizen is located */
-  region = ''
+  region = ""
   /** If the citizen is available for remote work */
   remoteWork = false
   /** If the citizen is seeking full-time employment */
   fullTime = false
   /** The user's professional biography */
-  biography = ''
+  biography = ""
   /** The user's past experience */
   experience : string | undefined
   /** The skills for the user */
@@ -248,11 +248,11 @@ export interface StoryEntry {
 /** The data required to provide a success story */
 export class StoryForm {
   /** The ID of this story */
-  id = ''
+  id = ""
   /** Whether the employment was obtained from Jobs, Jobs, Jobs */
   fromHere = false
   /** The success story */
-  story = ''
+  story = ""
 }
 
 /** A record of success finding employment */

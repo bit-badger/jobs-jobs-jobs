@@ -1,22 +1,12 @@
 <template lang="pug">
-span(:class='iconClass')
+span(:class="iconClass")
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue'
+<script setup lang="ts">
+const props = defineProps<{
+  icon: string
+}>()
 
-export default defineComponent({
-  name: 'Icon',
-  props: {
-    icon: {
-      type: String,
-      required: true
-    }
-  },
-  setup (props) {
-    return {
-      iconClass: `mdi mdi-${props.icon}`
-    }
-  }
-})
+/** The CSS class to display the requested icon */
+const iconClass = `mdi mdi-${props.icon}`
 </script>

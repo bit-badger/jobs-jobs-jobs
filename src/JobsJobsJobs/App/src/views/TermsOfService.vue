@@ -1,6 +1,6 @@
 <template lang="pug">
 article
-  page-title(title='Terms of Service')
+  page-title(title="Terms of Service")
   h3 Terms of Service
   p: em (as of February 6#[sup th], 2021)
 
@@ -14,9 +14,9 @@ article
   p.
     Jobs, Jobs, Jobs is a service that allows individuals to enter and amend employment profiles, restricting access
     to the details of these profiles to other users of
-    #[a(href='https://noagendasocial.com' target='_blank') No Agenda Social]. Registration is accomplished by allowing
+    #[a(href="https://noagendasocial.com" target="_blank") No Agenda Social]. Registration is accomplished by allowing
     Jobs, Jobs, Jobs to read one&rsquo;s No Agenda Social profile. See our
-    #[router-link(to='/privacy-policy') privacy policy] for details on the personal (user) information we maintain.
+    #[router-link(to="/privacy-policy") privacy policy] for details on the personal (user) information we maintain.
 
   h4 Liability
   p.
@@ -32,6 +32,6 @@ article
   hr
 
   p.
-    You may also wish to review our #[router-link(to='/privacy-policy') privacy policy] to learn how we handle your
+    You may also wish to review our #[router-link(to="/privacy-policy") privacy policy] to learn how we handle your
     data.
 </template>

@@ -1,6 +1,6 @@
-import { InjectionKey } from 'vue'
-import { createStore, Store, useStore as baseUseStore } from 'vuex'
-import api, { Continent, LogOnSuccess } from '../api'
+import { InjectionKey } from "vue"
+import { createStore, Store, useStore as baseUseStore } from "vuex"
+import api, { Continent, LogOnSuccess } from "../api"
 
 /** The state tracked by the application */
 export interface State {
@@ -13,7 +13,7 @@ export interface State {
 }
 
 /** An injection key to identify this state with Vue */
-export const key : InjectionKey<Store<State>> = Symbol('VueX Store')
+export const key : InjectionKey<Store<State>> = Symbol("VueX Store")
 
 /** Use this store in component `setup` functions */
 export function useStore () : Store<State> {
@@ -24,7 +24,7 @@ export default createStore({
   state: () : State => {
     return {
       user: undefined,
-      logOnState: '<em>Welcome back! Verifying your No Agenda Social account&hellip;</em>',
+      logOnState: "<em>Welcome back! Verifying your No Agenda Social account&hellip;</em>",
       continents: []
     }
   },
@@ -45,19 +45,19 @@ export default createStore({
   actions: {
     async logOn ({ commit }, code: string) {
       const logOnResult = await api.citizen.logOn(code)
-      if (typeof logOnResult === 'string') {
-        commit('setLogOnState', logOnResult)
+      if (typeof logOnResult === "string") {
+        commit("setLogOnState", logOnResult)
       } else {
-        commit('setUser', logOnResult)
+        commit("setUser", logOnResult)
       }
     },
     async ensureContinents ({ state, commit }) {
       if (state.continents.length > 0) return
       const theSeven = await api.continent.all()
-      if (typeof theSeven === 'string') {
+      if (typeof theSeven === "string") {
         console.error(theSeven)
       } else {
-        commit('setContinents', theSeven)
+        commit("setContinents", theSeven)
       }
     }
   },

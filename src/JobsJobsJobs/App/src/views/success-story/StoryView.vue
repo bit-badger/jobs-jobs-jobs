@@ -1,71 +1,60 @@
 <template lang="pug">
 article
-  page-title(title='Success Story')
-  load-data(:load='retrieveStory')
+  page-title(title="Success Story")
+  load-data(:load="retrieveStory")
     h3.pb-3 {{citizenName}}&rsquo;s Success Story
-    h4.text-muted: full-date-time(:date='story.recordedOn')
-    p.fst-italic(v-if='story.fromHere'): strong Found via Jobs, Jobs, Jobs
+    h4.text-muted: full-date-time(:date="story.recordedOn")
+    p.fst-italic(v-if="story.fromHere"): strong Found via Jobs, Jobs, Jobs
     hr
-    div(v-if='story.story' v-html='successStory')
+    div(v-if="story.story" v-html="successStory")
 </template>
 
-<script lang="ts">
-import { computed, defineComponent, Ref, ref } from 'vue'
-import { useRoute } from 'vue-router'
-import marked from 'marked'
-import api, { LogOnSuccess, markedOptions, Success } from '@/api'
-import { useStore } from '@/store'
+<script setup lang="ts">
+import { computed, Ref, ref } from "vue"
+import { useRoute } from "vue-router"
 
-import FullDateTime from '@/components/FullDateTime.vue'
-import LoadData from '@/components/LoadData.vue'
+import api, { LogOnSuccess, Success } from "@/api"
+import { citizenName as citName } from "@/App.vue"
+import { toHtml } from '@/markdown'
+import { useStore } from "@/store"
 
-export default defineComponent({
-  name: 'StoryView',
-  components: {
-    FullDateTime,
-    LoadData
-  },
-  setup () {
-    const store = useStore()
-    const route = useRoute()
+import FullDateTime from "@/components/FullDateTime.vue"
+import LoadData from "@/components/LoadData.vue"
 
-    /** The currently logged-on user */
-    const user = store.state.user as LogOnSuccess
+const store = useStore()
+const route = useRoute()
 
-    /** The story to be displayed */
-    const story : Ref<Success | undefined> = ref(undefined)
+/** The currently logged-on user */
+const user = store.state.user as LogOnSuccess
 
-    /** The citizen's name (real, display, or NAS, whichever is found first) */
-    const citizenName = ref('')
+/** The story to be displayed */
+const story : Ref<Success | undefined> = ref(undefined)
 
-    /** Retrieve the success story */
-    const retrieveStory = async (errors : string []) => {
-      const storyResponse = await api.success.retrieve(route.params.id as string, user)
-      if (typeof storyResponse === 'string') {
-        errors.push(storyResponse)
-        return
-      }
-      if (typeof storyResponse === 'undefined') {
-        errors.push('Success story not found')
-        return
-      }
-      story.value = storyResponse
-      const citResponse = await api.citizen.retrieve(story.value.citizenId, user)
-      if (typeof citResponse === 'string') {
-        errors.push(citResponse)
-      } else if (typeof citResponse === 'undefined') {
-        errors.push('Citizen not found')
-      } else {
-        citizenName.value = citResponse.realName || citResponse.displayName || citResponse.naUser
-      }
-    }
+/** The citizen's name (real, display, or NAS, whichever is found first) */
+const citizenName = ref("")
 
-    return {
-      story,
-      retrieveStory,
-      citizenName,
-      successStory: computed(() => marked(story.value?.story || '', markedOptions))
-    }
+/** Retrieve the success story */
+const retrieveStory = async (errors : string []) => {
+  const storyResponse = await api.success.retrieve(route.params.id as string, user)
+  if (typeof storyResponse === "string") {
+    errors.push(storyResponse)
+    return
   }
-})
+  if (typeof storyResponse === "undefined") {
+    errors.push("Success story not found")
+    return
+  }
+  story.value = storyResponse
+  const citResponse = await api.citizen.retrieve(story.value.citizenId, user)
+  if (typeof citResponse === "string") {
+    errors.push(citResponse)
+  } else if (typeof citResponse === "undefined") {
+    errors.push("Citizen not found")
+  } else {
+    citizenName.value = citName(citResponse)
+  }
+}
+
+/** The HTML success story */
+const successStory = computed(() => toHtml(story.value?.story ?? ""))
 </script>

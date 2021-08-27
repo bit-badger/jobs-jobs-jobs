@@ -10,18 +10,18 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue'
-import { Citizen } from './api'
-import AppFooter from './components/layout/AppFooter.vue'
-import AppNav from './components/layout/AppNav.vue'
-import AppToaster from './components/layout/AppToaster.vue'
-import TitleBar from './components/layout/TitleBar.vue'
+import { defineComponent } from "vue"
 
-import 'bootstrap/dist/css/bootstrap.min.css'
-import '@mdi/font/css/materialdesignicons.css'
+import "bootstrap/dist/css/bootstrap.min.css"
+import "@mdi/font/css/materialdesignicons.css"
+
+import { Citizen } from "./api"
+import AppFooter from "./components/layout/AppFooter.vue"
+import AppNav from "./components/layout/AppNav.vue"
+import AppToaster from "./components/layout/AppToaster.vue"
+import TitleBar from "./components/layout/TitleBar.vue"
 
 export default defineComponent({
-  name: 'App',
   components: {
     AppFooter,
     AppNav,
@@ -37,7 +37,7 @@ export default defineComponent({
  * @returns "Yes" for true, "No" for false
  */
 export function yesOrNo (cond : boolean) : string {
-  return cond ? 'Yes' : 'No'
+  return cond ? "Yes" : "No"
 }
 
 /**
@@ -47,7 +47,7 @@ export function yesOrNo (cond : boolean) : string {
  * @returns The citizen's display name
  */
 export function citizenName (cit : Citizen) : string {
-  return cit.realName || cit.displayName || cit.naUser
+  return cit.realName ?? cit.displayName ?? cit.naUser
 }
 </script>
 

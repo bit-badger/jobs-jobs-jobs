@@ -1,6 +1,6 @@
 <template lang="pug">
 article
-  page-title(title='How It Works')
+  page-title(title="How It Works")
   h3 How It Works
   h4 Completing Your Profile
   ul
@@ -12,9 +12,9 @@ article
     li.
       The &ldquo;Professional Biography&rdquo; and &ldquo;Experience&rdquo; sections support Markdown, a plain-text way
       to specify formatting quite similar to that provided by word processors. The
-      #[a(href='https://daringfireball.net/projects/markdown/' target='_blank') original page] for the project is a
+      #[a(href="https://daringfireball.net/projects/markdown/" target="_blank") original page] for the project is a
       good overview of its capabilities, and the pages at
-      #[a(href='https://www.markdownguide.org/' target='_blank') Markdown Guide] give in-depth lessons to make the most
+      #[a(href="https://www.markdownguide.org/" target="_blank") Markdown Guide] give in-depth lessons to make the most
       of this language. The version of Markdown employed here supports many popular extensions, include smart quotes
       (turning "a quote" into &ldquo;a quote&rdquo;), tables, super/subscripts, and more.
     li.
@@ -63,7 +63,7 @@ article
   h4 Help / Suggestions
   p.
     This is open-source software
-    #[a(href='https://github.com/bit-badger/jobs-jobs-jobs' _target='_blank') developed on Github]; feel free to
-    #[a(href='https://github.com/bit-badger/jobs-jobs-jobs/issues' target='_blank') create an issue there], or look up
+    #[a(href="https://github.com/bit-badger/jobs-jobs-jobs" _target="_blank") developed on Github]; feel free to
+    #[a(href="https://github.com/bit-badger/jobs-jobs-jobs/issues" target="_blank") create an issue there], or look up
     @danieljsummers on No Agenda Social.
 </template>

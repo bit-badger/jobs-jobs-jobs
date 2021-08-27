@@ -1,32 +1,27 @@
 <template lang="pug">
 .card: .card-body
   h6.card-title
-    a(href='#' :class="{ 'cp-c': collapsed, 'cp-o': !collapsed }" @click.prevent='toggle') {{headerText}}
-  slot(v-if='!collapsed')
+    a(href="#" :class="{ 'cp-c': collapsed, 'cp-o': !collapsed }" @click.prevent="toggle") {{headerText}}
+  slot(v-if="!collapsed")
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue'
+<script setup lang="ts">
+interface Props {
+  headerText: string
+  collapsed: boolean
+}
 
-export default defineComponent({
-  name: 'CollapsePanel',
-  emits: ['toggle'],
-  props: {
-    headerText: {
-      type: String,
-      default: 'Toggle'
-    },
-    collapsed: {
-      type: Boolean,
-      default: false
-    }
-  },
-  setup (props, { emit }) {
-    return {
-      toggle: () => emit('toggle', !props.collapsed)
-    }
-  }
+const props = withDefaults(defineProps<Props>(), {
+  headerText: "Toggle",
+  collapsed: false
 })
+
+const emit = defineEmits<{
+  (e: "toggle") : void
+}>()
+
+/** Emit the toggle event */
+const toggle = () => emit("toggle", !props.collapsed)
 </script>
 
 <style lang="sass" scoped>

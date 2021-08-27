@@ -1,6 +1,6 @@
 <template lang="pug">
 article
-  page-title(title='Welcome!')
+  page-title(title="Welcome!")
   p &nbsp;
   p.
     Welcome to Jobs, Jobs, Jobs (AKA No Agenda Careers), where citizens of Gitmo Nation can assist one another in
@@ -8,18 +8,10 @@ article
     their work deconstructing the misinformation that passes for news on a day-to-day basis.
   p.
     Do you not understand the terms in the paragraph above? No worries; just head over to
-    #[a(href='https://noagendashow.net' target='_blank') The Best Podcast in the Universe]
-    #[em &nbsp;#[audio-clip(clip='thats-true') (that&rsquo;s true!)]] and find out what you&rsquo;re missing.
+    #[a(href="https://noagendashow.net" target="_blank") The Best Podcast in the Universe]
+    #[em &nbsp;#[audio-clip(clip="thats-true") (that&rsquo;s true!)]] and find out what you&rsquo;re missing.
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue'
-import AudioClip from '@/components/AudioClip.vue'
-
-export default defineComponent({
-  name: 'Home',
-  components: {
-    AudioClip
-  }
-})
+<script setup lang="ts">
+import AudioClip from "@/components/AudioClip.vue"
 </script>

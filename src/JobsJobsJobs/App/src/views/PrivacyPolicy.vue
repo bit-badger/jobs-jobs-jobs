@@ -1,6 +1,6 @@
 <template lang="pug">
 article
-  page-title(title='Privacy Policy')
+  page-title(title="Privacy Policy")
   h3 Privacy Policy
   p: em (as of February 6#[sup th], 2021)
 
@@ -49,7 +49,7 @@ article
       provide our content or whose products or services we think may interest you.
     li.
       Website: {{name}}&rsquo;s site, which can be accessed via this URL:
-      #[router-link(to='/') https://noagendacareers.com/]
+      #[router-link(to="/") https://noagendacareers.com/]
     li You: a person or entity that is registered with {{name}} to use the Services.
 
   h4 What Information Do We Collect?
@@ -332,18 +332,10 @@ article
 
   h4 Contact Us
   p Don't hesitate to contact us if you have any questions.
-  ul: li Via this Link: #[router-link(to='/how-it-works') https://noagendacareers.com/how-it-works]
+  ul: li Via this Link: #[router-link(to="/how-it-works") https://noagendacareers.com/how-it-works]
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue'
-
-export default defineComponent({
-  name: 'PrivacyPolicy',
-  setup () {
-    return {
-      name: 'Jobs, Jobs, Jobs'
-    }
-  }
-})
+<script setup lang="ts">
+/** The name of the application */
+const name = "Jobs, Jobs, Jobs"
 </script>

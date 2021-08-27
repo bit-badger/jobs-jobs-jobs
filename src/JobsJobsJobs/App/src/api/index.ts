@@ -1,4 +1,3 @@
-import { MarkedOptions } from 'marked'
 import {
   Citizen,
   Continent,
@@ -18,7 +17,7 @@ import {
   StoryEntry,
   StoryForm,
   Success
-} from './types'
+} from "./types"
 
 /**
  * Create a URL that will access the API
@@ -37,13 +36,13 @@ const apiUrl = (url : string) : string => `http://localhost:5000/api/${url}`
 // eslint-disable-next-line
 const reqInit = (method : string, user : LogOnSuccess, body : any | undefined = undefined) : RequestInit => {
   const headers = new Headers()
-  headers.append('Authorization', `Bearer ${user.jwt}`)
+  headers.append("Authorization", `Bearer ${user.jwt}`)
   if (body) {
-    headers.append('Content-Type', 'application/json')
+    headers.append("Content-Type", "application/json")
     return {
       headers,
       method,
-      cache: 'no-cache',
+      cache: "no-cache",
       body: JSON.stringify(body)
     }
   }
@@ -104,7 +103,7 @@ export default {
      * @returns The user result, or an error
      */
     logOn: async (code : string) : Promise<LogOnSuccess | string> => {
-      const resp = await fetch(apiUrl(`citizen/log-on/${code}`), { method: 'GET', mode: 'cors' })
+      const resp = await fetch(apiUrl(`citizen/log-on/${code}`), { method: "GET", mode: "cors" })
       if (resp.status === 200) return await resp.json() as LogOnSuccess
       return `Error logging on - ${await resp.text()}`
     },
@@ -117,7 +116,7 @@ export default {
      * @returns The citizen, or an error
      */
     retrieve: async (id : string, user : LogOnSuccess) : Promise<Citizen | string | undefined> =>
-      apiResult<Citizen>(await fetch(apiUrl(`citizen/${id}`), reqInit('GET', user)), `retrieving citizen ${id}`),
+      apiResult<Citizen>(await fetch(apiUrl(`citizen/${id}`), reqInit("GET", user)), `retrieving citizen ${id}`),
 
     /**
      * Delete the current citizen's entire Jobs, Jobs, Jobs record
@@ -126,7 +125,7 @@ export default {
      * @returns Undefined if successful, an error if not
      */
     delete: async (user : LogOnSuccess) : Promise<string | undefined> =>
-      apiAction(await fetch(apiUrl('citizen'), reqInit('DELETE', user)), 'deleting citizen')
+      apiAction(await fetch(apiUrl("citizen"), reqInit("DELETE", user)), "deleting citizen")
   },
 
   /** API functions for continents */
@@ -138,7 +137,7 @@ export default {
      * @returns All continents, or an error
      */
     all: async () : Promise<Continent[] | string | undefined> =>
-      apiResult<Continent[]>(await fetch(apiUrl('continents'), { method: 'GET' }), 'retrieving continents')
+      apiResult<Continent[]>(await fetch(apiUrl("continents"), { method: "GET" }), "retrieving continents")
   },
 
   /** API functions for job listings */
@@ -152,7 +151,7 @@ export default {
      * @returns True if the addition was successful, an error string if not
      */
     add: async (listing : ListingForm, user : LogOnSuccess) : Promise<boolean | string> =>
-      apiSend(await fetch(apiUrl('listings'), reqInit('POST', user, listing)), 'adding job listing'),
+      apiSend(await fetch(apiUrl("listings"), reqInit("POST", user, listing)), "adding job listing"),
 
     /**
      * Retrieve the job listings posted by the current citizen
@@ -161,8 +160,8 @@ export default {
      * @returns The job listings the user has posted, or an error string
      */
     mine: async (user : LogOnSuccess) : Promise<ListingForView[] | string | undefined> =>
-      apiResult<ListingForView[]>(await fetch(apiUrl('listings/mine'), reqInit('GET', user)),
-        'retrieving your job listings'),
+      apiResult<ListingForView[]>(await fetch(apiUrl("listings/mine"), reqInit("GET", user)),
+        "retrieving your job listings"),
 
     /**
      * Retrieve a job listing
@@ -172,7 +171,7 @@ export default {
      * @returns The job listing (if found), undefined (if not found), or an error string
      */
     retreive: async (id : string, user : LogOnSuccess) : Promise<Listing | undefined | string> =>
-      apiResult<Listing>(await fetch(apiUrl(`listing/${id}`), reqInit('GET', user)), 'retrieving job listing'),
+      apiResult<Listing>(await fetch(apiUrl(`listing/${id}`), reqInit("GET", user)), "retrieving job listing"),
 
     /**
      * Retrieve a job listing for viewing (also contains continent information)
@@ -182,8 +181,8 @@ export default {
      * @returns The job listing (if found), undefined (if not found), or an error string
      */
     retreiveForView: async (id : string, user : LogOnSuccess) : Promise<ListingForView | undefined | string> =>
-      apiResult<ListingForView>(await fetch(apiUrl(`listing/${id}/view`), reqInit('GET', user)),
-        'retrieving job listing'),
+      apiResult<ListingForView>(await fetch(apiUrl(`listing/${id}/view`), reqInit("GET", user)),
+        "retrieving job listing"),
 
     /**
      * Search for job listings using the given parameters
@@ -194,12 +193,12 @@ export default {
      */
     search: async (query : ListingSearch, user : LogOnSuccess) : Promise<ListingForView[] | string | undefined> => {
       const params = new URLSearchParams()
-      if (query.continentId) params.append('continentId', query.continentId)
-      if (query.region) params.append('region', query.region)
-      params.append('remoteWork', query.remoteWork)
-      if (query.text) params.append('text', query.text)
+      if (query.continentId) params.append("continentId", query.continentId)
+      if (query.region) params.append("region", query.region)
+      params.append("remoteWork", query.remoteWork)
+      if (query.text) params.append("text", query.text)
       return apiResult<ListingForView[]>(await fetch(apiUrl(`listing/search?${params.toString()}`),
-        reqInit('GET', user)), 'searching job listings')
+        reqInit("GET", user)), "searching job listings")
     },
 
     /**
@@ -210,7 +209,7 @@ export default {
      * @returns True if the update was successful, an error string if not
      */
     update: async (listing : ListingForm, user : LogOnSuccess) : Promise<boolean | string> =>
-      apiSend(await fetch(apiUrl(`listing/${listing.id}`), reqInit('PUT', user, listing)), 'updating job listing')
+      apiSend(await fetch(apiUrl(`listing/${listing.id}`), reqInit("PUT", user, listing)), "updating job listing")
   },
 
   /** API functions for profiles */
@@ -223,7 +222,7 @@ export default {
      * @returns True if the action was successful, or an error string if not
      */
     markEmploymentFound: async (user : LogOnSuccess) : Promise<boolean | string> => {
-      const result = await fetch(apiUrl('profile/employment-found'), reqInit('PATCH', user))
+      const result = await fetch(apiUrl("profile/employment-found"), reqInit("PATCH", user))
       if (result.ok) return true
       return `${result.status} - ${result.statusText} (${await result.text()})`
     },
@@ -236,13 +235,13 @@ export default {
      */
     publicSearch: async (query : PublicSearch) : Promise<PublicSearchResult[] | string | undefined> => {
       const params = new URLSearchParams()
-      if (query.continentId) params.append('continentId', query.continentId)
-      if (query.region) params.append('region', query.region)
-      if (query.skill) params.append('skill', query.skill)
-      params.append('remoteWork', query.remoteWork)
+      if (query.continentId) params.append("continentId", query.continentId)
+      if (query.region) params.append("region", query.region)
+      if (query.skill) params.append("skill", query.skill)
+      params.append("remoteWork", query.remoteWork)
       return apiResult<PublicSearchResult[]>(
-        await fetch(apiUrl(`profile/public-search?${params.toString()}`), { method: 'GET' }),
-        'searching public profile data')
+        await fetch(apiUrl(`profile/public-search?${params.toString()}`), { method: "GET" }),
+        "searching public profile data")
     },
 
     /**
@@ -253,8 +252,8 @@ export default {
      * @returns The profile (if found), undefined (if not found), or an error string
      */
     retreive: async (id : string | undefined, user : LogOnSuccess) : Promise<Profile | undefined | string> => {
-      const url = id ? `profile/${id}` : 'profile'
-      const resp = await fetch(apiUrl(url), reqInit('GET', user))
+      const url = id ? `profile/${id}` : "profile"
+      const resp = await fetch(apiUrl(url), reqInit("GET", user))
       if (resp.status === 200) return await resp.json() as Profile
       if (resp.status !== 204) return `Error retrieving profile - ${await resp.text()}`
     },
@@ -267,7 +266,7 @@ export default {
      * @returns The profile (if found), undefined (if not found), or an error string
      */
     retreiveForView: async (id : string, user : LogOnSuccess) : Promise<ProfileForView | string | undefined> =>
-      apiResult<ProfileForView>(await fetch(apiUrl(`profile/${id}/view`), reqInit('GET', user)), 'retrieving profile'),
+      apiResult<ProfileForView>(await fetch(apiUrl(`profile/${id}/view`), reqInit("GET", user)), "retrieving profile"),
 
     /**
      * Save a user's profile data
@@ -277,7 +276,7 @@ export default {
      * @returns True if the save was successful, an error string if not
      */
     save: async (data : ProfileForm, user : LogOnSuccess) : Promise<boolean | string> =>
-      apiSend(await fetch(apiUrl('profile'), reqInit('POST', user, data)), 'saving profile'),
+      apiSend(await fetch(apiUrl("profile"), reqInit("POST", user, data)), "saving profile"),
 
     /**
      * Search for profiles using the given parameters
@@ -288,12 +287,12 @@ export default {
      */
     search: async (query : ProfileSearch, user : LogOnSuccess) : Promise<ProfileSearchResult[] | string | undefined> => {
       const params = new URLSearchParams()
-      if (query.continentId) params.append('continentId', query.continentId)
-      if (query.skill) params.append('skill', query.skill)
-      if (query.bioExperience) params.append('bioExperience', query.bioExperience)
-      params.append('remoteWork', query.remoteWork)
+      if (query.continentId) params.append("continentId", query.continentId)
+      if (query.skill) params.append("skill", query.skill)
+      if (query.bioExperience) params.append("bioExperience", query.bioExperience)
+      params.append("remoteWork", query.remoteWork)
       return apiResult<ProfileSearchResult[]>(await fetch(apiUrl(`profile/search?${params.toString()}`),
-        reqInit('GET', user)), 'searching profiles')
+        reqInit("GET", user)), "searching profiles")
     },
 
     /**
@@ -303,7 +302,7 @@ export default {
      * @returns A count of profiles within the entire system
      */
     count: async (user : LogOnSuccess) : Promise<number | string> => {
-      const resp = await fetch(apiUrl('profile/count'), reqInit('GET', user))
+      const resp = await fetch(apiUrl("profile/count"), reqInit("GET", user))
       if (resp.status === 200) {
         const result = await resp.json() as Count
         return result.count
@@ -318,7 +317,7 @@ export default {
      * @returns Undefined if successful, an error if not
      */
     delete: async (user : LogOnSuccess) : Promise<string | undefined> =>
-      apiAction(await fetch(apiUrl('profile'), reqInit('DELETE', user)), 'deleting profile')
+      apiAction(await fetch(apiUrl("profile"), reqInit("DELETE", user)), "deleting profile")
   },
 
   /** API functions for success stories */
@@ -331,7 +330,7 @@ export default {
      * @returns All success stories (if any exist), undefined (if none exist), or an error
      */
     list: async (user : LogOnSuccess) : Promise<StoryEntry[] | string | undefined> =>
-      apiResult<StoryEntry[]>(await fetch(apiUrl('successes'), reqInit('GET', user)), 'retrieving success stories'),
+      apiResult<StoryEntry[]>(await fetch(apiUrl("successes"), reqInit("GET", user)), "retrieving success stories"),
 
     /**
      * Retrieve a success story by its ID
@@ -341,7 +340,7 @@ export default {
      * @returns The success story, or an error
      */
     retrieve: async (id : string, user : LogOnSuccess) : Promise<Success | string | undefined> =>
-      apiResult<Success>(await fetch(apiUrl(`success/${id}`), reqInit('GET', user)), `retrieving success story ${id}`),
+      apiResult<Success>(await fetch(apiUrl(`success/${id}`), reqInit("GET", user)), `retrieving success story ${id}`),
 
     /**
      * Save a success story
@@ -351,14 +350,8 @@ export default {
      * @returns True if successful, an error string if not
      */
     save: async (data : StoryForm, user : LogOnSuccess) : Promise<boolean | string> =>
-      apiSend(await fetch(apiUrl('success'), reqInit('POST', user, data)), 'saving success story')
+      apiSend(await fetch(apiUrl("success"), reqInit("POST", user, data)), "saving success story")
   }
 }
 
-/** The standard Jobs, Jobs, Jobs options for `marked` (GitHub-Flavo(u)red Markdown (GFM) with smart quotes) */
-export const markedOptions : MarkedOptions = {
-  gfm: true,
-  smartypants: true
-}
-
-export * from './types'
+export * from "./types"

@@ -1,40 +1,33 @@
 <template lang="pug">
 aside.collapse.show.p-3
-  p.home-link.pb-3: router-link(to='/') Jobs, Jobs, Jobs
+  p.home-link.pb-3: router-link(to="/") Jobs, Jobs, Jobs
   p &nbsp;
   nav
-    template(v-if='isLoggedOn')
-      router-link(to='/citizen/dashboard') #[icon(icon='view-dashboard-variant')]&nbsp; Dashboard
-      router-link(to='/help-wanted') #[icon(icon='newspaper-variant-multiple-outline')]&nbsp; Help Wanted!
-      router-link(to='/profile/search') #[icon(icon='view-list-outline')]&nbsp; Employment Profiles
-      router-link(to='/success-story/list') #[icon(icon='thumb-up')]&nbsp; Success Stories
+    template(v-if="isLoggedOn")
+      router-link(to="/citizen/dashboard") #[icon(icon="view-dashboard-variant")]&nbsp; Dashboard
+      router-link(to="/help-wanted") #[icon(icon="newspaper-variant-multiple-outline")]&nbsp; Help Wanted!
+      router-link(to="/profile/search") #[icon(icon="view-list-outline")]&nbsp; Employment Profiles
+      router-link(to="/success-story/list") #[icon(icon="thumb-up")]&nbsp; Success Stories
       .separator
-      router-link(to='/listings/mine') #[icon(icon='sign-text')]&nbsp; My Job Listings
-      router-link(to='/citizen/profile') #[icon(icon='pencil')]&nbsp; My Employment Profile
+      router-link(to="/listings/mine") #[icon(icon="sign-text")]&nbsp; My Job Listings
+      router-link(to="/citizen/profile") #[icon(icon="pencil")]&nbsp; My Employment Profile
       .separator
-      router-link(to='/citizen/log-off') #[icon(icon='logout-variant')]&nbsp; Log Off
+      router-link(to="/citizen/log-off") #[icon(icon="logout-variant")]&nbsp; Log Off
     template(v-else)
-      router-link(to='/') #[icon(icon='home')]&nbsp; Home
-      router-link(to='/profile/seeking') #[icon(icon='view-list-outline')]&nbsp; Job Seekers
-      router-link(to='/citizen/log-on') #[icon(icon='login-variant')]&nbsp; Log On
-    router-link(to='/how-it-works') #[icon(icon='help-circle-outline')]&nbsp; How It Works
+      router-link(to="/") #[icon(icon="home")]&nbsp; Home
+      router-link(to="/profile/seeking") #[icon(icon="view-list-outline")]&nbsp; Job Seekers
+      router-link(to="/citizen/log-on") #[icon(icon="login-variant")]&nbsp; Log On
+    router-link(to="/how-it-works") #[icon(icon="help-circle-outline")]&nbsp; How It Works
 </template>
 
-<script lang="ts">
-import { computed, defineComponent } from 'vue'
-import { useStore } from '@/store'
+<script setup lang="ts">
+import { computed } from "vue"
+import { useStore } from "@/store"
 
-export default defineComponent({
-  name: 'AppNav',
-  setup () {
-    const store = useStore()
+const store = useStore()
 
-    return {
-      /** Whether a user is logged in or not */
-      isLoggedOn: computed(() => store.state.user !== undefined)
-    }
-  }
-})
+/** Whether a user is logged in or not */
+const isLoggedOn = computed(() => store.state.user !== undefined)
 </script>
 
 <style lang="sass" scoped>
