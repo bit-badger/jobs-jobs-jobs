@@ -167,7 +167,7 @@ module Startup =
                   r.Table(table).IndexCreate(idx).RunWriteAsync conn |> awaitIgnore)
       }
     do! ensureIndexes Table.Citizen [ "naUser" ]
-    do! ensureIndexes Table.Listing [ "citizenId"; "continentId" ]
+    do! ensureIndexes Table.Listing [ "citizenId"; "continentId"; "isExpired" ]
     do! ensureIndexes Table.Profile [ "continentId" ]
     do! ensureIndexes Table.Success [ "citizenId" ]
     }
@@ -523,7 +523,8 @@ module Listing =
         |> Seq.toList
         |> List.fold
             (fun q f -> f q)
-            (r.Table(Table.Listing) :> ReqlExpr))
+            (r.Table(Table.Listing)
+              .GetAll(false).OptArg("index", "isExpired") :> ReqlExpr))
           .EqJoin("continentId", r.Table(Table.Continent))
           .Map(ReqlFunction1(fun it -> upcast r.HashMap("listing", it.G("left")).With("continent", it.G("right"))))
           .RunResultAsync<ListingForView list> conn)
