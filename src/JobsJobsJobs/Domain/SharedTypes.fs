@@ -34,6 +34,15 @@ type ListingForView = {
 }
 
 
+/// The form submitted to expire a listing
+type ListingExpireForm = {
+  /// Whether the job was filled from here
+  fromHere     : bool
+  /// The success story written by the user
+  successStory : string option
+}
+
+
 /// The various ways job listings can be searched
 [<CLIMutable>]
 type ListingSearch = {

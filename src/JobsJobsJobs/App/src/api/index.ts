@@ -3,6 +3,7 @@ import {
   Continent,
   Count,
   Listing,
+  ListingExpireForm,
   ListingForm,
   ListingForView,
   ListingSearch,
@@ -152,6 +153,17 @@ export default {
      */
     add: async (listing : ListingForm, user : LogOnSuccess) : Promise<boolean | string> =>
       apiSend(await fetch(apiUrl("listings"), reqInit("POST", user, listing)), "adding job listing"),
+
+    /**
+     * Expire a job listing
+     *
+     * @param id The ID of the job listing to be expired
+     * @param form The information needed to expire the form
+     * @param user The currently logged-on user
+     * @returns True if the action was successful, an error string if not
+     */
+    expire: async (id : string, listing : ListingExpireForm, user : LogOnSuccess) : Promise<boolean | string> =>
+      apiSend(await fetch(apiUrl(`listing/${id}`), reqInit("PATCH", user, listing)), "expiring job listing"),
 
     /**
      * Retrieve the job listings posted by the current citizen

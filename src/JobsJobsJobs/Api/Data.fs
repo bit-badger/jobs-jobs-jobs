@@ -429,6 +429,8 @@ module Continent =
 [<RequireQualifiedAccess>]
 module Listing =  
 
+  open NodaTime
+
   /// Find all job listings posted by the given citizen
   let findByCitizen (citizenId : CitizenId) conn =
     withReconn(conn).ExecuteAsync(fun () ->
@@ -477,6 +479,17 @@ module Listing =
           r.Table(Table.Listing)
             .Get(listing.id)
             .Replace(listing)
+            .RunWriteAsync conn
+        ()
+      })
+
+  /// Expire a listing
+  let expire (listingId : ListingId) (fromHere : bool) (now : Instant) conn =
+    withReconn(conn).ExecuteAsync(fun () -> task {
+        let! _ =
+          r.Table(Table.Listing)
+            .Get(listingId)
+            .Update(r.HashMap("isExpired", true).With("fromHere", fromHere).With("updatedOn", now))
             .RunWriteAsync conn
         ()
       })

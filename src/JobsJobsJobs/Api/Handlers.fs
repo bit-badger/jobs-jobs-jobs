@@ -257,6 +257,33 @@ module Listing =
           return! ok next ctx
       | None -> return! Error.notFound next ctx
       }
+  
+  // PATCH: /api/listing/[id]
+  let expire listingId : HttpHandler =
+    authorize
+    >=> fun next ctx -> task {
+      let dbConn = conn ctx
+      let now    = clock(ctx).GetCurrentInstant ()
+      match! Data.Listing.findById (ListingId listingId) dbConn with
+      | Some listing when listing.citizenId <> (currentCitizenId ctx) -> return! Error.notAuthorized next ctx
+      | Some listing ->
+          let! form = ctx.BindJsonAsync<ListingExpireForm> ()
+          do! Data.Listing.expire listing.id form.fromHere now dbConn
+          match form.successStory with
+          | Some storyText ->
+              do! Data.Success.save
+                    { id         = SuccessId.create()
+                      citizenId  = currentCitizenId ctx
+                      recordedOn = now
+                      fromHere   = form.fromHere
+                      source     = "listing"
+                      story      = (Text >> Some) storyText
+                      } dbConn
+          | None -> ()
+          return! ok next ctx
+      | None -> return! Error.notFound next ctx
+
+    }
 
   // GET: /api/listing/search
   let search : HttpHandler =
@@ -474,6 +501,9 @@ let allEndpoints = [
         route  "/search"  Listing.search
         routef "/%O/view" Listing.view
         route  "s/mine"   Listing.mine
+        ]
+      PATCH [
+        routef "/%O" Listing.expire
         ]
       POST [
         route "s" Listing.add

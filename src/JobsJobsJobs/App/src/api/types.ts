@@ -77,6 +77,14 @@ export class ListingForm {
   neededBy : string | undefined
 }
 
+/** The form submitted to expire a listing */
+export class ListingExpireForm {
+  /** Whether the job was filled from here */
+  fromHere = false
+  /** The success story written by the user */
+  successStory : string | undefined
+}
+
 /** The data required to view a listing */
 export interface ListingForView {
   /** The listing itself */

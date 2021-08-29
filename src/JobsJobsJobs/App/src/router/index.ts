@@ -84,6 +84,11 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import(/* webpackChunkName: "jobedit" */ "../views/listing/ListingEdit.vue")
   },
   {
+    path: "/listing/:id/expire",
+    name: "ExpireListing",
+    component: () => import(/* webpackChunkName: "jobedit" */ "../views/listing/ListingExpire.vue")
+  },
+  {
     path: "/listing/:id/view",
     name: "ViewListing",
     component: () => import(/* webpackChunkName: "joblist" */ "../views/listing/ListingView.vue")

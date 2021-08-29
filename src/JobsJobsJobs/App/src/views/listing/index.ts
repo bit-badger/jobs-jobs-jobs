@@ -7,5 +7,5 @@ import { format } from "date-fns"
  * @returns The date to display
  */
 export function formatNeededBy (neededBy : string) : string {
-  return format(Date.parse(neededBy), "PPP")
+  return format(Date.parse(`${neededBy}T00:00:00`), "PPP")
 }
