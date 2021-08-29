@@ -2,7 +2,10 @@
 article
   page-title(:title="title")
   load-data(:load="retrieveProfile")
-    h2: a(:href="it.citizen.profileUrl" target="_blank") {{citizenName(it.citizen)}}
+    h2
+      a(:href="it.citizen.profileUrl" target="_blank") {{citizenName(it.citizen)}}
+      .jjj-heading-label(v-if="it.profile.seekingEmployment")
+        | &nbsp; &nbsp;#[span.badge.bg-dark Currently Seeking Employment]
     h4.pb-3 {{it.continent.name}}, {{it.profile.region}}
     p(v-html="workTypes")
     hr
@@ -47,11 +50,6 @@ const workTypes = computed(() => {
   const parts : string[] = []
   if (it.value) {
     const p = it.value.profile
-    if (p.seekingEmployment) {
-      parts.push("<strong><em>CURRENTLY SEEKING EMPLOYMENT</em></strong>")
-    } else {
-      parts.push("Not actively seeking employment")
-    }
     parts.push(`${p.fullTime ? "I" : "Not i"}nterested in full-time employment`)
     parts.push(`${p.remoteWork ? "I" : "Not i"}nterested in remote opportunities`)
   }

@@ -19,7 +19,7 @@ article
           th(scope="col") Last Updated
         tbody: tr(v-for="profile in results" :key="profile.citzenId")
           td: router-link(:to="`/profile/${profile.citizenId}/view`") View
-          td(:class="{ 'font-weight-bold' : profile.seekingEmployment }") {{profile.displayName}}
+          td(:class="{ 'fw-bold' : profile.seekingEmployment }") {{profile.displayName}}
           td.text-center {{yesOrNo(profile.seekingEmployment)}}
           td.text-center {{yesOrNo(profile.remoteWork)}}
           td.text-center {{yesOrNo(profile.fullTime)}}
@@ -55,10 +55,10 @@ const searched = ref(false)
 
 /** An empty set of search criteria */
 const emptyCriteria = {
-  continentId: '',
+  continentId: "",
   skill: undefined,
   bioExperience: undefined,
-  remoteWork: ''
+  remoteWork: ""
 }
 
 /** The search criteria being built from the page */
@@ -113,5 +113,5 @@ watch(() => route.query, setUpPage, { immediate: true })
 const toggleCollapse = (it : boolean) => { isCollapsed.value = it }
 
 /** Execute a search */
-const doSearch = () => router.push({ query: { searched: 'true', ...criteria.value } })
+const doSearch = () => router.push({ query: { searched: "true", ...criteria.value } })
 </script>

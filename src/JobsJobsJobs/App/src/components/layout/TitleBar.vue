@@ -2,7 +2,7 @@
 nav.navbar.navbar-light.bg-light
   span &nbsp;
   span.navbar-text.
-    (&hellip;and Jobs &ndash; #[audio-clip(clip="pelosi-jobs") Let's Vote for Jobs!])
+    (&hellip;and Jobs &ndash; #[audio-clip(clip="pelosi-jobs") Let&rsquo;s Vote for Jobs!])
 </template>
 
 <script setup lang="ts">

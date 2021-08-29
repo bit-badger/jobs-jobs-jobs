@@ -2,14 +2,18 @@
 article
   page-title(:title="title")
   load-data(:load="retrieveListing")
-    h3 {{it.listing.title}}
+    h3
+      | {{it.listing.title}}
+      .jjj-heading-label(v-if="it.listing.isExpired")
+        | &nbsp; &nbsp; #[span.badge.bg-warning.text-dark Expired]
+        template(v-if="it.listing.wasFilledHere") &nbsp; &nbsp;#[span.badge.bg-success Filled via Jobs, Jobs, Jobs]
     h4.pb-3.text-muted {{it.continent.name}} / {{it.listing.region}}
     p
       template(v-if="it.listing.neededBy").
         #[strong #[em NEEDED BY {{neededBy(it.listing.neededBy)}}]] &bull;
       |  Listed by #[a(:href="profileUrl" target="_blank") {{citizenName(citizen)}}]
     hr
-    div(v-html='details')
+    div(v-html="details")
 </template>
 
 <script setup lang="ts">

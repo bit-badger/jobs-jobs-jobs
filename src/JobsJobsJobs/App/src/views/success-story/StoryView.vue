@@ -2,10 +2,11 @@
 article
   page-title(title="Success Story")
   load-data(:load="retrieveStory")
-    h3.pb-3 {{citizenName}}&rsquo;s Success Story
-    h4.text-muted: full-date-time(:date="story.recordedOn")
-    p.fst-italic(v-if="story.fromHere"): strong Found via Jobs, Jobs, Jobs
-    hr
+    h3
+      | {{citizenName}}&rsquo;s Success Story
+      .jjj-heading-label(v-if="story.fromHere")
+        | &nbsp; &nbsp;#[span.badge.bg-success Via {{profileOrListing}} on Jobs, Jobs, Jobs]
+    h4.pb-3.text-muted: full-date-time(:date="story.recordedOn")
     div(v-if="story.story" v-html="successStory")
 </template>
 
@@ -15,7 +16,7 @@ import { useRoute } from "vue-router"
 
 import api, { LogOnSuccess, Success } from "@/api"
 import { citizenName as citName } from "@/App.vue"
-import { toHtml } from '@/markdown'
+import { toHtml } from "@/markdown"
 import { useStore } from "@/store"
 
 import FullDateTime from "@/components/FullDateTime.vue"
@@ -54,6 +55,9 @@ const retrieveStory = async (errors : string []) => {
     citizenName.value = citName(citResponse)
   }
 }
+
+/** Whether this success is from an employment profile or a job listing */
+const profileOrListing = computed(() => story.value?.source === "profile" ? "employment profile" : "job listing")
 
 /** The HTML success story */
 const successStory = computed(() => toHtml(story.value?.story ?? ""))

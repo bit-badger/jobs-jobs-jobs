@@ -52,10 +52,10 @@ const errors : Ref<string[]> = ref([])
 
 /** An empty set of search criteria */
 const emptyCriteria = {
-  continentId: '',
+  continentId: "",
   region: undefined,
   skill: undefined,
-  remoteWork: ''
+  remoteWork: ""
 }
 
 /** The search criteria being built from the page */
@@ -109,5 +109,5 @@ watch(() => route.query, setUpPage, { immediate: true })
 const toggleCollapse = (it : boolean) => { isCollapsed.value = it }
 
 /** Execute a search */
-const doSearch = () => router.push({ query: { searched: 'true', ...criteria.value } })
+const doSearch = () => router.push({ query: { searched: "true", ...criteria.value } })
 </script>

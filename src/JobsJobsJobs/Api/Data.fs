@@ -489,7 +489,7 @@ module Listing =
         let! _ =
           r.Table(Table.Listing)
             .Get(listingId)
-            .Update(r.HashMap("isExpired", true).With("fromHere", fromHere).With("updatedOn", now))
+            .Update(r.HashMap("isExpired", true).With("wasFilledHere", fromHere).With("updatedOn", now))
             .RunWriteAsync conn
         ()
       })
@@ -569,4 +569,5 @@ module Success =
                                                                     it.G("naUser")))
                 .With("hasStory", it.G("story").Default_("").Gt(""))))
           .Pluck("id", "citizenId", "citizenName", "recordedOn", "fromHere", "hasStory")
+          .OrderBy(r.Desc("recordedOn"))
           .RunResultAsync<StoryEntry list> conn)

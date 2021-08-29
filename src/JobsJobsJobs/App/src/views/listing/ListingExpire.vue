@@ -49,6 +49,7 @@ const listing : Ref<Listing | undefined> = ref(undefined)
 
 /** The data needed to expire a job listing */
 const expiration = reactive(new ListingExpireForm())
+expiration.successStory = ""
 
 /** The validation rules for the form */
 const rules = computed(() => ({

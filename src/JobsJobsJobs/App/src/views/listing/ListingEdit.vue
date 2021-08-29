@@ -59,16 +59,16 @@ const user = store.state.user as LogOnSuccess
 
 /** A new job listing */
 const newListing : Listing = {
-  id: '',
+  id: "",
   citizenId: user.citizenId,
-  createdOn: '',
-  title: '',
-  continentId: '',
-  region: '',
+  createdOn: "",
+  title: "",
+  continentId: "",
+  region: "",
   remoteWork: false,
   isExpired: false,
-  updatedOn: '',
-  text: '',
+  updatedOn: "",
+  text: "",
   neededBy: undefined,
   wasFilledHere: undefined
 }

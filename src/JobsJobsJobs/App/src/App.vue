@@ -3,8 +3,8 @@
   app-nav
   .jjj-main
     title-bar
-    main.container-fluid: router-view(v-slot="{ Component }"): transition(name='fade' mode='out-in')
-      component(:is='Component')
+    main.container-fluid: router-view(v-slot="{ Component }"): transition(name="fade" mode="out-in")
+      component(:is="Component")
     app-footer
     app-toaster
 </template>
@@ -63,6 +63,10 @@ a:not(.btn):hover
 label.jjj-required::after
   color: red
   content: ' *'
+.jjj-heading-label
+  display: inline-block
+  font-size: 1rem
+  text-transform: uppercase
 // Styles for this component
 .jjj-app
   display: flex
