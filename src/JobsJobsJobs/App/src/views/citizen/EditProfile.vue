@@ -64,13 +64,11 @@ article
   p.text-muted.fst-italic.
     (If you want to delete your profile, or your entire account,
     #[router-link(to="/so-long/options") see your deletion options here].)
-  maybe-save(:isShown="confirmNavShown" :toRoute="nextRoute" :saveAction="saveProfile" :validator="v$"
-             @close="confirmClose")
+  maybe-save(:saveAction="saveProfile" :validator="v$")
 </template>
 
 <script setup lang="ts">
-import { computed, ref, reactive, Ref } from "vue"
-import { onBeforeRouteLeave, RouteLocationNormalized } from "vue-router"
+import { computed, ref, reactive } from "vue"
 import useVuelidate from "@vuelidate/core"
 import { required } from "@vuelidate/validators"
 
@@ -183,21 +181,4 @@ const saveProfile = async () => {
     v$.value.$reset()
   }
 }
-
-/** Whether the navigation confirmation is shown  */
-const confirmNavShown = ref(false)
-
-/** The "next" route (will be navigated or cleared) */
-const nextRoute : Ref<RouteLocationNormalized | undefined> = ref(undefined)
-
-/** If the user has unsaved changes, give them an opportunity to save before moving on */
-onBeforeRouteLeave(async (to, from) => { // eslint-disable-line
-  if (!v$.value.$anyDirty) return true
-  nextRoute.value = to
-  confirmNavShown.value = true
-  return false
-})
-
-/** Close the navigation confirmation modal */
-const confirmClose = () => { confirmNavShown.value = false }
 </script>

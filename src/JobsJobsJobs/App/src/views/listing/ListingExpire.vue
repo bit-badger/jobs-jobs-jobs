@@ -18,12 +18,12 @@ article
       .col-12
         button.btn.btn-primary(@click.prevent="expireListing").
           #[icon(icon="text-box-remove-outline")]&nbsp; Expire Listing
-  maybe-save(:isShown="confirmNavShown" :toRoute="nextRoute" :saveAction="doSave" :validator="v$" @close="confirmClose")
+  maybe-save(:saveAction="doSave" :validator="v$")
 </template>
 
 <script setup lang="ts">
 import { computed, reactive, Ref, ref } from "vue"
-import { onBeforeRouteLeave, RouteLocationNormalized, useRoute, useRouter } from "vue-router"
+import { useRoute, useRouter } from "vue-router"
 import useVuelidate from "@vuelidate/core"
 
 import api, { Listing, ListingExpireForm, LogOnSuccess } from "@/api"
@@ -89,23 +89,6 @@ const expireListing = async (navigate : boolean) => {
   }
 }
 
-/** Whether the navigation confirmation is shown  */
-const confirmNavShown = ref(false)
-
-/** The "next" route (will be navigated or cleared) */
-const nextRoute : Ref<RouteLocationNormalized | undefined> = ref(undefined)
-
-/** Prompt for save if the user navigates away with unsaved changes */
-onBeforeRouteLeave(async (to, from) => { // eslint-disable-line
-  if (!v$.value.$anyDirty) return true
-  nextRoute.value = to
-  confirmNavShown.value = true
-  return false
-})
-
 /** No-parameter save function (used for save-on-navigate) */
 const doSave = async () => await expireListing(false)
-
-/** Close the confirm navigation modal */
-const confirmClose = () => { confirmNavShown.value = false }
 </script>

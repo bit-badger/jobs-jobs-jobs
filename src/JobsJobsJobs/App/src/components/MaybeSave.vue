@@ -3,28 +3,20 @@
   .modal-header: h5.modal-title(id="maybeSaveLabel") Unsaved Changes
   .modal-body You have modified the data on this page since it was last saved. What would you like to do?
   .modal-footer
-    button.btn.btn-secondary(type="button" @click.prevent="onStay") Stay on This Page
-    button.btn.btn-primary(type="button" @click.prevent="onSave") Save Changes
-    button.btn.btn-danger(type="button" @click.prevent="onDiscard") Discard Changes
+    button.btn.btn-secondary(type="button" @click.prevent="close") Stay on This Page
+    button.btn.btn-primary(type="button" @click.prevent="save") Save Changes
+    button.btn.btn-danger(type="button" @click.prevent="discard") Discard Changes
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, Ref, watch } from "vue"
-import { RouteLocationNormalized, useRouter } from "vue-router"
+import { onMounted, ref, Ref } from "vue"
+import { onBeforeRouteLeave, RouteLocationNormalized, useRouter } from "vue-router"
 import { Validation } from "@vuelidate/core"
 import { Modal } from "bootstrap"
 
 const props = defineProps<{
-  isShown: boolean
-  toRoute: RouteLocationNormalized
-  saveAction?: () => Promise<unknown>
+  saveAction: () => Promise<unknown>
   validator?: Validation
-}>()
-
-const emit = defineEmits<{
-  (e: "close") : void
-  (e: "discard") : void
-  (e: "cancel") : void
 }>()
 
 const router = useRouter()
@@ -32,18 +24,24 @@ const router = useRouter()
 /** Reference to the modal dialog (we can't get it until the component is rendered) */
 const modal : Ref<Modal | undefined> = ref(undefined)
 
-/** Save changes (if required) and go to the next route */
-const onSave = async () => {
-  if (props.saveAction) await props.saveAction()
-  emit("close")
-  router.push(props.toRoute)
+/** The route to which navigation was intercepted, and will be resumed */
+let nextRoute : RouteLocationNormalized
+
+/** Close the modal window */
+const close = () => modal.value?.hide()
+
+/** Save changes and go to the next route */
+const save = async () => {
+  await props.saveAction()
+  close()
+  router.push(nextRoute)
 }
 
-/** Discard changes (if required) and go to the next route */
-const onDiscard = () => {
+/** Discard changes and go to the next route */
+const discard = () => {
   if (props.validator) props.validator.$reset()
-  emit("close")
-  router.push(props.toRoute)
+  close()
+  router.push(nextRoute)
 }
 
 onMounted(() => {
@@ -51,17 +49,11 @@ onMounted(() => {
     { backdrop: "static", keyboard: false })
 })
 
-/** Show or hide the modal based on the property value changing */
-watch(() => props.isShown, (toShow) => {
-  if (modal.value) {
-    if (toShow) {
-      modal.value.show()
-    } else {
-      modal.value.hide()
-    }
-  }
+/** Prompt for save if the user navigates away with unsaved changes */
+onBeforeRouteLeave(async (to, from) => { // eslint-disable-line
+  if (!props.validator || !props.validator.$anyDirty) return true
+  nextRoute = to
+  modal.value?.show()
+  return false
 })
-
-/** Stay on this page with no changes; just close the modal */
-const onStay = () => emit("close")
 </script>

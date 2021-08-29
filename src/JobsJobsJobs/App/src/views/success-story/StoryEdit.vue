@@ -15,12 +15,12 @@ article
         button.btn.btn-primary(type="submit" @click.prevent="saveStory(true)").
           #[icon(icon="content-save-outline")]&nbsp; Save
         p(v-if="isNew"): em (Saving this will set &ldquo;Seeking Employment&rdquo; to &ldquo;No&rdquo; on your profile.)
-  maybe-save(:isShown="confirmNavShown" :toRoute="nextRoute" :saveAction="doSave" :validator="v$" @close="confirmClose")
+  maybe-save(:saveAction="doSave" :validator="v$")
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, Ref } from "vue"
-import { onBeforeRouteLeave, RouteLocationNormalized, useRoute, useRouter } from "vue-router"
+import { computed, reactive } from "vue"
+import { useRoute, useRouter } from "vue-router"
 import useVuelidate from "@vuelidate/core"
 
 import api, { LogOnSuccess, StoryForm } from "@/api"
@@ -106,23 +106,6 @@ const saveStory = async (navigate : boolean) => {
   }
 }
 
-/** Whether the navigation confirmation is shown  */
-const confirmNavShown = ref(false)
-
-/** The "next" route (will be navigated or cleared) */
-const nextRoute : Ref<RouteLocationNormalized | undefined> = ref(undefined)
-
-/** Prompt for save if the user navigates away with unsaved changes */
-onBeforeRouteLeave(async (to, from) => { // eslint-disable-line
-  if (!v$.value.$anyDirty) return true
-  nextRoute.value = to
-  confirmNavShown.value = true
-  return false
-})
-
 /** No-parameter save function (used for save-on-navigate) */
 const doSave = async () => await saveStory(false)
-
-/** Close the confirm navigation modal */
-const confirmClose = () => { confirmNavShown.value = false }
 </script>
