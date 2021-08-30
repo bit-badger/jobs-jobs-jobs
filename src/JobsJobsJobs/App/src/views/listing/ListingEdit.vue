@@ -31,13 +31,14 @@ article
       label(for="neededBy") Needed By
     .col-12
       p.text-danger(v-if="v$.$error") Please correct the errors above
-      button.btn.btn-primary(@click.prevent="saveListing(true)") #[icon(icon="content-save-outline")]&nbsp; Save
+      button.btn.btn-primary(@click.prevent="saveListing(true)") #[icon(:icon="mdiContentSaveOutline")]&nbsp; Save
   maybe-save(:saveAction="doSave" :validator="v$")
 </template>
 
 <script setup lang="ts">
 import { computed, reactive } from "vue"
 import { useRoute, useRouter } from "vue-router"
+import { mdiContentSaveOutline } from "@mdi/js"
 import useVuelidate from "@vuelidate/core"
 import { required } from "@vuelidate/validators"
 

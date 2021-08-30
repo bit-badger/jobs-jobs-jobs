@@ -37,8 +37,8 @@ article.container
       .card-footer: router-link.btn.btn-outline-secondary(to="/profile/search") Search Profiles
   p &nbsp;
   p.
-    To see how this application works, check out &ldquo;How It Works&rdquo; in the sidebar (last updated June
-    14#[sup th], 2021).
+    To see how this application works, check out &ldquo;How It Works&rdquo; in the sidebar (last updated August
+    29#[sup th], 2021).
 </template>
 
 <script setup lang="ts">

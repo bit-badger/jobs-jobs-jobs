@@ -55,11 +55,11 @@ article
       label.form-check-label(for="isPublic") Allow my profile to be searched publicly (outside NA Social)
     .col-12
       p.text-danger(v-if="v$.$error") Please correct the errors above
-      button.btn.btn-primary(@click.prevent="saveProfile") #[icon(icon="content-save-outline")]&nbsp; Save
+      button.btn.btn-primary(@click.prevent="saveProfile") #[icon(:icon="mdiContentSaveOutline")]&nbsp; Save
       template(v-if="!isNew")
         | &nbsp; &nbsp;
         router-link.btn.btn-outline-secondary(:to="`/profile/${user.citizenId}/view`").
-          #[icon(icon="file-account-outline")]&nbsp; View Your User Profile
+          #[icon(color="#6c757d" :icon="mdiFileAccountOutline")]&nbsp; View Your User Profile
   hr
   p.text-muted.fst-italic.
     (If you want to delete your profile, or your entire account,
@@ -69,6 +69,7 @@ article
 
 <script setup lang="ts">
 import { computed, ref, reactive } from "vue"
+import { mdiContentSaveOutline, mdiFileAccountOutline } from "@mdi/js"
 import useVuelidate from "@vuelidate/core"
 import { required } from "@vuelidate/validators"
 

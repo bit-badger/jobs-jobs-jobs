@@ -13,7 +13,7 @@ article
       markdown-editor(id="story" label="The Success Story" v-model:text="v$.story.$model")
       .col-12
         button.btn.btn-primary(type="submit" @click.prevent="saveStory(true)").
-          #[icon(icon="content-save-outline")]&nbsp; Save
+          #[icon(:icon="mdiContentSaveOutline")]&nbsp; Save
         p(v-if="isNew"): em (Saving this will set &ldquo;Seeking Employment&rdquo; to &ldquo;No&rdquo; on your profile.)
   maybe-save(:saveAction="doSave" :validator="v$")
 </template>
@@ -21,6 +21,7 @@ article
 <script setup lang="ts">
 import { computed, reactive } from "vue"
 import { useRoute, useRouter } from "vue-router"
+import { mdiContentSaveOutline } from "@mdi/js"
 import useVuelidate from "@vuelidate/core"
 
 import api, { LogOnSuccess, StoryForm } from "@/api"

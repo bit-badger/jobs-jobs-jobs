@@ -1,12 +1,16 @@
 <template lang="pug">
-span(:class="iconClass")
+svg(viewbox="0 0 24 24"): path(:fill="color || 'white'" :d="icon")
 </template>
 
 <script setup lang="ts">
 const props = defineProps<{
+  color?: string
   icon: string
 }>()
-
-/** The CSS class to display the requested icon */
-const iconClass = `mdi mdi-${props.icon}`
 </script>
+
+<style lang="sass" scoped>
+svg
+  width: 24px
+  height: 24px
+</style>

@@ -23,12 +23,13 @@ article
     template(v-if="user.citizenId === it.citizen.id")
       br
       br
-      router-link.btn.btn-primary(to="/citizen/profile") #[icon(icon="pencil")]&nbsp; Edit Your Profile
+      router-link.btn.btn-primary(to="/citizen/profile") #[icon(:icon="mdiPencil")]&nbsp; Edit Your Profile
 </template>
 
 <script setup lang="ts">
 import { computed, ref, Ref } from "vue"
 import { useRoute } from "vue-router"
+import { mdiPencil } from "@mdi/js"
 
 import api, { LogOnSuccess, ProfileForView } from "@/api"
 import { citizenName } from "@/App.vue"

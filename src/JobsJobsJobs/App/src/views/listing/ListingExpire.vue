@@ -17,13 +17,14 @@ article
         markdown-editor(id="successStory" label="Your Success Story" v-model:text="v$.successStory.$model")
       .col-12
         button.btn.btn-primary(@click.prevent="expireListing").
-          #[icon(icon="text-box-remove-outline")]&nbsp; Expire Listing
+          #[icon(:icon="mdiTextBoxRemoveOutline")]&nbsp; Expire Listing
   maybe-save(:saveAction="doSave" :validator="v$")
 </template>
 
 <script setup lang="ts">
 import { computed, reactive, Ref, ref } from "vue"
 import { useRoute, useRouter } from "vue-router"
+import { mdiTextBoxRemoveOutline } from "@mdi/js"
 import useVuelidate from "@vuelidate/core"
 
 import api, { Listing, ListingExpireForm, LogOnSuccess } from "@/api"
