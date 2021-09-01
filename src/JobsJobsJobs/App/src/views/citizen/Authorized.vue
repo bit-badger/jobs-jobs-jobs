@@ -1,0 +1,41 @@
+<template lang="pug">
+article
+  page-title(title="Logging on...")
+  p &nbsp;
+  p(v-html="message")
+</template>
+
+<script setup lang="ts">
+import { computed, onMounted } from "vue"
+import { useRouter } from "vue-router"
+import { useStore } from "@/store"
+import { AFTER_LOG_ON_URL } from "@/router"
+
+const router = useRouter()
+const store = useStore()
+
+/** Pass the code to the API and exchange it for a user and a JWT */
+const logOn = async () => {
+  const code = router.currentRoute.value.query.code
+  if (code) {
+    await store.dispatch("logOn", code)
+    if (store.state.user !== undefined) {
+      const afterLogOnUrl = window.localStorage.getItem(AFTER_LOG_ON_URL)
+      if (afterLogOnUrl) {
+        window.localStorage.removeItem(AFTER_LOG_ON_URL)
+        router.push(afterLogOnUrl)
+      } else {
+        router.push("/citizen/dashboard")
+      }
+    }
+  } else {
+    store.commit("setLogOnState",
+      "Did not receive a token from No Agenda Social (perhaps you clicked &ldquo;Cancel&rdquo;?)")
+  }
+}
+
+onMounted(logOn)
+
+/** Accessor for the log on state */
+const message = computed(() => store.state.logOnState)
+</script>
