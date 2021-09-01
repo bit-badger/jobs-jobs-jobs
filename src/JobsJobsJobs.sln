@@ -17,8 +17,6 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Domain", "JobsJobsJobs\Doma
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Api", "JobsJobsJobs\Api\Api.fsproj", "{8F5A3D1E-562B-4F27-9787-6CB14B35E69E}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "DataMigrate", "JobsJobsJobs\DataMigrate\DataMigrate.fsproj", "{C5774E4F-2930-4B64-8407-77BF7EB79F39}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,10 +31,6 @@ Global
 		{8F5A3D1E-562B-4F27-9787-6CB14B35E69E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8F5A3D1E-562B-4F27-9787-6CB14B35E69E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8F5A3D1E-562B-4F27-9787-6CB14B35E69E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C5774E4F-2930-4B64-8407-77BF7EB79F39}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C5774E4F-2930-4B64-8407-77BF7EB79F39}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C5774E4F-2930-4B64-8407-77BF7EB79F39}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C5774E4F-2930-4B64-8407-77BF7EB79F39}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -47,6 +41,5 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{C81278DA-DA97-4E55-AB39-4B88565B615D} = {FA833B24-B8F6-4CE6-A044-99257EAC02FF}
 		{8F5A3D1E-562B-4F27-9787-6CB14B35E69E} = {FA833B24-B8F6-4CE6-A044-99257EAC02FF}
-		{C5774E4F-2930-4B64-8407-77BF7EB79F39} = {FA833B24-B8F6-4CE6-A044-99257EAC02FF}
 	EndGlobalSection
 EndGlobal
