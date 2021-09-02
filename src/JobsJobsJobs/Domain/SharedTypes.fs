@@ -2,6 +2,7 @@
 module JobsJobsJobs.Domain.SharedTypes
 
 open JobsJobsJobs.Domain.Types
+open Microsoft.Extensions.Options
 open NodaTime
 
 // fsharplint:disable FieldNames
@@ -72,6 +73,45 @@ type LogOnSuccess = {
 type Count = {
   // The count being returned
   count : int64
+  }
+
+
+/// An instance of a Mastodon server which is configured to work with Jobs, Jobs, Jobs
+type MastodonInstance () =
+  /// The name of the instance
+  member val Name     = "" with get, set
+  /// The URL for this instance
+  member val Url      = "" with get, set
+  /// The abbreviation used in the URL to distinguish this instance's return codes
+  member val Abbr     = "" with get, set
+  /// The client ID (assigned by the Mastodon server)
+  member val ClientId = "" with get, set
+  /// The cryptographic secret (provided by the Mastodon server)
+  member val Secret   = "" with get, set
+
+
+/// The authorization options for Jobs, Jobs, Jobs
+type AuthOptions () =
+  /// The return URL for Mastodoon verification
+  member val ReturnUrl    = "" with get, set
+  /// The secret with which the server signs the JWTs for auth once we've verified with Mastodon
+  member val ServerSecret = "" with get, set
+  /// The instances configured for use
+  member val Instances    = Array.empty<MastodonInstance> with get, set
+  interface IOptions<AuthOptions> with
+    override this.Value = this
+
+
+/// The Mastodon instance data provided via the Jobs, Jobs, Jobs API
+type Instance = {
+  /// The name of the instance
+  name     : string
+  /// The URL for this instance
+  url      : string
+  /// The abbreviation used in the URL to distinguish this instance's return codes
+  abbr     : string
+  /// The client ID (assigned by the Mastodon server)
+  clientId : string
   }
 
 

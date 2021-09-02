@@ -53,7 +53,7 @@ const routes: Array<RouteRecordRaw> = [
     component: LogOn
   },
   {
-    path: "/citizen/authorized",
+    path: "/citizen/:abbr/authorized",
     name: "CitizenAuthorized",
     component: () => import(/* webpackChunkName: "dashboard" */ "../views/citizen/Authorized.vue")
   },

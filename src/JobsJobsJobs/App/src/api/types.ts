@@ -31,6 +31,18 @@ export interface Count {
   count : number
 }
 
+/** The Mastodon instance data provided via the Jobs, Jobs, Jobs API */
+export interface Instance {
+  /** The name of the instance */
+  name : string
+  /** The URL for this instance */
+  url : string
+  /** The abbreviation used in the URL to distinguish this instance's return codes */
+  abbr : string
+  /** The client ID (assigned by the Mastodon server) */
+  clientId : string
+}
+
 /** A job listing */
 export interface Listing {
   /** The ID of the job listing */

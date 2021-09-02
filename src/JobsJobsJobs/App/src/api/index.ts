@@ -2,6 +2,7 @@ import {
   Citizen,
   Continent,
   Count,
+  Instance,
   Listing,
   ListingExpireForm,
   ListingForm,
@@ -100,11 +101,12 @@ export default {
     /**
      * Log a citizen on
      *
-     * @param code The authorization code from No Agenda Social
+     * @param abbr The abbreviation of the Mastodon instance that issued the code
+     * @param code The authorization code from Mastodon
      * @returns The user result, or an error
      */
-    logOn: async (code : string) : Promise<LogOnSuccess | string> => {
-      const resp = await fetch(apiUrl(`citizen/log-on/${code}`), { method: "GET", mode: "cors" })
+    logOn: async (abbr : string, code : string) : Promise<LogOnSuccess | string> => {
+      const resp = await fetch(apiUrl(`citizen/log-on/${abbr}/${code}`), { method: "GET", mode: "cors" })
       if (resp.status === 200) return await resp.json() as LogOnSuccess
       return `Error logging on - ${await resp.text()}`
     },
@@ -139,6 +141,27 @@ export default {
      */
     all: async () : Promise<Continent[] | string | undefined> =>
       apiResult<Continent[]>(await fetch(apiUrl("continents"), { method: "GET" }), "retrieving continents")
+  },
+
+  /** API functions for instances */
+  instances: {
+
+    /**
+     * Get all Mastodon instances we support
+     *
+     * @returns All instances, or an error
+     */
+    all: async () : Promise<Instance[] | string | undefined> =>
+      apiResult<Instance[]>(await fetch(apiUrl("instances"), { method: "GET" }), "retrieving Mastodon instances"),
+
+    /**
+     * Retrieve a Mastodon instance by its abbreviation
+     *
+     * @param abbr The abbreviation of the Mastodon instance to retrieve
+     * @returns The Mastodon instance (if found), undefined (if not found), or an error string
+     */
+    byAbbr: async (abbr : string) : Promise<Instance | string | undefined> =>
+      apiResult<Instance>(await fetch(apiUrl(`instance/${abbr}`), { method: "GET" }), "retrieving Mastodon instance")
   },
 
   /** API functions for job listings */

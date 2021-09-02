@@ -43,8 +43,8 @@ export default createStore({
     }
   },
   actions: {
-    async logOn ({ commit }, code: string) {
-      const logOnResult = await api.citizen.logOn(code)
+    async logOn ({ commit }, { abbr, code }) {
+      const logOnResult = await api.citizen.logOn(abbr, code)
       if (typeof logOnResult === "string") {
         commit("setLogOnState", logOnResult)
       } else {

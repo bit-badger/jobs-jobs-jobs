@@ -30,6 +30,7 @@ open Microsoft.Extensions.Configuration
 open Microsoft.Extensions.Logging
 open Microsoft.IdentityModel.Tokens
 open System.Text
+open JobsJobsJobs.Domain.SharedTypes
 
 /// Configure dependency injection
 let configureServices (svc : IServiceCollection) =
@@ -57,10 +58,11 @@ let configureServices (svc : IServiceCollection) =
           ValidAudience    = "https://noagendacareers.com",
           ValidIssuer      = "https://noagendacareers.com",
           IssuerSigningKey = SymmetricSecurityKey (
-            Encoding.UTF8.GetBytes (cfg.GetSection("Auth").["ServerSecret"]))))
+            Encoding.UTF8.GetBytes (cfg.GetSection "Auth").["ServerSecret"])))
     |> ignore
   svc.AddAuthorization () |> ignore
-
+  svc.Configure<AuthOptions> (cfg.GetSection "Auth") |> ignore
+  
   let dbCfg = cfg.GetSection "Rethink"
   let log   = svcs.GetRequiredService<ILoggerFactory>().CreateLogger (nameof Data.Startup)
   let conn  = Data.Startup.createConnection dbCfg log
