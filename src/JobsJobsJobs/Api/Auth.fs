@@ -6,7 +6,7 @@ open System.Text.Json.Serialization
 /// The variables we need from the account information we get from Mastodon
 [<NoComparison; NoEquality; AllowNullLiteral>]
 type MastodonAccount () =
-  /// The user name (what we store as naUser)
+  /// The user name (what we store as mastodonUser)
   [<JsonPropertyName "username">]
   member val Username = "" with get, set
   /// The account name; will generally be the same as username for local accounts, which is all we can verify

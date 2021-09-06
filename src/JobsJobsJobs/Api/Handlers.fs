@@ -117,22 +117,23 @@ module Citizen =
       | Some instance ->
           let log = (logger ctx).CreateLogger (nameof JobsJobsJobs.Api.Auth)
           
-          match! Auth.verifyWithMastodon authCode instance cfg.ReturnUrl log with
+          match! Auth.verifyWithMastodon authCode instance cfg.ReturnHost log with
           | Ok account ->
               // Step 2 - Find / establish Jobs, Jobs, Jobs account
               let  now     = (clock ctx).GetCurrentInstant ()
               let  dbConn  = conn ctx
               let! citizen = task {
-                match! Data.Citizen.findByNaUser account.Username dbConn with
+                match! Data.Citizen.findByMastodonUser instance.Abbr account.Username dbConn with
                 | None ->
                     let it : Citizen =
-                      { id          = CitizenId.create ()
-                        naUser      = account.Username
-                        displayName = noneIfEmpty account.DisplayName
-                        realName    = None
-                        profileUrl  = account.Url
-                        joinedOn    = now
-                        lastSeenOn  = now
+                      { id           = CitizenId.create ()
+                        instance     = instance.Abbr
+                        mastodonUser = account.Username
+                        displayName  = noneIfEmpty account.DisplayName
+                        realName     = None
+                        profileUrl   = account.Url
+                        joinedOn     = now
+                        lastSeenOn   = now
                         }
                     do! Data.Citizen.add it dbConn
                     return it

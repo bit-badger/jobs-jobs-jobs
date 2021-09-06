@@ -92,8 +92,8 @@ type MastodonInstance () =
 
 /// The authorization options for Jobs, Jobs, Jobs
 type AuthOptions () =
-  /// The return URL for Mastodoon verification
-  member val ReturnUrl    = "" with get, set
+  /// The host for the return URL for Mastodoon verification
+  member val ReturnHost   = "" with get, set
   /// The secret with which the server signs the JWTs for auth once we've verified with Mastodon
   member val ServerSecret = "" with get, set
   /// The instances configured for use

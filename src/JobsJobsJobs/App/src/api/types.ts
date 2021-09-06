@@ -3,8 +3,10 @@
 export interface Citizen {
   /** The ID of the user */
   id : string
+  /** The abbreviation of the instance where this citizen is based */
+  instance : string
   /** The handle by which the user is known on Mastodon */
-  naUser : string
+  mastodonUser : string
   /** The user's display name from Mastodon (updated every login) */
   displayName : string | undefined
   /** The user's real name */

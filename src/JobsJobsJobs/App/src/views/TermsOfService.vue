@@ -2,7 +2,7 @@
 article
   page-title(title="Terms of Service")
   h3 Terms of Service
-  p: em (as of February 6#[sup th], 2021)
+  p: em (as of September 6#[sup th], 2021)
 
   h4 Acceptance of Terms
   p.
@@ -11,12 +11,20 @@ article
     acceptance of these terms.
 
   h4 Description of Service and Registration
-  p.
-    Jobs, Jobs, Jobs is a service that allows individuals to enter and amend employment profiles, restricting access
-    to the details of these profiles to other users of
-    #[a(href="https://noagendasocial.com" target="_blank") No Agenda Social]. Registration is accomplished by allowing
-    Jobs, Jobs, Jobs to read one&rsquo;s No Agenda Social profile. See our
-    #[router-link(to="/privacy-policy") privacy policy] for details on the personal (user) information we maintain.
+  p
+    | Jobs, Jobs, Jobs is a service that allows individuals to enter and amend employment profiles, restricting access
+    | to the details of these profiles to other users of
+    = " "
+    template(v-for="(it, idx) in instances" :key="idx")
+      a(:href="it.url" target="_blank") {{it.name}}
+      template(v-if="idx + 2 < instances.length")= ", "
+      template(v-else-if="idx + 1 < instances.length")= ", and "
+      template(v-else)= ". "
+    | Registration is accomplished by allowing Jobs, Jobs, Jobs to read one&rsquo;s Mastodon profile. See our
+    = " "
+    router-link(to="/privacy-policy") privacy policy
+    = " "
+    | for details on the personal (user) information we maintain.
 
   h4 Liability
   p.
@@ -34,4 +42,30 @@ article
   p.
     You may also wish to review our #[router-link(to="/privacy-policy") privacy policy] to learn how we handle your
     data.
+
+  hr
+
+  p: em.
+    Change on September 6#[sup th], 2021 &ndash; replaced &ldquo;No Agenda Social&rdquo; with a list of all No
+    Agenda-affiliated Mastodon instances.
 </template>
+
+<script setup lang="ts">
+import { onMounted, Ref, ref } from "vue"
+
+import api, { Instance } from "@/api"
+import { toastError } from "@/components/layout/AppToaster.vue"
+
+const instances : Ref<Instance[]> = ref([])
+
+onMounted(async () => {
+  const apiResp = await api.instances.all()
+  if (typeof apiResp === "string") {
+    toastError(apiResp, "retrieving instances")
+  } else if (typeof apiResp === "undefined") {
+    toastError("No instances to display", undefined)
+  } else {
+    instances.value = apiResp
+  }
+})
+</script>

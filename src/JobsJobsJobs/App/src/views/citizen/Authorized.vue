@@ -30,6 +30,7 @@ const logOn = async () => {
   } else if (typeof instance === "undefined") {
     setMessage(`Mastodon instance ${abbr} not found`)
   } else {
+    setMessage(`<em>Welcome back! Verifying your ${instance.name} account&hellip;</em>`)
     const code = route.query.code
     if (code) {
       await store.dispatch("logOn", { abbr, code })

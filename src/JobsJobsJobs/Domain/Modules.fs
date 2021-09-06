@@ -33,7 +33,7 @@ module CitizenId =
 module Citizen =
   /// Get the name of the citizen (the first of real name, display name, or handle that is filled in)
   let name x =
-    [ x.realName; x.displayName; Some x.naUser ]
+    [ x.realName; x.displayName; Some x.mastodonUser ]
     |> List.find Option.isSome
     |> Option.get
 

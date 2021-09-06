@@ -46,7 +46,7 @@ export function yesOrNo (cond : boolean) : string {
  * @returns The citizen's display name
  */
 export function citizenName (cit : Citizen) : string {
-  return cit.realName ?? cit.displayName ?? cit.naUser
+  return cit.realName ?? cit.displayName ?? cit.mastodonUser
 }
 </script>
 

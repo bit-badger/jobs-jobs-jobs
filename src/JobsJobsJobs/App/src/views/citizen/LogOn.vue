@@ -24,7 +24,6 @@ const selected : Ref<Instance | undefined> = ref(undefined)
 /** The authorization URL to which the user should be directed */
 const authUrl = computed(() => {
   if (selected.value) {
-    /** The client ID for Jobs, Jobs, Jobs at No Agenda Social */
     const client = `client_id=${selected.value.clientId}`
     const scope = "scope=read:accounts"
     const redirect = `redirect_uri=${document.location.origin}/citizen/${selected.value.abbr}/authorized`
@@ -35,7 +34,7 @@ const authUrl = computed(() => {
 })
 
 /**
- * Select a given Mastadon instance
+ * Select a given Mastodon instance
  *
  * @param abbr The abbreviation of the instance being selected
  */

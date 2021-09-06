@@ -2,7 +2,7 @@
 article
   page-title(title="Privacy Policy")
   h3 Privacy Policy
-  p: em (as of February 6#[sup th], 2021)
+  p: em (as of September 6#[sup th], 2021)
 
   p.
     {{name}} (&ldquo;we,&rdquo; &ldquo;our,&rdquo; or &ldquo;us&rdquo;) is committed to protecting your privacy. This
@@ -58,7 +58,7 @@ article
     li Name / Username
     li Coarse Geographic Location
     li Employment History
-    li No Agenda Social Account Name / Profile
+    li Mastodon Account Name / Profile
 
   h4 How Do We Use The Information We Collect?
   p Any of the information we collect from you may be used in one of the following ways:
@@ -75,9 +75,9 @@ article
   p {{name}} will collect End User Data necessary to provide the {{name}} services to our customers.
   p.
     End users may voluntarily provide us with information they have made available on social media websites
-    (specifically No Agenda Social). If you provide us with any such information, we may collect publicly available
-    information from the social media websites you have indicated. You can control how much of your information social
-    media websites make public by visiting these websites and changing your privacy settings.
+    (specifically No Agenda-affiliated Mastodon instances). If you provide us with any such information, we may collect
+    publicly available information from the social media websites you have indicated. You can control how much of your
+    information social media websites make public by visiting these websites and changing your privacy settings.
 
   h4 When does {{name}} use customer information from third parties?
   p We do not utilize third party information apart from the end-user data described above.
@@ -223,10 +223,10 @@ article
 
   h4 Tracking Technologies
   p.
-    {{name}} does not use any tracking technologies. When an authorization code is received from No Agenda Social, that
-    token is stored in the browser&rsquo;s memory, and the Service uses tokens on each request for data. If the page is
-    refreshed or the browser window/tab is closed, this token disappears, and a new one must be generated before the
-    application can be used again.
+    {{name}} does not use any tracking technologies. When an authorization code is received from Mastodon, that token is
+    stored in the browser&rsquo;s memory, and the Service uses tokens on each request for data. If the page is refreshed
+    or the browser window/tab is closed, this token disappears, and a new one must be generated before the application
+    can be used again.
 
   h4 Information about General Data Protection Regulation (GDPR)
   p.
@@ -335,6 +335,12 @@ article
   h4 Contact Us
   p Don&rsquo;t hesitate to contact us if you have any questions.
   ul: li Via this Link: #[router-link(to="/how-it-works") https://noagendacareers.com/how-it-works]
+
+  hr
+
+  p: em.
+    Change on September 6#[sup th], 2021 &ndash; replaced &ldquo;No Agenda Social&rdquo; with generic terms for any
+    authorized Mastodon instance.
 </template>
 
 <script setup lang="ts">

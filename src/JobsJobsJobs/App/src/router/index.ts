@@ -121,7 +121,7 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import(/* webpackChunkName: "so-long" */ "../views/so-long/DeletionOptions.vue")
   },
   {
-    path: "/so-long/success",
+    path: "/so-long/success/:url",
     name: "DeletionSuccess",
     component: () => import(/* webpackChunkName: "so-long" */ "../views/so-long/DeletionSuccess.vue")
   },
