@@ -1,22 +1,24 @@
 <template lang="pug">
 article
   p &nbsp;
-  load-data(:load="retrieveInstances")
-    p.fst-italic(v-if="selected") Sending you over to {{selected.name}} to log on; see you back in just a second&hellip;
-    template(v-else)
-      p.text-center Please select your No Agenda-affiliated Mastodon instance
-      p.text-center(v-for="it in instances" :key="it.abbr")
-        button.btn.btn-primary(@click.prevent="select(it.abbr)") {{it.name}}
+  p.fst-italic(v-if="selected") Sending you over to {{selected.name}} to log on; see you back in just a second&hellip;
+  template(v-else)
+    p.text-center Please select your No Agenda-affiliated Mastodon instance
+    p.text-center(v-for="it in instances" :key="it.abbr")
+      button.btn.btn-primary(@click.prevent="select(it.abbr)") {{it.name}}
 </template>
 
 <script setup lang="ts">
-import { computed, Ref, ref } from "vue"
-import api, { Instance } from "@/api"
+import { computed, onMounted, Ref, ref } from "vue"
+import { Instance } from "@/api"
+import { useStore, Actions } from "@/store"
 
 import LoadData from "@/components/LoadData.vue"
 
+const store = useStore()
+
 /** The instances configured for Jobs, Jobs, Jobs */
-const instances : Ref<Instance[]> = ref([])
+const instances = computed(() => store.state.instances)
 
 /** Whether authorization is in progress */
 const selected : Ref<Instance | undefined> = ref(undefined)
@@ -43,15 +45,6 @@ const select = (abbr : string) => {
   document.location.assign(authUrl.value)
 }
 
-/** Load the instances we have configured */
-const retrieveInstances = async (errors : string[]) => {
-  const instancesResp = await api.instances.all()
-  if (typeof instancesResp === "string") {
-    errors.push(instancesResp)
-  } else if (typeof instancesResp === "undefined") {
-    errors.push("No instances found (this should not happen)")
-  } else {
-    instances.value = instancesResp
-  }
-}
+onMounted(async () => { await store.dispatch(Actions.EnsureInstances) })
+
 </script>

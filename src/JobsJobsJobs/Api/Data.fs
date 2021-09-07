@@ -360,10 +360,14 @@ module Citizen =
 
   /// Find a citizen by their Mastodon username
   let findByMastodonUser (instance : string) (mastodonUser : string) conn =
-    r.Table(Table.Citizen)
-      .GetAll(r.Array (instance, mastodonUser)).OptArg("index", "instanceUser").Nth(0)
-      .RunResultAsync<Citizen>
-    |> withReconnOption conn
+    fun c -> task {
+      let! u =
+        r.Table(Table.Citizen)
+          .GetAll(r.Array (instance, mastodonUser)).OptArg("index", "instanceUser").Limit(1)
+          .RunResultAsync<Citizen list> c
+      return u |> List.tryHead
+      }
+    |> withReconn conn
   
   /// Add a citizen
   let add (citizen : Citizen) conn =

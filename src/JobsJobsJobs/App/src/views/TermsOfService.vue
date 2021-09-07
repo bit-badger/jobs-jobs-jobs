@@ -13,14 +13,13 @@ article
   h4 Description of Service and Registration
   p
     | Jobs, Jobs, Jobs is a service that allows individuals to enter and amend employment profiles, restricting access
-    | to the details of these profiles to other users of
+    | to the details of these profiles to other users of No Agenda-afilliated Mastodon sites (currently
     = " "
     template(v-for="(it, idx) in instances" :key="idx")
       a(:href="it.url" target="_blank") {{it.name}}
       template(v-if="idx + 2 < instances.length")= ", "
       template(v-else-if="idx + 1 < instances.length")= ", and "
-      template(v-else)= ". "
-    | Registration is accomplished by allowing Jobs, Jobs, Jobs to read one&rsquo;s Mastodon profile. See our
+    | ). Registration is accomplished by allowing Jobs, Jobs, Jobs to read one&rsquo;s Mastodon profile. See our
     = " "
     router-link(to="/privacy-policy") privacy policy
     = " "
@@ -51,21 +50,14 @@ article
 </template>
 
 <script setup lang="ts">
-import { onMounted, Ref, ref } from "vue"
+import { computed, onMounted } from "vue"
+import { useStore, Actions } from "@/store"
 
-import api, { Instance } from "@/api"
-import { toastError } from "@/components/layout/AppToaster.vue"
+const store = useStore()
 
-const instances : Ref<Instance[]> = ref([])
+/** All instances authorized to view Jobs, Jobs, Jobs */
+const instances = computed(() => store.state.instances)
 
-onMounted(async () => {
-  const apiResp = await api.instances.all()
-  if (typeof apiResp === "string") {
-    toastError(apiResp, "retrieving instances")
-  } else if (typeof apiResp === "undefined") {
-    toastError("No instances to display", undefined)
-  } else {
-    instances.value = apiResp
-  }
-})
+onMounted(async () => { await store.dispatch(Actions.EnsureInstances) })
+
 </script>

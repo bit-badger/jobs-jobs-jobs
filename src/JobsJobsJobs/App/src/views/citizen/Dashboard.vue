@@ -6,7 +6,8 @@ article.container
     .col: .card.h-100
       h5.card-header Your Profile
       .card-body
-        h6.card-subtitle.mb-3.text-muted.fst-italic Last updated #[full-date-time(:date="profile.lastUpdatedOn")]
+        h6.card-subtitle.mb-3.text-muted.fst-italic(v-if="profile").
+          Last updated #[full-date-time(:date="profile.lastUpdatedOn")]
         p.card-text(v-if="profile")
           | Your profile currently lists {{profile.skills.length}}
           | skill#[template(v-if="profile.skills.length !== 1") s].

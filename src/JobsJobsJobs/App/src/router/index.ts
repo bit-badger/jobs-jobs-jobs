@@ -10,7 +10,7 @@ import store from "@/store"
 import Home from "@/views/Home.vue"
 import LogOn from "@/views/citizen/LogOn.vue"
 
-/** The URL to which the user should be pointed once they have authorized with NAS */
+/** The URL to which the user should be pointed once they have authorized with Mastodon */
 export const AFTER_LOG_ON_URL = "jjj-after-log-on-url"
 
 /**
@@ -121,7 +121,7 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import(/* webpackChunkName: "so-long" */ "../views/so-long/DeletionOptions.vue")
   },
   {
-    path: "/so-long/success/:url",
+    path: "/so-long/success/:abbr",
     name: "DeletionSuccess",
     component: () => import(/* webpackChunkName: "so-long" */ "../views/so-long/DeletionSuccess.vue")
   },

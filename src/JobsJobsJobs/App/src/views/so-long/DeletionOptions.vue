@@ -21,14 +21,14 @@ article
   p.text-center: button.btn.btn-danger(@click.prevent="deleteAccount") Delete Your Entire Account
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
+import { onMounted } from "vue"
 import { useRouter } from "vue-router"
+
 import api, { LogOnSuccess } from "@/api"
 import { toastError, toastSuccess } from "@/components/layout/AppToaster.vue"
-import { useStore } from "@/store"
-</script>
+import { useStore, Actions, Mutations } from "@/store"
 
-<script setup lang="ts">
 const store = useStore()
 const router = useRouter()
 
@@ -54,21 +54,22 @@ const deleteAccount = async () => {
   } else if (typeof citizenResp === "undefined") {
     toastError("Could not retrieve citizen record", undefined)
   } else {
-    const instResp = await api.instances.byAbbr(citizenResp.instance)
-    if (typeof instResp === "string") {
-      toastError(instResp, "retriving instance")
-    } else if (typeof instResp === "undefined") {
+    const instance = store.state.instances.find(it => it.abbr === citizenResp.instance)
+    if (typeof instance === "undefined") {
       toastError("Could not retrieve instance", undefined)
     } else {
       const resp = await api.citizen.delete(user)
       if (typeof resp === "string") {
         toastError(resp, "Deleting Account")
       } else {
-        store.commit("clearUser")
+        store.commit(Mutations.ClearUser)
         toastSuccess("Account Deleted Successfully")
-        router.push(`/so-long/success/${instResp.url}`)
+        router.push(`/so-long/success/${instance.abbr}`)
       }
     }
   }
 }
+
+onMounted(async () => { await store.dispatch(Actions.EnsureInstances) })
+
 </script>

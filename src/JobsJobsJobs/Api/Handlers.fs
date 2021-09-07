@@ -201,14 +201,6 @@ module Instances =
     fun next ctx -> task {
       return! json ((authConfig ctx).Instances |> Array.map toInstance) next ctx
       }
-  
-  // GET: /api/instance/[abbr]
-  let byAbbr abbr : HttpHandler =
-    fun next ctx -> task {
-      match (authConfig ctx).Instances |> Array.tryFind (fun it -> it.Abbr = abbr) with
-      | Some inst -> return! json (toInstance inst) next ctx
-      | None -> return! Error.notFound next ctx
-      }
 
 
 /// Handlers for /api/listing[s] routes
@@ -530,12 +522,7 @@ let allEndpoints = [
       DELETE [ route "" Citizen.delete ]
       ]
     GET_HEAD [ route "/continents" Continent.all ]
-    subRoute "/instance" [
-      GET_HEAD [
-        route  "s"   Instances.all
-        routef "/%s" Instances.byAbbr
-        ]
-      ]
+    GET_HEAD [ route "/instances"  Instances.all ]
     subRoute "/listing" [
       GET_HEAD [
         routef "/%O"      Listing.get

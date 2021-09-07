@@ -40,7 +40,7 @@ export function yesOrNo (cond : boolean) : string {
 }
 
 /**
- * Get the display name for a citizen (the first available among real, display, or NAS handle)
+ * Get the display name for a citizen (the first available among real, display, or Mastodon handle)
  *
  * @param cit The citizen
  * @returns The citizen's display name

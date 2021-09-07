@@ -8,8 +8,7 @@ article
 <script setup lang="ts">
 import { computed, onMounted } from "vue"
 import { useRoute, useRouter } from "vue-router"
-import api from "@/api"
-import { useStore } from "@/store"
+import { useStore, Actions, Mutations } from "@/store"
 import { AFTER_LOG_ON_URL } from "@/router"
 
 const store = useStore()
@@ -20,20 +19,19 @@ const router = useRouter()
 const abbr = route.params.abbr as string
 
 /** Set the message for this component */
-const setMessage = (msg : string) => store.commit("setLogOnState", msg)
+const setMessage = (msg : string) => store.commit(Mutations.SetLogOnState, msg)
 
 /** Pass the code to the API and exchange it for a user and a JWT */
 const logOn = async () => {
-  const instance = await api.instances.byAbbr(abbr)
-  if (typeof instance === "string") {
-    setMessage(instance)
-  } else if (typeof instance === "undefined") {
+  await store.dispatch(Actions.EnsureInstances)
+  const instance = store.state.instances.find(it => it.abbr === abbr)
+  if (typeof instance === "undefined") {
     setMessage(`Mastodon instance ${abbr} not found`)
   } else {
     setMessage(`<em>Welcome back! Verifying your ${instance.name} account&hellip;</em>`)
     const code = route.query.code
     if (code) {
-      await store.dispatch("logOn", { abbr, code })
+      await store.dispatch(Actions.LogOn, { abbr, code })
       if (store.state.user !== undefined) {
         const afterLogOnUrl = window.localStorage.getItem(AFTER_LOG_ON_URL)
         if (afterLogOnUrl) {

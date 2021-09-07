@@ -1,6 +1,8 @@
 import { InjectionKey } from "vue"
 import { createStore, Store, useStore as baseUseStore } from "vuex"
-import api, { Continent, LogOnSuccess } from "../api"
+import api, { Continent, Instance, LogOnSuccess } from "../api"
+import * as Actions from "./actions"
+import * as Mutations from "./mutations"
 
 /** The state tracked by the application */
 export interface State {
@@ -10,6 +12,8 @@ export interface State {
   logOnState: string
   /** All continents (use `ensureContinents` action) */
   continents: Continent[]
+  /** All instances (use `ensureInstances` action) */
+  instances: Instance[]
 }
 
 /** An injection key to identify this state with Vue */
@@ -25,42 +29,50 @@ export default createStore({
     return {
       user: undefined,
       logOnState: "<em>Welcome back!</em>",
-      continents: []
+      continents: [],
+      instances: []
     }
   },
   mutations: {
-    setUser (state, user : LogOnSuccess) {
-      state.user = user
-    },
-    clearUser (state) {
-      state.user = undefined
-    },
-    setLogOnState (state, message : string) {
-      state.logOnState = message
-    },
-    setContinents (state, continents : Continent[]) {
-      state.continents = continents
-    }
+    [Mutations.SetUser]: (state, user : LogOnSuccess) => { state.user = user },
+    [Mutations.ClearUser]: (state) => { state.user = undefined },
+    [Mutations.SetLogOnState]: (state, message : string) => { state.logOnState = message },
+    [Mutations.SetContinents]: (state, continents : Continent[]) => { state.continents = continents },
+    [Mutations.SetInstances]: (state, instances : Instance[]) => { state.instances = instances }
   },
   actions: {
-    async logOn ({ commit }, { abbr, code }) {
+    [Actions.LogOn]: async ({ commit }, { abbr, code }) => {
       const logOnResult = await api.citizen.logOn(abbr, code)
       if (typeof logOnResult === "string") {
-        commit("setLogOnState", logOnResult)
+        commit(Mutations.SetLogOnState, logOnResult)
       } else {
-        commit("setUser", logOnResult)
+        commit(Mutations.SetUser, logOnResult)
       }
     },
-    async ensureContinents ({ state, commit }) {
+    [Actions.EnsureContinents]: async ({ state, commit }) => {
       if (state.continents.length > 0) return
       const theSeven = await api.continent.all()
       if (typeof theSeven === "string") {
         console.error(theSeven)
       } else {
-        commit("setContinents", theSeven)
+        commit(Mutations.SetContinents, theSeven)
+      }
+    },
+    [Actions.EnsureInstances]: async ({ state, commit }) => {
+      if (state.instances.length > 0) return
+      const instResp = await api.instances.all()
+      if (typeof instResp === "string") {
+        console.error(instResp)
+      } else if (typeof instResp === "undefined") {
+        console.error("No instances were found; this should not happen")
+      } else {
+        commit(Mutations.SetInstances, instResp)
       }
     }
   },
   modules: {
   }
 })
+
+export * as Actions from "./actions"
+export * as Mutations from "./mutations"

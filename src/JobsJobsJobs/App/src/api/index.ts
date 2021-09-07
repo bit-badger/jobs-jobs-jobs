@@ -152,16 +152,7 @@ export default {
      * @returns All instances, or an error
      */
     all: async () : Promise<Instance[] | string | undefined> =>
-      apiResult<Instance[]>(await fetch(apiUrl("instances"), { method: "GET" }), "retrieving Mastodon instances"),
-
-    /**
-     * Retrieve a Mastodon instance by its abbreviation
-     *
-     * @param abbr The abbreviation of the Mastodon instance to retrieve
-     * @returns The Mastodon instance (if found), undefined (if not found), or an error string
-     */
-    byAbbr: async (abbr : string) : Promise<Instance | string | undefined> =>
-      apiResult<Instance>(await fetch(apiUrl(`instance/${abbr}`), { method: "GET" }), "retrieving Mastodon instance")
+      apiResult<Instance[]>(await fetch(apiUrl("instances"), { method: "GET" }), "retrieving Mastodon instances")
   },
 
   /** API functions for job listings */

@@ -65,7 +65,7 @@ const title = computed(() => it.value ? `${it.value.listing.title} | Job Listing
 /** The HTML details of the job listing */
 const details = computed(() => toHtml(it.value?.listing.text ?? ""))
 
-/** The NAS profile URL for the citizen who posted this job listing */
+/** The Mastodon profile URL for the citizen who posted this job listing */
 const profileUrl = computed(() => citizen.value ? citizen.value.profileUrl : "")
 
 /** The needed by date, formatted in SHOUTING MODE */

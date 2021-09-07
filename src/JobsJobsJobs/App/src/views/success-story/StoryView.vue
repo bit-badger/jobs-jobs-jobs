@@ -31,7 +31,7 @@ const user = store.state.user as LogOnSuccess
 /** The story to be displayed */
 const story : Ref<Success | undefined> = ref(undefined)
 
-/** The citizen's name (real, display, or NAS, whichever is found first) */
+/** The citizen's name (real, display, or Mastodon, whichever is found first) */
 const citizenName = ref("")
 
 /** Retrieve the success story */

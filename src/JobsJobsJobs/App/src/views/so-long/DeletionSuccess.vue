@@ -11,11 +11,19 @@ article
 </template>
 
 <script setup lang="ts">
+import { computed, onMounted } from "vue"
 import { useRoute } from "vue-router"
+import { useStore, Actions } from "@/store"
 
 const route = useRoute()
+const store = useStore()
 
-/** The URL of the instance from which the deleted user had authorized access */
-const url = route.params.url as string
+/** The abbreviation of the instance from which the deleted user had authorized access */
+const abbr = route.params.abbr as string
+
+/** The URL of that instance */
+const url = computed(() => store.state.instances.find(it => it.abbr === abbr)?.url ?? "")
+
+onMounted(async () => { await store.dispatch(Actions.EnsureInstances) })
 
 </script>
