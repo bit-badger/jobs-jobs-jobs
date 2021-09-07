@@ -566,11 +566,3 @@ module Success =
       .OrderBy(r.Desc "recordedOn")
       .RunResultAsync<StoryEntry list>
     |> withReconn conn
-
-(*
--- To replace naUser with mastodonUser for NAS --
-r.db('jobsjobsjobs').table('citizen').replace(function(it) {
-  return it.merge({ mastodonUser: it('naUser'), instance: 'nas' }).without('naUser');
-})
-
-*)

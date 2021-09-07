@@ -26,7 +26,7 @@ import {
  * @param url The partial URL for the API
  * @returns A full URL for the API
  */
-const apiUrl = (url : string) : string => `http://localhost:5000/api/${url}`
+const apiUrl = (url : string) : string => `/api/${url}`
 
 /**
  * Create request init parameters
