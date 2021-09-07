@@ -6,6 +6,7 @@ open JobsJobsJobs.Domain.Types
 open Polly
 open RethinkDb.Driver
 open RethinkDb.Driver.Net
+open RethinkDb.Driver.Ast
 
 /// Shorthand for the RethinkDB R variable (how every command starts)
 let private r = RethinkDB.R
@@ -166,10 +167,20 @@ module Startup =
                   log.LogInformation $"Creating \"{idx}\" index on {table}"
                   r.Table(table).IndexCreate(idx).RunWriteAsync conn |> awaitIgnore)
       }
-    do! ensureIndexes Table.Citizen [ "naUser" ]
     do! ensureIndexes Table.Listing [ "citizenId"; "continentId"; "isExpired" ]
     do! ensureIndexes Table.Profile [ "continentId" ]
     do! ensureIndexes Table.Success [ "citizenId" ]
+    // The instance/user is a compound index
+    let! userIdx = r.Table(Table.Citizen).IndexList().RunResultAsync<string list> conn
+    match userIdx |> List.contains "instanceUser" with
+    | true -> ()
+    | false ->
+        let! _ =
+          r.Table(Table.Citizen)
+            .IndexCreate("instanceUser",
+                ReqlFunction1 (fun row -> upcast r.Array (row.G "instance", row.G "mastodonUser")))
+            .RunWriteAsync conn
+        ()
     }
 
 
@@ -215,7 +226,6 @@ let regexContains = System.Text.RegularExpressions.Regex.Escape >> sprintf "(?i)
 
 open JobsJobsJobs.Domain
 open JobsJobsJobs.Domain.SharedTypes
-open RethinkDb.Driver.Ast
 
 /// Profile data access functions
 [<RequireQualifiedAccess>]
@@ -287,7 +297,7 @@ module Profile =
                 .HashMap("displayName",
                   r.Branch (it.G("realName"   ).Default_("").Ne "", it.G "realName",
                             it.G("displayName").Default_("").Ne "", it.G "displayName",
-                                                                    it.G "naUser"))
+                                                                    it.G "mastodonUser"))
                 .With ("citizenId", it.G "id")))
           .Pluck("citizenId", "displayName", "seekingEmployment", "remoteWork", "fullTime", "lastUpdatedOn")
           .OrderBy(ReqlFunction1 (fun it -> upcast it.G("displayName").Downcase ()))
@@ -348,12 +358,16 @@ module Citizen =
       .RunResultAsync<Citizen>
     |> withReconnOption conn
 
-  /// Find a citizen by their No Agenda Social username
-  let findByNaUser (naUser : string) conn =
-    r.Table(Table.Citizen)
-      .GetAll(naUser).OptArg("index", "naUser").Nth(0)
-      .RunResultAsync<Citizen>
-    |> withReconnOption conn
+  /// Find a citizen by their Mastodon username
+  let findByMastodonUser (instance : string) (mastodonUser : string) conn =
+    fun c -> task {
+      let! u =
+        r.Table(Table.Citizen)
+          .GetAll(r.Array (instance, mastodonUser)).OptArg("index", "instanceUser").Limit(1)
+          .RunResultAsync<Citizen list> c
+      return u |> List.tryHead
+      }
+    |> withReconn conn
   
   /// Add a citizen
   let add (citizen : Citizen) conn =
@@ -546,7 +560,7 @@ module Success =
             .HashMap("citizenName",
               r.Branch(it.G("realName"   ).Default_("").Ne "", it.G "realName",
                        it.G("displayName").Default_("").Ne "", it.G "displayName",
-                                                               it.G "naUser"))
+                                                               it.G "mastodonUser"))
             .With ("hasStory", it.G("story").Default_("").Gt "")))
       .Pluck("id", "citizenId", "citizenName", "recordedOn", "fromHere", "hasStory")
       .OrderBy(r.Desc "recordedOn")

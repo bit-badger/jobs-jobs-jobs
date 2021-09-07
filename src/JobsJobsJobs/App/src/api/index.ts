@@ -2,6 +2,7 @@ import {
   Citizen,
   Continent,
   Count,
+  Instance,
   Listing,
   ListingExpireForm,
   ListingForm,
@@ -25,7 +26,7 @@ import {
  * @param url The partial URL for the API
  * @returns A full URL for the API
  */
-const apiUrl = (url : string) : string => `http://localhost:5000/api/${url}`
+const apiUrl = (url : string) : string => `/api/${url}`
 
 /**
  * Create request init parameters
@@ -100,11 +101,12 @@ export default {
     /**
      * Log a citizen on
      *
-     * @param code The authorization code from No Agenda Social
+     * @param abbr The abbreviation of the Mastodon instance that issued the code
+     * @param code The authorization code from Mastodon
      * @returns The user result, or an error
      */
-    logOn: async (code : string) : Promise<LogOnSuccess | string> => {
-      const resp = await fetch(apiUrl(`citizen/log-on/${code}`), { method: "GET", mode: "cors" })
+    logOn: async (abbr : string, code : string) : Promise<LogOnSuccess | string> => {
+      const resp = await fetch(apiUrl(`citizen/log-on/${abbr}/${code}`), { method: "GET", mode: "cors" })
       if (resp.status === 200) return await resp.json() as LogOnSuccess
       return `Error logging on - ${await resp.text()}`
     },
@@ -139,6 +141,18 @@ export default {
      */
     all: async () : Promise<Continent[] | string | undefined> =>
       apiResult<Continent[]>(await fetch(apiUrl("continents"), { method: "GET" }), "retrieving continents")
+  },
+
+  /** API functions for instances */
+  instances: {
+
+    /**
+     * Get all Mastodon instances we support
+     *
+     * @returns All instances, or an error
+     */
+    all: async () : Promise<Instance[] | string | undefined> =>
+      apiResult<Instance[]>(await fetch(apiUrl("instances"), { method: "GET" }), "retrieving Mastodon instances")
   },
 
   /** API functions for job listings */

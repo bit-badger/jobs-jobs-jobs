@@ -3,8 +3,10 @@
 export interface Citizen {
   /** The ID of the user */
   id : string
+  /** The abbreviation of the instance where this citizen is based */
+  instance : string
   /** The handle by which the user is known on Mastodon */
-  naUser : string
+  mastodonUser : string
   /** The user's display name from Mastodon (updated every login) */
   displayName : string | undefined
   /** The user's real name */
@@ -29,6 +31,18 @@ export interface Continent {
 export interface Count {
   /** The count being returned */
   count : number
+}
+
+/** The Mastodon instance data provided via the Jobs, Jobs, Jobs API */
+export interface Instance {
+  /** The name of the instance */
+  name : string
+  /** The URL for this instance */
+  url : string
+  /** The abbreviation used in the URL to distinguish this instance's return codes */
+  abbr : string
+  /** The client ID (assigned by the Mastodon server) */
+  clientId : string
 }
 
 /** A job listing */

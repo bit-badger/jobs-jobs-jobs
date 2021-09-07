@@ -13,19 +13,21 @@ type CitizenId = CitizenId of Guid
 [<CLIMutable; NoComparison; NoEquality>]
 type Citizen = {
   /// The ID of the user
-  id          : CitizenId
+  id           : CitizenId
+  /// The Mastodon instance abbreviation from which this citizen is authorized
+  instance     : string
   /// The handle by which the user is known on Mastodon
-  naUser      : string
+  mastodonUser : string
   /// The user's display name from Mastodon (updated every login)
-  displayName : string option
+  displayName  : string option
   /// The user's real name
-  realName    : string option
+  realName     : string option
   /// The URL for the user's Mastodon profile
-  profileUrl  : string
+  profileUrl   : string
   /// When the user joined Jobs, Jobs, Jobs
-  joinedOn    : Instant
+  joinedOn     : Instant
   /// When the user last logged in
-  lastSeenOn  : Instant
+  lastSeenOn   : Instant
   }
 
 

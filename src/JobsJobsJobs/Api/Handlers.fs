@@ -23,23 +23,23 @@ module Error =
 
   /// URL prefixes for the Vue app
   let vueUrls = [
-    "/"; "/how-it-works"; "/privacy-policy"; "/terms-of-service"; "/citizen"; "/help-wanted"; "/listing"; "/profile"
+    "/how-it-works"; "/privacy-policy"; "/terms-of-service"; "/citizen"; "/help-wanted"; "/listing"; "/profile"
     "/so-long"; "/success-story"
     ]
 
   /// Handler that will return a status code 404 and the text "Not Found"
   let notFound : HttpHandler =
     fun next ctx -> task {
-      let fac = ctx.GetService<ILoggerFactory>()
-      let log = fac.CreateLogger("Handler")
+      let fac  = ctx.GetService<ILoggerFactory> ()
+      let log  = fac.CreateLogger "Handler"
+      let path = string ctx.Request.Path
       match [ "GET"; "HEAD" ] |> List.contains ctx.Request.Method with
-      | true when vueUrls |> List.exists (fun url -> ctx.Request.Path.ToString().StartsWith url) ->
+      | true when path = "/" || vueUrls |> List.exists path.StartsWith ->
           log.LogInformation "Returning Vue app"
           return! Vue.app next ctx
       | _ ->
           log.LogInformation "Returning 404"
-          return! RequestErrors.NOT_FOUND $"The URL {string ctx.Request.Path} was not recognized as a valid URL" next
-                    ctx
+          return! RequestErrors.NOT_FOUND $"The URL {path} was not recognized as a valid URL" next ctx
       }
   
   /// Handler that returns a 403 NOT AUTHORIZED response
@@ -58,6 +58,7 @@ module Helpers =
 
   open NodaTime
   open Microsoft.Extensions.Configuration
+  open Microsoft.Extensions.Options
   open RethinkDb.Driver.Net
   open System.Security.Claims
 
@@ -66,6 +67,9 @@ module Helpers =
 
   /// Get the application configuration from the request context
   let config (ctx : HttpContext) = ctx.GetService<IConfiguration> ()
+
+  /// Get the authorization configuration from the request context
+  let authConfig (ctx : HttpContext) = (ctx.GetService<IOptions<AuthOptions>> ()).Value
 
   /// Get the logger factory from the request context
   let logger (ctx : HttpContext) = ctx.GetService<ILoggerFactory> ()
@@ -104,46 +108,50 @@ module Helpers =
 module Citizen =
 
   // GET: /api/citizen/log-on/[code]
-  let logOn authCode : HttpHandler =
+  let logOn (abbr, authCode) : HttpHandler =
     fun next ctx -> task {
       // Step 1 - Verify with Mastodon
-      let cfg = (config ctx).GetSection "Auth"
-      let log = (logger ctx).CreateLogger (nameof JobsJobsJobs.Api.Auth)
+      let cfg = authConfig ctx
       
-      match! Auth.verifyWithMastodon authCode cfg log with
-      | Ok account ->
-          // Step 2 - Find / establish Jobs, Jobs, Jobs account
-          let  now     = (clock ctx).GetCurrentInstant ()
-          let  dbConn  = conn ctx
-          let! citizen = task {
-            match! Data.Citizen.findByNaUser account.Username dbConn with
-            | None ->
-                let it : Citizen =
-                  { id          = CitizenId.create ()
-                    naUser      = account.Username
-                    displayName = noneIfEmpty account.DisplayName
-                    realName    = None
-                    profileUrl  = account.Url
-                    joinedOn    = now
-                    lastSeenOn  = now
-                    }
-                do! Data.Citizen.add it dbConn
-                return it
-            | Some citizen ->
-                let it = { citizen with displayName = noneIfEmpty account.DisplayName; lastSeenOn = now }
-                do! Data.Citizen.logOnUpdate it dbConn
-                return it
-          }
+      match cfg.Instances |> Array.tryFind (fun it -> it.Abbr = abbr) with
+      | Some instance ->
+          let log = (logger ctx).CreateLogger (nameof JobsJobsJobs.Api.Auth)
           
-          // Step 3 - Generate JWT
-          return!
-            json
-              { jwt       = Auth.createJwt citizen cfg
-                citizenId = CitizenId.toString citizen.id
-                name      = Citizen.name citizen
-                } next ctx
-      | Error err ->
-          return! RequestErrors.BAD_REQUEST err next ctx
+          match! Auth.verifyWithMastodon authCode instance cfg.ReturnHost log with
+          | Ok account ->
+              // Step 2 - Find / establish Jobs, Jobs, Jobs account
+              let  now     = (clock ctx).GetCurrentInstant ()
+              let  dbConn  = conn ctx
+              let! citizen = task {
+                match! Data.Citizen.findByMastodonUser instance.Abbr account.Username dbConn with
+                | None ->
+                    let it : Citizen =
+                      { id           = CitizenId.create ()
+                        instance     = instance.Abbr
+                        mastodonUser = account.Username
+                        displayName  = noneIfEmpty account.DisplayName
+                        realName     = None
+                        profileUrl   = account.Url
+                        joinedOn     = now
+                        lastSeenOn   = now
+                        }
+                    do! Data.Citizen.add it dbConn
+                    return it
+                | Some citizen ->
+                    let it = { citizen with displayName = noneIfEmpty account.DisplayName; lastSeenOn = now }
+                    do! Data.Citizen.logOnUpdate it dbConn
+                    return it
+              }
+              
+              // Step 3 - Generate JWT
+              return!
+                json
+                  { jwt       = Auth.createJwt citizen cfg
+                    citizenId = CitizenId.toString citizen.id
+                    name      = Citizen.name citizen
+                    } next ctx
+          | Error err -> return! RequestErrors.BAD_REQUEST err next ctx
+      | None -> return! Error.notFound next ctx
       }
   
   // GET: /api/citizen/[id]
@@ -173,6 +181,25 @@ module Continent =
     fun next ctx -> task {
       let! continents = Data.Continent.all (conn ctx)
       return! json continents next ctx
+      }
+
+
+/// Handlers for /api/instances routes
+[<RequireQualifiedAccess>]
+module Instances =
+
+  /// Convert a Masotodon instance to the one we use in the API
+  let private toInstance (inst : MastodonInstance) =
+    { name     = inst.Name
+      url      = inst.Url
+      abbr     = inst.Abbr
+      clientId = inst.ClientId
+      }
+
+  // GET: /api/instances
+  let all : HttpHandler =
+    fun next ctx -> task {
+      return! json ((authConfig ctx).Instances |> Array.map toInstance) next ctx
       }
 
 
@@ -489,12 +516,13 @@ let allEndpoints = [
   subRoute "/api" [
     subRoute "/citizen" [
       GET_HEAD [
-        routef "/log-on/%s" Citizen.logOn
-        routef "/%O"        Citizen.get
+        routef "/log-on/%s/%s" Citizen.logOn
+        routef "/%O"           Citizen.get
         ]
       DELETE [ route "" Citizen.delete ]
       ]
     GET_HEAD [ route "/continents" Continent.all ]
+    GET_HEAD [ route "/instances"  Instances.all ]
     subRoute "/listing" [
       GET_HEAD [
         routef "/%O"      Listing.get

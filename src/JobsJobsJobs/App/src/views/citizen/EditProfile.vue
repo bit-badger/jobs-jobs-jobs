@@ -6,9 +6,9 @@ article
     .col-12.col-sm-10.col-md-8.col-lg-6
       .form-floating
         input.form-control(type="text" id="realName" v-model="v$.realName.$model" maxlength="255"
-                           placeholder="Leave blank to use your NAS display name")
+                           placeholder="Leave blank to use your Mastodon display name")
         label(for="realName") Real Name
-      .form-text Leave blank to use your NAS display name
+      .form-text Leave blank to use your Mastodon display name
     .col-12
       .form-check
         input.form-check-input(type="checkbox" id="isSeeking" v-model="v$.isSeekingEmployment.$model")

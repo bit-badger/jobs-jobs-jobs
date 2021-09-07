@@ -21,8 +21,8 @@ article
   p.
     Clicking the #[span.link View] link on a listing brings up the full view page for a listing. This page displays all
     of the information from the search results, along with the citizen who posted it, and the full details of the job.
-    The citizen&rsquo;s name is a link to their profile page at No Agenda Social; you can use that to get their handle,
-    and use NAS&rsquo;s communication facilites to inquire about the position.
+    The citizen&rsquo;s name is a link to their profile page at their Mastodon instance; you can use that to get their
+    handle, and use Mastodon&rsquo;s communication facilites to inquire about the position.
   p: em.text-muted.
     (If you know of a way to construct a link to Mastodon that would start a direct message, please reach out;
     I&rsquo;ve searched and searched, and asked NAS, but have not yet determined how to do that.)
@@ -43,9 +43,9 @@ article
     The #[span.link My Job Listings] page will show you all of your active job listings just below the
     #[span.button Add a Job Listing] button. Within this table, you can edit the listing, view it, or expire it (more on
     that below). The #[span.link View] link will show you the job listing just as other users will see it. You can share
-    the link from your browser over on No Agenda Social, and those who click on it will be able to view it. (Existing
-    users of Jobs, Jobs, Jobs will go right to it; others will need to authorize this site&rsquo;s access, but then they
-    will get there as well.)
+    the link from your browser on any No Agenda-affiliated Mastodon instance, and those who click on it will be able to
+    view it. (Existing users of Jobs, Jobs, Jobs will go right to it; others will need to authorize this site&rsquo;s
+    access, but then they will get there as well.)
 
   h5 Expire a Job Listing
   p.
@@ -68,7 +68,7 @@ article
     The #[span.link Employment Profiles] link at the side allows you to search for profiles by continent, the
     citizen&rsquo;s desire for remote work, a skill, or any text in their professional biography and experience. If you
     find someone with whom you&rsquo;d like to discuss potential opportunities, the name at the top of the profile links
-    to their No Agenda Social account, where you can use its features to get in touch.
+    to their Mastodon profile, where you can use its features to get in touch.
 
   hr
 
@@ -76,8 +76,8 @@ article
   p.
     The employment profile is your r&eacute;sum&eacute;, visible to other citizens here. It also allows you to specify
     your real name, if you so desire; if that is filled in, that is how you will be identified in search results,
-    profile views, etc. If not, you will be identified as you are on No Agenda Social; this system updates your current
-    display name each time you log on.
+    profile views, etc. If not, you will be identified as you are on your Mastodon instance; this system updates your
+    current display name each time you log on.
 
   h5 Completing Your Profile
   p.
@@ -99,19 +99,19 @@ article
     li.
       If you check the #[span.link Allow my profile to be searched publicly] checkbox #[strong and] you are seeking
       employment, your continent, region, and skills fields will be searchable and displayed to public users of the
-      site. They will not be tied to your No Agenda Social handle or real name; they are there to let people peek
-      behind the curtain a bit, and hopefully inspire them to join us.
+      site. They will not be tied to your Mastodon handle or real name; they are there to let people peek behind the
+      curtain a bit, and hopefully inspire them to join us.
 
   h5 Viewing and Sharing Your Profile
   p.
     Once your profile has been established, the #[span.link My Employment Profile] page will have a button at the bottom
     that will let you view your profile the way all other validated users will be able to see it. (There will also be a
-    link to this page from the #[span.link Dashboard].) The URL of this page can be shared on No Agenda Social, if you
-    would like to share it there. Just as with job listings, existing users will go straight there, while other No
-    Agenda Social users will get there once they authorize this application.
+    link to this page from the #[span.link Dashboard].) The URL of this page can be shared on any No Agenda-affiliated
+    Mastodon instance, if you would like to share it there. Just as with job listings, existing users will go straight
+    there, while others will get there once they authorize this application.
   p.
-    The name on employment profiles is a link to that user&rsquo;s profile on No Agenda Social; from there, others can
-    communicate further with you using the tools Mastodon provides.
+    The name on employment profiles is a link to that user&rsquo;s profile on their Mastodon instance; from there,
+    others can communicate further with you using the tools Mastodon provides.
 
   h5 &ldquo;I Found a Job!&rdquo;
   p.
