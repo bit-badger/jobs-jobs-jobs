@@ -20,7 +20,6 @@ type MastodonAccount () =
   member val Url = "" with get, set
 
 
-open FSharp.Control.Tasks
 open Microsoft.Extensions.Logging
 open System
 open System.Net.Http
