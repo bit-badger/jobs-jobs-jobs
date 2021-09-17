@@ -1,6 +1,5 @@
 <template lang="pug">
 article
-  page-title(:title="title")
   load-data(:load="retrieveListing")
     h3
       | {{it.listing.title}}
@@ -24,7 +23,7 @@ import { formatNeededBy } from "./"
 import api, { Citizen, ListingForView, LogOnSuccess } from "@/api"
 import { citizenName } from "@/App.vue"
 import { toHtml } from "@/markdown"
-import { useStore } from "@/store"
+import { Mutations, useStore } from "@/store"
 import LoadData from "@/components/LoadData.vue"
 
 const store = useStore()
@@ -48,6 +47,7 @@ const retrieveListing = async (errors : string[]) => {
     errors.push("Job Listing not found")
   } else {
     it.value = listingResp
+    store.commit(Mutations.SetTitle, `${listingResp.listing.title} | Job Listing`)
     const citizenResp = await api.citizen.retrieve(listingResp.listing.citizenId, user)
     if (typeof citizenResp === "string") {
       errors.push(citizenResp)
@@ -58,9 +58,6 @@ const retrieveListing = async (errors : string[]) => {
     }
   }
 }
-
-/** The page title (changes once the listing is loaded) */
-const title = computed(() => it.value ? `${it.value.listing.title} | Job Listing` : "Loading Job Listing...")
 
 /** The HTML details of the job listing */
 const details = computed(() => toHtml(it.value?.listing.text ?? ""))

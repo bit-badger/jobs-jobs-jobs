@@ -1,6 +1,5 @@
 <template lang="pug">
 article
-  page-title(title="Terms of Service")
   h3 Terms of Service
   p: em (as of September 6#[sup th], 2021)
 

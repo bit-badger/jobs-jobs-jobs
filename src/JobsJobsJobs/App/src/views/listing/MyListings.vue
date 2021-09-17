@@ -1,6 +1,5 @@
 <template lang="pug">
 article
-  page-title(title="My Job Listings")
   h3.pb-3 My Job Listings
   p: router-link.btn.btn-outline-primary(to="/listing/new/edit") Add a New Job Listing
   load-data(:load="getListings")

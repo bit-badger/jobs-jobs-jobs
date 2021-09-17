@@ -1,6 +1,5 @@
 <template lang="pug">
 article
-  page-title(title="People Seeking Work")
   h3.pb-3 People Seeking Work
   p(v-if="!searched").
     Enter one or more criteria to filter results, or just click &ldquo;Search&rdquo; to list all profiles.

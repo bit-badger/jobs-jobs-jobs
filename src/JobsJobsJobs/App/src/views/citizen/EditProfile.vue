@@ -1,6 +1,5 @@
 <template lang="pug">
 article
-  page-title(title="Edit Profile")
   h3.pb-3 My Employment Profile
   load-data(:load="retrieveData"): form.row.g-3
     .col-12.col-sm-10.col-md-8.col-lg-6

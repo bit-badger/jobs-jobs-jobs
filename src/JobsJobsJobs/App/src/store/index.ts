@@ -1,3 +1,4 @@
+import { useTitle } from "@vueuse/core"
 import { InjectionKey } from "vue"
 import { createStore, Store, useStore as baseUseStore } from "vuex"
 import api, { Continent, Instance, LogOnSuccess } from "../api"
@@ -6,14 +7,16 @@ import * as Mutations from "./mutations"
 
 /** The state tracked by the application */
 export interface State {
+  /** The document's current title */
+  pageTitle : string
   /** The currently logged-on user */
-  user: LogOnSuccess | undefined
+  user : LogOnSuccess | undefined
   /** The state of the log on process */
-  logOnState: string
+  logOnState : string
   /** All continents (use `ensureContinents` action) */
-  continents: Continent[]
+  continents : Continent[]
   /** All instances (use `ensureInstances` action) */
-  instances: Instance[]
+  instances : Instance[]
 }
 
 /** An injection key to identify this state with Vue */
@@ -24,9 +27,13 @@ export function useStore () : Store<State> {
   return baseUseStore(key)
 }
 
+/** The application name */
+const appName = "Jobs, Jobs, Jobs"
+
 export default createStore({
   state: () : State => {
     return {
+      pageTitle: "",
       user: undefined,
       logOnState: "<em>Welcome back!</em>",
       continents: [],
@@ -34,6 +41,10 @@ export default createStore({
     }
   },
   mutations: {
+    [Mutations.SetTitle]: (state, title : string) => {
+      state.pageTitle = title === "" ? appName : `${title} | ${appName}`
+      useTitle(state.pageTitle)
+    },
     [Mutations.SetUser]: (state, user : LogOnSuccess) => { state.user = user },
     [Mutations.ClearUser]: (state) => { state.user = undefined },
     [Mutations.SetLogOnState]: (state, message : string) => { state.logOnState = message },

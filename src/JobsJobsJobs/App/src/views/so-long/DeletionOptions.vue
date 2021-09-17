@@ -1,6 +1,5 @@
 <template lang="pug">
 article
-  page-title(title="Account Deletion Options")
   h3.pb-3 Account Deletion Options
   h4.pb-3 Option 1 &ndash; Delete Your Profile
   p.

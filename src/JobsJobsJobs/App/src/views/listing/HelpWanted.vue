@@ -1,6 +1,5 @@
 <template lang="pug">
 article
-  page-title(title="Help Wanted")
   h3.pb-3 Help Wanted
   p(v-if="!searched").
     Enter relevant criteria to find results, or just click &ldquo;Search&rdquo; to see all current job listings.

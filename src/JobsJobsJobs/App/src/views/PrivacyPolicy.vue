@@ -1,6 +1,5 @@
 <template lang="pug">
 article
-  page-title(title="Privacy Policy")
   h3 Privacy Policy
   p: em (as of September 6#[sup th], 2021)
 

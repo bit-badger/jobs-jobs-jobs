@@ -1,6 +1,5 @@
 <template lang="pug">
 article
-  page-title(title="Search Profiles")
   h3.pb-3 Search Profiles
   p(v-if="!searched").
     Enter one or more criteria to filter results, or just click &ldquo;Search&rdquo; to list all profiles.
@@ -13,23 +12,25 @@ article
         thead: tr
           th(scope="col") Profile
           th(scope="col") Name
-          th.text-center(scope="col") Seeking?
+          th.text-center(scope="col" v-if="wideDisplay") Seeking?
           th.text-center(scope="col") Remote?
-          th.text-center(scope="col") Full-Time?
-          th(scope="col") Last Updated
+          th.text-center(scope="col" v-if="wideDisplay") Full-Time?
+          th(scope="col" v-if="wideDisplay") Last Updated
         tbody: tr(v-for="profile in results" :key="profile.citzenId")
           td: router-link(:to="`/profile/${profile.citizenId}/view`") View
           td(:class="{ 'fw-bold' : profile.seekingEmployment }") {{profile.displayName}}
-          td.text-center {{yesOrNo(profile.seekingEmployment)}}
+          td.text-center(v-if="wideDisplay") {{yesOrNo(profile.seekingEmployment)}}
           td.text-center {{yesOrNo(profile.remoteWork)}}
-          td.text-center {{yesOrNo(profile.fullTime)}}
-          td: full-date(:date="profile.lastUpdatedOn")
+          td.text-center(v-if="wideDisplay") {{yesOrNo(profile.fullTime)}}
+          td(v-if="wideDisplay"): full-date(:date="profile.lastUpdatedOn")
       p.pt-3(v-else-if="searched") No results found for the specified criteria
 </template>
 
 <script setup lang="ts">
-import { defineComponent, Ref, ref, watch } from "vue"
+import { Ref, ref, watch } from "vue"
 import { useRoute, useRouter } from "vue-router"
+import { useBreakpoints, breakpointsBootstrapV5 } from "@vueuse/core"
+
 import { yesOrNo } from "@/App.vue"
 import api, { LogOnSuccess, ProfileSearch, ProfileSearchResult } from "@/api"
 import { queryValue } from "@/router"
@@ -43,6 +44,7 @@ import ProfileSearchForm from "@/components/profile/SearchForm.vue"
 const store = useStore()
 const route = useRoute()
 const router = useRouter()
+const breakpoints = useBreakpoints(breakpointsBootstrapV5)
 
 /** Any errors encountered while retrieving data */
 const errors : Ref<string[]> = ref([])
@@ -69,6 +71,9 @@ const results : Ref<ProfileSearchResult[]> = ref([])
 
 /** Whether the search criteria should be collapsed */
 const isCollapsed = ref(searched.value && results.value.length > 0)
+
+/** Hide certain columns if the display is too narrow */
+const wideDisplay = breakpoints.greater("sm")
 
 /** Set up the page to match its requested state */
 const setUpPage = async () => {
