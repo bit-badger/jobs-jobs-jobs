@@ -1,6 +1,5 @@
 <template lang="pug">
 article
-  page-title(title="Expire Job Listing")
   load-data(:load="retrieveListing")
     h3.pb-3 Expire Job Listing ({{listing.title}})
     p: em.

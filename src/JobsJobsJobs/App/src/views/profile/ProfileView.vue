@@ -34,7 +34,7 @@ import { mdiPencil } from "@mdi/js"
 import api, { LogOnSuccess, ProfileForView } from "@/api"
 import { citizenName } from "@/App.vue"
 import { toHtml } from "@/markdown"
-import { useStore } from "@/store"
+import { Mutations, useStore } from "@/store"
 import LoadData from "@/components/LoadData.vue"
 
 const store = useStore()
@@ -66,13 +66,9 @@ const retrieveProfile = async (errors : string[]) => {
     errors.push("Profile not found")
   } else {
     it.value = profileResp
+    store.commit(Mutations.SetTitle, `Employment profile for ${citizenName(profileResp.citizen)}`)
   }
 }
-
-/** The title of the page (changes once the profile is loaded) */
-const title = computed(() => it.value
-  ? `Employment profile for ${citizenName(it.value.citizen)}`
-  : "Loading Profile...")
 
 /** The HTML version of the citizen's professional biography */
 const bioHtml = computed(() => toHtml(it.value?.profile.biography ?? ""))

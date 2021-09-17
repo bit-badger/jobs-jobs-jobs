@@ -3,10 +3,9 @@ import {
   createWebHistory,
   RouteLocationNormalized,
   RouteLocationNormalizedLoaded,
-  RouteRecordName,
   RouteRecordRaw
 } from "vue-router"
-import store from "@/store"
+import store, { Mutations } from "@/store"
 import Home from "@/views/Home.vue"
 import LogOn from "@/views/citizen/LogOn.vue"
 
@@ -29,123 +28,140 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: "/",
     name: "Home",
-    component: Home
+    component: Home,
+    meta: { title: "Welcome!" }
   },
   {
     path: "/how-it-works",
     name: "HowItWorks",
-    component: () => import(/* webpackChunkName: "help" */ "../views/HowItWorks.vue")
+    component: () => import(/* webpackChunkName: "help" */ "../views/HowItWorks.vue"),
+    meta: { title: "How It Works" }
   },
   {
     path: "/privacy-policy",
     name: "PrivacyPolicy",
-    component: () => import(/* webpackChunkName: "legal" */ "../views/PrivacyPolicy.vue")
+    component: () => import(/* webpackChunkName: "legal" */ "../views/PrivacyPolicy.vue"),
+    meta: { title: "Privacy Policy" }
   },
   {
     path: "/terms-of-service",
     name: "TermsOfService",
-    component: () => import(/* webpackChunkName: "legal" */ "../views/TermsOfService.vue")
+    component: () => import(/* webpackChunkName: "legal" */ "../views/TermsOfService.vue"),
+    meta: { title: "Terms of Service" }
   },
   // Citizen URLs
   {
     path: "/citizen/log-on",
     name: "LogOn",
-    component: LogOn
+    component: LogOn,
+    meta: { title: "Log On" }
   },
   {
     path: "/citizen/:abbr/authorized",
     name: "CitizenAuthorized",
-    component: () => import(/* webpackChunkName: "dashboard" */ "../views/citizen/Authorized.vue")
+    component: () => import(/* webpackChunkName: "dashboard" */ "../views/citizen/Authorized.vue"),
+    meta: { title: "Logging On" }
   },
   {
     path: "/citizen/dashboard",
     name: "Dashboard",
-    component: () => import(/* webpackChunkName: "dashboard" */ "../views/citizen/Dashboard.vue")
+    component: () => import(/* webpackChunkName: "dashboard" */ "../views/citizen/Dashboard.vue"),
+    meta: { auth: true, title: "Dashboard" }
   },
   {
     path: "/citizen/profile",
     name: "EditProfile",
-    component: () => import(/* webpackChunkName: "profedit" */ "../views/citizen/EditProfile.vue")
+    component: () => import(/* webpackChunkName: "profedit" */ "../views/citizen/EditProfile.vue"),
+    meta: { auth: true, title: "Edit Profile" }
   },
   {
     path: "/citizen/log-off",
     name: "LogOff",
-    component: () => import(/* webpackChunkName: "logoff" */ "../views/citizen/LogOff.vue")
+    component: () => import(/* webpackChunkName: "logoff" */ "../views/citizen/LogOff.vue"),
+    meta: { auth: true, title: "Logging Off" }
   },
   // Job Listing URLs
   {
     path: "/help-wanted",
     name: "HelpWanted",
-    component: () => import(/* webpackChunkName: "joblist" */ "../views/listing/HelpWanted.vue")
+    component: () => import(/* webpackChunkName: "joblist" */ "../views/listing/HelpWanted.vue"),
+    meta: { auth: true, title: "Help Wanted" }
   },
   {
     path: "/listing/:id/edit",
     name: "EditListing",
-    component: () => import(/* webpackChunkName: "jobedit" */ "../views/listing/ListingEdit.vue")
+    component: () => import(/* webpackChunkName: "jobedit" */ "../views/listing/ListingEdit.vue"),
+    meta: { auth: true, title: "Edit Job Listing" }
   },
   {
     path: "/listing/:id/expire",
     name: "ExpireListing",
-    component: () => import(/* webpackChunkName: "jobedit" */ "../views/listing/ListingExpire.vue")
+    component: () => import(/* webpackChunkName: "jobedit" */ "../views/listing/ListingExpire.vue"),
+    meta: { auth: true, title: "Expire Job Listing" }
   },
   {
     path: "/listing/:id/view",
     name: "ViewListing",
-    component: () => import(/* webpackChunkName: "joblist" */ "../views/listing/ListingView.vue")
+    component: () => import(/* webpackChunkName: "joblist" */ "../views/listing/ListingView.vue"),
+    meta: { auth: true, title: "Loading Job Listing..." }
   },
   {
     path: "/listings/mine",
     name: "MyListings",
-    component: () => import(/* webpackChunkName: "joblist" */ "../views/listing/MyListings.vue")
+    component: () => import(/* webpackChunkName: "joblist" */ "../views/listing/MyListings.vue"),
+    meta: { auth: true, title: "My Job Listings" }
   },
   // Profile URLs
   {
     path: "/profile/:id/view",
     name: "ViewProfile",
-    component: () => import(/* webpackChunkName: "profview" */ "../views/profile/ProfileView.vue")
+    component: () => import(/* webpackChunkName: "profview" */ "../views/profile/ProfileView.vue"),
+    meta: { auth: true, title: "Loading Profile..." }
   },
   {
     path: "/profile/search",
     name: "SearchProfiles",
-    component: () => import(/* webpackChunkName: "profview" */ "../views/profile/ProfileSearch.vue")
+    component: () => import(/* webpackChunkName: "profview" */ "../views/profile/ProfileSearch.vue"),
+    meta: { auth: true, title: "Search Profiles" }
   },
   {
     path: "/profile/seeking",
     name: "PublicSearchProfiles",
-    component: () => import(/* webpackChunkName: "seeking" */ "../views/profile/Seeking.vue")
+    component: () => import(/* webpackChunkName: "seeking" */ "../views/profile/Seeking.vue"),
+    meta: { auth: false, title: "People Seeking Work" }
   },
   // "So Long" URLs
   {
     path: "/so-long/options",
     name: "DeletionOptions",
-    component: () => import(/* webpackChunkName: "so-long" */ "../views/so-long/DeletionOptions.vue")
+    component: () => import(/* webpackChunkName: "so-long" */ "../views/so-long/DeletionOptions.vue"),
+    meta: { auth: true, title: "Account Deletion Options" }
   },
   {
     path: "/so-long/success/:abbr",
     name: "DeletionSuccess",
-    component: () => import(/* webpackChunkName: "so-long" */ "../views/so-long/DeletionSuccess.vue")
+    component: () => import(/* webpackChunkName: "so-long" */ "../views/so-long/DeletionSuccess.vue"),
+    meta: { auth: false, title: "Account Deletion Success" }
   },
   // Success Story URLs
   {
     path: "/success-story/list",
     name: "ListStories",
-    component: () => import(/* webpackChunkName: "success" */ "../views/success-story/StoryList.vue")
+    component: () => import(/* webpackChunkName: "success" */ "../views/success-story/StoryList.vue"),
+    meta: { auth: false, title: "Success Stories" }
   },
   {
     path: "/success-story/:id/edit",
     name: "EditStory",
-    component: () => import(/* webpackChunkName: "succedit" */ "../views/success-story/StoryEdit.vue")
+    component: () => import(/* webpackChunkName: "succedit" */ "../views/success-story/StoryEdit.vue"),
+    meta: { auth: false, title: "Edit Success Story" }
   },
   {
     path: "/success-story/:id/view",
     name: "ViewStory",
-    component: () => import(/* webpackChunkName: "success" */ "../views/success-story/StoryView.vue")
+    component: () => import(/* webpackChunkName: "success" */ "../views/success-story/StoryView.vue"),
+    meta: { auth: false, title: "Success Story" }
   }
-]
-/** The routes that do not require logins */
-const publicRoutes : Array<RouteRecordName> = [
-  "Home", "HowItWorks", "PrivacyPolicy", "TermsOfService", "LogOn", "CitizenAuthorized", "PublicSearchProfiles",
-  "DeletionSuccess"
 ]
 
 const router = createRouter({
@@ -158,11 +174,12 @@ const router = createRouter({
 })
 
 // eslint-disable-next-line
-router.beforeEach((to : RouteLocationNormalized, from : RouteLocationNormalized) =>{
-  if (store.state.user === undefined && !publicRoutes.includes(to.name ?? "")) {
+router.beforeEach((to : RouteLocationNormalized, from : RouteLocationNormalized) => {
+  if (store.state.user === undefined && (to.meta.auth || false)) {
     window.localStorage.setItem(AFTER_LOG_ON_URL, to.fullPath)
     return "/citizen/log-on"
   }
+  store.commit(Mutations.SetTitle, to.meta.title ?? "")
 })
 
 export default router

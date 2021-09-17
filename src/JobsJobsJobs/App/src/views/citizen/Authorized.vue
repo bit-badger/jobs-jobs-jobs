@@ -1,6 +1,5 @@
 <template lang="pug">
 article
-  page-title(title="Logging on...")
   p &nbsp;
   p(v-html="message")
 </template>

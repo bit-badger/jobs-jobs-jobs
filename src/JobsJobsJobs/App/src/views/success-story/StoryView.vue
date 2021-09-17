@@ -1,6 +1,5 @@
 <template lang="pug">
 article
-  page-title(title="Success Story")
   load-data(:load="retrieveStory")
     h3
       | {{citizenName}}&rsquo;s Success Story

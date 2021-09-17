@@ -1,7 +1,6 @@
 /// Data access functions for Jobs, Jobs, Jobs
 module JobsJobsJobs.Api.Data
 
-open FSharp.Control.Tasks
 open JobsJobsJobs.Domain.Types
 open Polly
 open RethinkDb.Driver

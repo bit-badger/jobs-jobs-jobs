@@ -1,6 +1,5 @@
 <template lang="pug">
 article.container
-  page-title(title="Dashboard")
   h3.pb-4 Welcome, {{user.name}}
   load-data(:load="retrieveData"): .row.row-cols-1.row-cols-md-2
     .col: .card.h-100

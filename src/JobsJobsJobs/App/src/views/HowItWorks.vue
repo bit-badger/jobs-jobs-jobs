@@ -1,6 +1,5 @@
 <template lang="pug">
 article
-  page-title(title="How It Works")
   h3 How It Works
   h5.pb-3.text-muted: em Last Updated August 29#[sup th], 2021
   p: em.

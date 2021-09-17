@@ -1,3 +1,6 @@
+/** Set the page title */
+export const SetTitle = "setTitle"
+
 /** Set the logged-on user */
 export const SetUser = "setUser"
 

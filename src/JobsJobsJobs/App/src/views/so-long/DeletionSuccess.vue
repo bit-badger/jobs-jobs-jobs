@@ -1,6 +1,5 @@
 <template lang="pug">
 article
-  page-title(title="Account Deletion Success")
   h3.pb-3 Account Deletion Success
   p.
     Your account has been successfully deleted. To revoke the permissions you have previously granted to this

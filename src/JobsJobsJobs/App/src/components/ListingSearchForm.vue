@@ -1,15 +1,15 @@
 <template lang="pug">
 form.container
   .row
-    .col.col-xs-12.col-sm-6.col-md-4.col-lg-3
+    .col-xs-12.col-sm-6.col-md-4.col-lg-3
       continent-list(v-model="criteria.continentId" topLabel="Any" @update:modelValue="updateContinent")
-    .col.col-xs-12.col-sm-6.col-lg-3
+    .col-xs-12.col-sm-6.col-lg-3
       .form-floating
         input.form-control(type="text" id="regionSearch" placeholder="(free-form text)" :value="criteria.region"
                            @input="updateValue('region', $event.target.value)")
         label(for="regionSearch") Region
       .form-text (free-form text)
-    .col.col-xs-12.col-sm-6.col-offset-md-2.col-lg-3.col-offset-lg-0
+    .col-xs-12.col-sm-6.col-offset-md-2.col-lg-3.col-offset-lg-0
       label.jjj-label Remote Work Opportunity?
       br
       .form-check.form-check-inline
@@ -24,13 +24,13 @@ form.container
         input.form-check-input(type="radio" id="remoteNo" name="remoteWork" :checked="criteria.remoteWork === 'no'"
                                @click="updateValue('remoteWork', 'no')")
         label.form-check-label(for="remoteNo") No
-    .col.col-xs-12.col-sm-6.col-lg-3
+    .col-xs-12.col-sm-6.col-lg-3
       .form-floating
         input.form-control(type="text" id="textSearch" placeholder="(free-form text)" :value="criteria.text"
                            @input="updateValue('text', $event.target.value)")
         label(for="textSearch") Job Listing Text
       .form-text (free-form text)
-  .row: .col.col-xs-12
+  .row: .col
     br
     button.btn.btn-outline-primary(type="submit" @click.prevent="$emit('search')") Search
 </template>

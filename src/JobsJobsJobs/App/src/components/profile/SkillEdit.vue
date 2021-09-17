@@ -1,15 +1,15 @@
 <template lang="pug">
 .row.pb-3
-  .col.col-xs-2.col-md-1.align-self-center
+  .col-xs-2.col-md-1.align-self-center
     button.btn.btn-sm.btn-outline-danger.rounded-pill(title="Delete" @click.prevent="$emit('remove')") &nbsp;&minus;&nbsp;
-  .col.col-xs-10.col-md-6
+  .col-xs-10.col-md-6
     .form-floating
       input.form-control(type="text" :id="`skillDesc${skill.id}`" maxlength="100"
                          placeholder="A skill (language, design technique, process, etc.)" :value="skill.description"
                          @input="updateValue('description', $event.target.value)")
       label.jjj-label(:for="`skillDesc${skill.id}`") Skill
     .form-text A skill (language, design technique, process, etc.)
-  .col.col-xs-12.col-md-5
+  .col-xs-12.col-md-5
     .form-floating
       input.form-control(type="text" :id="`skillNotes${skill.id}`" maxlength="100"
                          placeholder="A further description of the skill (100 characters max)" :value="skill.notes"

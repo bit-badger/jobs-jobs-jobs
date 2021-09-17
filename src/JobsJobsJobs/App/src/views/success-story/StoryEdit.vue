@@ -1,6 +1,5 @@
 <template lang="pug">
 article
-  page-title(:title="title")
   h3.pb-3 {{title}}
   load-data(:load="retrieveStory")
     p(v-if="isNew").
@@ -26,7 +25,7 @@ import useVuelidate from "@vuelidate/core"
 
 import api, { LogOnSuccess, StoryForm } from "@/api"
 import { toastError, toastSuccess } from "@/components/layout/AppToaster.vue"
-import { useStore } from "@/store"
+import { Mutations, useStore } from "@/store"
 
 import LoadData from "@/components/LoadData.vue"
 import MarkdownEditor from "@/components/MarkdownEditor.vue"
@@ -45,9 +44,6 @@ const id = route.params.id as string
 /** Whether this is a new story */
 const isNew = computed(() => id === "new")
 
-/** The page title */
-const title = computed(() => isNew.value ? "Tell Your Success Story" : "Edit Success Story")
-
 /** The form for editing the story */
 const story = reactive(new StoryForm())
 
@@ -64,6 +60,7 @@ const v$ = useVuelidate(rules, story, { $lazy: true })
 const retrieveStory = async (errors : string[]) => {
   if (isNew.value) {
     story.id = "new"
+    store.commit(Mutations.SetTitle, "Tell Your Success Story")
   } else {
     const storyResult = await api.success.retrieve(id, user)
     if (typeof storyResult === "string") {

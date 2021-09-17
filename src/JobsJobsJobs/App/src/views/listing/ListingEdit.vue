@@ -1,6 +1,5 @@
 <template lang="pug">
 article
-  page-title(:title="isNew ? 'Add a Job Listing' : 'Edit Job Listing'")
   h3.pb-3(v-if="isNew") Add a Job Listing
   h3.pb-3(v-else) Edit Job Listing
   load-data(:load="retrieveData"): form.row.g-3
@@ -44,7 +43,7 @@ import { required } from "@vuelidate/validators"
 
 import api, { Listing, ListingForm, LogOnSuccess } from "@/api"
 import { toastError, toastSuccess } from "@/components/layout/AppToaster.vue"
-import { useStore } from "@/store"
+import { Mutations, useStore } from "@/store"
 
 import ContinentList from "@/components/ContinentList.vue"
 import LoadData from "@/components/LoadData.vue"
@@ -99,6 +98,7 @@ const v$ = useVuelidate(rules, listing, { $lazy: true })
 
 /** Retrieve the listing being edited (or set up the form for a new listing) */
 const retrieveData = async (errors : string[]) => {
+  if (isNew.value) store.commit(Mutations.SetTitle, "Add a Job Listing")
   const listResult = isNew.value ? newListing : await api.listings.retreive(id, user)
   if (typeof listResult === "string") {
     errors.push(listResult)

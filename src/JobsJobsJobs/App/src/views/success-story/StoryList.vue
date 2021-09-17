@@ -1,6 +1,5 @@
 <template lang="pug">
 article
-  page-title(title="Success Stories")
   h3.pb-3 Success Stories
   load-data(:load="retrieveStories")
     table.table.table-sm.table-hover(v-if="stories?.length > 0")

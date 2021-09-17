@@ -1,6 +1,5 @@
 <template lang="pug">
 article
-  page-title(title="Logging off...")
   p &nbsp;
   p.fst-italic Logging off&hellip;
 </template>

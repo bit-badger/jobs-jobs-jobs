@@ -1,7 +1,6 @@
 /// Route handlers for Giraffe endpoints
 module JobsJobsJobs.Api.Handlers
 
-open FSharp.Control.Tasks
 open Giraffe
 open JobsJobsJobs.Domain
 open JobsJobsJobs.Domain.SharedTypes
@@ -288,7 +287,7 @@ module Listing =
   // PATCH: /api/listing/[id]
   let expire listingId : HttpHandler =
     authorize
-    >=> fun next ctx -> task {
+    >=> fun next ctx -> FSharp.Control.Tasks.Affine.task {
       let dbConn = conn ctx
       let now    = clock(ctx).GetCurrentInstant ()
       match! Data.Listing.findById (ListingId listingId) dbConn with
@@ -309,8 +308,7 @@ module Listing =
           | None -> ()
           return! ok next ctx
       | None -> return! Error.notFound next ctx
-
-    }
+      }
 
   // GET: /api/listing/search
   let search : HttpHandler =

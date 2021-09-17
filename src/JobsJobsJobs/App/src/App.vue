@@ -10,11 +10,12 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue"
+import { defineComponent, onMounted } from "vue"
 
 import "bootstrap/dist/css/bootstrap.min.css"
 
 import { Citizen } from "./api"
+import { Mutations, useStore } from "./store"
 import AppFooter from "./components/layout/AppFooter.vue"
 import AppNav from "./components/layout/AppNav.vue"
 import AppToaster from "./components/layout/AppToaster.vue"
@@ -28,6 +29,10 @@ export default defineComponent({
     TitleBar
   }
 })
+
+const store = useStore()
+
+onMounted(() => store.commit(Mutations.SetTitle, "Jobs, Jobs, Jobs"))
 
 /**
  * Return "Yes" for true and "No" for false

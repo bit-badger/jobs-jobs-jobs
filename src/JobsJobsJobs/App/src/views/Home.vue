@@ -1,6 +1,5 @@
 <template lang="pug">
 article
-  page-title(title="Welcome!")
   p &nbsp;
   p.
     Welcome to Jobs, Jobs, Jobs (AKA No Agenda Careers), where citizens of Gitmo Nation can assist one another in
