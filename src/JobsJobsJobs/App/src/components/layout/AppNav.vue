@@ -32,10 +32,14 @@ aside
   min-width: 250px
   position: sticky
   top: 0
-.home-link
-  font-size: 1.2rem
-  text-align: center
-  background-color: rgba(0, 0, 0, .4)
-  margin: -1rem
-  padding: 1rem
+  .home-link
+    font-size: 1.2rem
+    text-align: center
+    background-color: rgba(0, 0, 0, .4)
+    margin: -1rem
+    padding: 1rem
+  a:link,
+  a:visited
+    text-decoration: none
+    color: white
 </style>

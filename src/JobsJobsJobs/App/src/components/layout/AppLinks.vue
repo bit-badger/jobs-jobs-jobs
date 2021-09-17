@@ -59,7 +59,6 @@ path:hover
 a:link, a:visited
   text-decoration: none
   color: white
-  // font-weight: 500
 nav > a
   display: block
   width: 100%
