@@ -2,7 +2,7 @@ module.exports = {
   transpileDependencies: [
     'vuetify'
   ],
-  outputDir: '../Api/wwwroot',
+  outputDir: '../Server/wwwroot',
   configureWebpack: {
     module: {
       rules: [{

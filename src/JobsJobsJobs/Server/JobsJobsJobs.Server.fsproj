@@ -14,7 +14,7 @@
   </ItemGroup>
   
   <ItemGroup>
-    <ProjectReference Include="..\Domain\Domain.fsproj" />
+    <ProjectReference Include="..\Domain\JobsJobsJobs.Domain.fsproj" />
   </ItemGroup>
 
   <ItemGroup>

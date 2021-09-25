@@ -13,9 +13,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "JobsJobsJobs", "JobsJobsJobs", "{FA833B24-B8F6-4CE6-A044-99257EAC02FF}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Domain", "JobsJobsJobs\Domain\Domain.fsproj", "{C81278DA-DA97-4E55-AB39-4B88565B615D}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Domain", "JobsJobsJobs\Domain\JobsJobsJobs.Domain.fsproj", "{C81278DA-DA97-4E55-AB39-4B88565B615D}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Api", "JobsJobsJobs\Api\Api.fsproj", "{8F5A3D1E-562B-4F27-9787-6CB14B35E69E}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Api", "JobsJobsJobs\Server\JobsJobsJobs.Server.fsproj", "{8F5A3D1E-562B-4F27-9787-6CB14B35E69E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -1,13 +1,13 @@
 {
   "name": "jobs-jobs-jobs",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
-    "apiserve": "vue-cli-service build && cd ../Api && dotnet run -c Debug",
-    "publish": "vue-cli-service build --modern && cd ../Api && dotnet publish -c Release -r linux-x64 -p:PublishSingleFile=true --self-contained false"
+    "apiserve": "vue-cli-service build && cd ../Server && dotnet run -c Debug",
+    "publish": "vue-cli-service build --modern && cd ../Server && dotnet publish -c Release -r linux-x64 -p:PublishSingleFile=true --self-contained false"
   },
   "dependencies": {
     "@mdi/js": "^5.9.55",
