@@ -29,7 +29,10 @@ open System.Text.Json
 open JobsJobsJobs.Domain.SharedTypes
 
 /// HTTP client to use to communication with Mastodon
-let private http = new HttpClient()
+let private http =
+  let h = new HttpClient ()
+  h.Timeout <- TimeSpan.FromSeconds 30.
+  h
 
 /// Verify the authorization code with Mastodon and get the user's profile
 let verifyWithMastodon (authCode : string) (inst : MastodonInstance) rtnHost (log : ILogger) = task {
