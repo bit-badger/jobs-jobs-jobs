@@ -79,15 +79,19 @@ type Count =
 /// An instance of a Mastodon server which is configured to work with Jobs, Jobs, Jobs
 type MastodonInstance () =
     /// The name of the instance
-    member val Name     = "" with get, set
+    member val Name      = ""   with get, set
     /// The URL for this instance
-    member val Url      = "" with get, set
+    member val Url       = ""   with get, set
     /// The abbreviation used in the URL to distinguish this instance's return codes
-    member val Abbr     = "" with get, set
+    member val Abbr      = ""   with get, set
     /// The client ID (assigned by the Mastodon server)
-    member val ClientId = "" with get, set
+    member val ClientId  = ""   with get, set
     /// The cryptographic secret (provided by the Mastodon server)
-    member val Secret   = "" with get, set
+    member val Secret    = ""   with get, set
+    /// Whether the instance is currently enabled
+    member val IsEnabled = true with get, set
+    /// If an instance is disabled, the reason for it being disabled
+    member val Reason    = ""   with get, set
 
 
 /// The authorization options for Jobs, Jobs, Jobs
@@ -105,13 +109,17 @@ type AuthOptions () =
 /// The Mastodon instance data provided via the Jobs, Jobs, Jobs API
 type Instance =
     {   /// The name of the instance
-        name     : string
+        name      : string
         /// The URL for this instance
-        url      : string
+        url       : string
         /// The abbreviation used in the URL to distinguish this instance's return codes
-        abbr     : string
+        abbr      : string
         /// The client ID (assigned by the Mastodon server)
-        clientId : string
+        clientId  : string
+        /// Whether this instance is currently enabled
+        isEnabled : bool
+        /// If not enabled, the reason the instance is disabled
+        reason    : string
     }
 
 

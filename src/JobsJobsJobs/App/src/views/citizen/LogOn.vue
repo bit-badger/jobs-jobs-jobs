@@ -5,7 +5,10 @@ article
   template(v-else)
     p.text-center Please select your No Agenda-affiliated Mastodon instance
     p.text-center(v-for="it in instances" :key="it.abbr")
-      button.btn.btn-primary(@click.prevent="select(it.abbr)") {{it.name}}
+      template(v-if="it.isEnabled")
+        button.btn.btn-primary(@click.prevent="select(it.abbr)") {{it.name}}
+      template(v-else).
+        #[button.btn.btn-secondary(disabled="disabled") {{it.name}}]#[br]#[em {{it.reason}}]
 </template>
 
 <script setup lang="ts">

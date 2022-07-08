@@ -28,7 +28,9 @@
     <PackageReference Include="NodaTime.Serialization.JsonNet" Version="3.0.0" />
     <PackageReference Include="Polly" Version="7.2.2" />
     <PackageReference Include="RethinkDb.Driver" Version="2.3.150" />
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.11.1" />
+    <PackageReference Include="RethinkDb.Driver.FSharp" Version="0.9.0-beta-05" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.21.0" />
+    <PackageReference Update="FSharp.Core" Version="6.0.5" />
   </ItemGroup>
 
 </Project>

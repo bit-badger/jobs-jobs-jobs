@@ -63,7 +63,7 @@ let configureServices (svc : IServiceCollection) =
     svc.Configure<AuthOptions> (cfg.GetSection "Auth") |> ignore
     
     let dbCfg = cfg.GetSection "Rethink"
-    let log   = svcs.GetRequiredService<ILoggerFactory>().CreateLogger (nameof Data.Startup)
+    let log   = svcs.GetRequiredService<ILoggerFactory>().CreateLogger "JobsJobsJobs.Api.Data.Startup"
     let conn  = Data.Startup.createConnection dbCfg log
     svc.AddSingleton conn |> ignore
     Data.Startup.establishEnvironment dbCfg log conn |> Data.awaitIgnore

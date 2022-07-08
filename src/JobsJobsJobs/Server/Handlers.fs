@@ -182,11 +182,13 @@ module Instances =
 
     /// Convert a Mastodon instance to the one we use in the API
     let private toInstance (inst : MastodonInstance) =
-        { name     = inst.Name
-          url      = inst.Url
-          abbr     = inst.Abbr
-          clientId = inst.ClientId
-          }
+        { name      = inst.Name
+          url       = inst.Url
+          abbr      = inst.Abbr
+          clientId  = inst.ClientId
+          isEnabled = inst.IsEnabled
+          reason    = inst.Reason
+        }
 
     // GET: /api/instances
     let all : HttpHandler = fun next ctx -> task {
