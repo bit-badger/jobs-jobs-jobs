@@ -5,9 +5,7 @@
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint",
-    "apiserve": "vue-cli-service build && cd ../Server && dotnet run -c Debug",
-    "publish": "vue-cli-service build --modern && cd ../Server && dotnet publish -c Release -r linux-x64 -p:PublishSingleFile=true --self-contained false"
+    "lint": "vue-cli-service lint"
   },
   "dependencies": {
     "@mdi/js": "^5.9.55",
