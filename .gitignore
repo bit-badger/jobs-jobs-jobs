@@ -4,3 +4,4 @@ src/**/bin
 src/**/obj
 src/**/appsettings.*.json
 src/.vs
+src/.idea
