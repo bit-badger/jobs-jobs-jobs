@@ -43,6 +43,10 @@ export interface Instance {
   abbr : string
   /** The client ID (assigned by the Mastodon server) */
   clientId : string
+  /** Whether this instance is enabled */
+  isEnabled : boolean
+  /** If disabled, the reason why it is disabled */
+  reason : string
 }
 
 /** A job listing */

@@ -21,6 +21,7 @@ module.exports = {
     "no-console": process.env.NODE_ENV === "production" ? "warn" : "off",
     "no-debugger": process.env.NODE_ENV === "production" ? "warn" : "off",
     "vue/no-multiple-template-root": "off",
+    "vue/multi-word-component-names": "off",
     "vue/script-setup-uses-vars": 1,
     "quotes": ["error", "double", { avoidEscape: true, allowTemplateLiterals: true }],
     "func-call-spacing": "off",
