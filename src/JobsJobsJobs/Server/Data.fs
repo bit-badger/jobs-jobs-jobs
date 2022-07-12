@@ -31,8 +31,7 @@ module Converters =
     type MarkdownStringJsonConverter() =
         inherit JsonConverter<MarkdownString>()
         override _.WriteJson(writer : JsonWriter, value : MarkdownString, _ : JsonSerializer) =
-            let (Text text) = value
-            writer.WriteValue text
+            writer.WriteValue (MarkdownString.toString value)
         override _.ReadJson(reader: JsonReader, _ : Type, _ : MarkdownString, _ : bool, _ : JsonSerializer) =
             (string >> Text) reader.Value
 
@@ -75,16 +74,22 @@ module Converters =
 /// Table names
 [<RequireQualifiedAccess>]
 module Table =
+    
     /// The user (citizen of Gitmo Nation) table
     let Citizen = "citizen"
+    
     /// The continent table
     let Continent = "continent"
+    
     /// The job listing table
     let Listing = "listing"
+    
     /// The citizen employment profile table
     let Profile = "profile"
+    
     /// The success story table
     let Success = "success"
+    
     /// All tables
     let all () = [ Citizen; Continent; Listing; Profile; Success ]
 
@@ -166,7 +171,7 @@ module Startup =
         let! userIdx = fromTable Table.Citizen |> indexList |> result<string list> conn
         if not (List.contains "instanceUser" userIdx) then
             do! fromTable Table.Citizen
-                |> indexCreateFunc "instanceUser" (fun row -> r.Array (row.G "instance", row.G "mastodonUser"))
+                |> indexCreateFunc "instanceUser" (fun row -> [| row.G "instance"; row.G "mastodonUser" |])
                 |> write conn
     }
 
@@ -175,7 +180,21 @@ open JobsJobsJobs.Domain
 open JobsJobsJobs.Domain.SharedTypes
 
 /// Sanitize user input, and create a "contains" pattern for use with RethinkDB queries
-let regexContains = System.Text.RegularExpressions.Regex.Escape >> sprintf "(?i)%s"
+let private regexContains = System.Text.RegularExpressions.Regex.Escape >> sprintf "(?i)%s"
+
+/// Apply filters to a query, ensuring that types all match up
+let private applyFilters (filters : (ReqlExpr -> Filter) list) query : ReqlExpr =
+    if List.isEmpty filters then
+        query
+    else
+        let first = List.head filters query
+        List.fold (fun q (f : ReqlExpr -> Filter) -> f q) first (List.tail filters)
+
+/// Derive a user's display name from real name, display name, or handle (in that order)
+let private deriveDisplayName (it : ReqlExpr) =
+    r.Branch (it.G("realName"   ).Default_("").Ne "", it.G "realName",
+              it.G("displayName").Default_("").Ne "", it.G "displayName",
+                                                      it.G "mastodonUser")
 
 /// Profile data access functions
 [<RequireQualifiedAccess>]
@@ -209,75 +228,62 @@ module Profile =
   
     /// Search profiles (logged-on users)
     let search (search : ProfileSearch) conn =
-        (seq<ReqlExpr -> ReqlExpr> {
-            match search.continentId with
-            | Some cId -> yield (fun q -> q.Filter (r.HashMap (nameof search.continentId, ContinentId.ofString cId)))
-            | None -> ()
-            match search.remoteWork with
-            | "" -> ()
-            | _ -> yield (fun q -> q.Filter (r.HashMap (nameof search.remoteWork, search.remoteWork = "yes")))
-            match search.skill with
-            | Some skl ->
-                yield (fun q -> q.Filter (ReqlFunction1(fun it ->
-                    it.G("skills").Contains (ReqlFunction1(fun s -> s.G("description").Match (regexContains skl))))))
-            | None -> ()
-            match search.bioExperience with
-            | Some text ->
-                let txt = regexContains text
-                yield (fun q -> q.Filter (ReqlFunction1(fun it ->
-                    it.G("biography").Match(txt).Or (it.G("experience").Match txt))))
-            | None -> ()
-        }
-        |> Seq.toList
-        |> List.fold
-            (fun q f -> f q)
-            (r.Table(Table.Profile)
-                .EqJoin("id", r.Table Table.Citizen)
-                .Without(r.HashMap ("right", "id"))
-                .Zip () :> ReqlExpr))
-        |> mergeFunc (fun it ->
-            r.HashMap("displayName",
-                r.Branch (it.G("realName"   ).Default_("").Ne "", it.G "realName",
-                          it.G("displayName").Default_("").Ne "", it.G "displayName",
-                                                                  it.G "mastodonUser"))
-                .With ("citizenId", it.G "id"))
+        fromTable Table.Profile
+        |> eqJoin "id" (fromTable Table.Citizen)
+        |> without [ "right.id" ]
+        |> zip
+        |> applyFilters
+            [ match search.continentId with
+              | Some contId -> yield filter {| continentId = ContinentId.ofString contId |}
+              | None -> ()
+              match search.remoteWork with
+              | "" -> ()
+              | _ -> yield filter {| remoteWork = search.remoteWork = "yes" |}
+              match search.skill with
+              | Some skl ->
+                  yield filterFunc (fun it ->
+                      it.G("skills").Contains (ReqlFunction1 (fun s -> s.G("description").Match (regexContains skl))))
+              | None -> ()
+              match search.bioExperience with
+              | Some text ->
+                  let txt = regexContains text
+                  yield filterFunc (fun it -> it.G("biography").Match(txt).Or (it.G("experience").Match txt))
+              | None -> ()
+            ]
+        |> mergeFunc (fun it -> {| displayName = deriveDisplayName it; citizenId = it.G "id" |})
         |> pluck [ "citizenId"; "displayName"; "seekingEmployment"; "remoteWork"; "fullTime"; "lastUpdatedOn" ]
         |> orderByFunc (fun it -> it.G("displayName").Downcase ())
         |> result<ProfileSearchResult list> conn
 
     // Search profiles (public)
     let publicSearch (search : PublicSearch) conn =
-        (seq<ReqlExpr -> ReqlExpr> {
-            match search.continentId with
-            | Some cId -> yield (fun q -> q.Filter (r.HashMap (nameof search.continentId, ContinentId.ofString cId)))
-            | None -> ()
-            match search.region with
-            | Some reg ->
-                yield (fun q -> q.Filter (ReqlFunction1 (fun it -> upcast it.G("region").Match (regexContains reg))))
-            | None -> ()
-            match search.remoteWork with
-            | "" -> ()
-            | _ -> yield (fun q -> q.Filter (r.HashMap (nameof search.remoteWork, search.remoteWork = "yes")))
-            match search.skill with
-            | Some skl ->
-                yield (fun q -> q.Filter (ReqlFunction1 (fun it ->
-                    it.G("skills").Contains (ReqlFunction1(fun s -> s.G("description").Match (regexContains skl))))))
-            | None -> ()
-        }
-        |> Seq.toList
-        |> List.fold
-            (fun q f -> f q)
-            (r.Table(Table.Profile)
-                .EqJoin("continentId", r.Table Table.Continent)
-                .Without(r.HashMap ("right", "id"))
-                .Zip()
-                .Filter(r.HashMap ("isPublic", true))))
+        fromTable Table.Profile
+        |> eqJoin "continentId" (fromTable Table.Continent)
+        |> without [ "right.id" ]
+        |> zip
+        |> applyFilters
+            [ yield filter {| isPublic = true |}
+              match search.continentId with
+              | Some contId -> yield filter {| continentId = ContinentId.ofString contId |}
+              | None -> ()
+              match search.region with
+              | Some reg -> yield filterFunc (fun it -> it.G("region").Match (regexContains reg))
+              | None -> ()
+              match search.remoteWork with
+              | "" -> ()
+              | _ -> yield filter {| remoteWork = search.remoteWork = "yes" |}
+              match search.skill with
+              | Some skl ->
+                  yield filterFunc (fun it ->
+                      it.G("skills").Contains (ReqlFunction1 (fun s -> s.G("description").Match (regexContains skl))))
+              | None -> ()
+            ]
         |> mergeFunc (fun it ->
-            r.HashMap("skills", 
-                it.G("skills").Map (ReqlFunction1 (fun skill ->
-                    r.Branch(skill.G("notes").Default_("").Eq "", skill.G "description",
-                             skill.G("description").Add(" (").Add(skill.G("notes")).Add ")"))))
-                .With("continent", it.G "name"))
+            {|  skills    = it.G("skills").Map (ReqlFunction1 (fun skill ->
+                                r.Branch(skill.G("notes").Default_("").Eq "", skill.G "description",
+                                         skill.G("description").Add(" (").Add(skill.G("notes")).Add ")")))
+                continent = it.G "name"
+            |})
         |> pluck [ "continent"; "region"; "skills"; "remoteWork" ]
         |> result<PublicSearchResult list> conn
 
@@ -295,7 +301,7 @@ module Citizen =
     let findByMastodonUser (instance : string) (mastodonUser : string) conn = task {
         let! u =
             fromTable Table.Citizen
-            |> getAllWithIndex [ r.Array (instance, mastodonUser) ] "instanceUser"
+            |> getAllWithIndex [ [| instance; mastodonUser |] ] "instanceUser"
             |> limit 1
             |> result<Citizen list> conn
         return List.tryHead u
@@ -311,8 +317,7 @@ module Citizen =
     let logOnUpdate (citizen : Citizen) conn =
         fromTable Table.Citizen
         |> get citizen.id
-        |> update (r.HashMap( nameof citizen.displayName, citizen.displayName)
-                       .With (nameof citizen.lastSeenOn,  citizen.lastSeenOn))
+        |> update {| displayName = citizen.displayName; lastSeenOn = citizen.lastSeenOn |}
         |> write conn
   
     /// Delete a citizen
@@ -336,7 +341,7 @@ module Citizen =
     let realNameUpdate (citizenId : CitizenId) (realName : string option) conn =
         fromTable Table.Citizen
         |> get citizenId
-        |> update (r.HashMap (nameof realName, realName))
+        |> update {| realName = realName |}
         |> write conn
 
 
@@ -362,12 +367,15 @@ module Listing =
 
     open NodaTime
 
+    /// Convert a joined query to the form needed for ListingForView deserialization
+    let private toListingForView (it : ReqlExpr) : obj = {| listing = it.G "left"; continent = it.G "right" |}
+    
     /// Find all job listings posted by the given citizen
     let findByCitizen (citizenId : CitizenId) conn =
         fromTable Table.Listing
         |> getAllWithIndex [ citizenId ] (nameof citizenId)
         |> eqJoin "continentId" (fromTable Table.Continent)
-        |> mapFunc (fun it -> r.HashMap("listing", it.G "left").With ("continent", it.G "right"))
+        |> mapFunc toListingForView
         |> result<ListingForView list> conn
   
     /// Find a listing by its ID
@@ -380,9 +388,9 @@ module Listing =
     let findByIdForView (listingId : ListingId) conn = task {
         let! listing =
             fromTable Table.Listing
-            |> filter (r.HashMap ("id", listingId))
+            |> filter {| id = listingId |}
             |> eqJoin "continentId" (fromTable Table.Continent)
-            |> mapFunc (fun it -> r.HashMap("listing", it.G "left").With ("continent", it.G "right"))
+            |> mapFunc toListingForView
             |> result<ListingForView list> conn
         return List.tryHead listing
     }
@@ -404,36 +412,29 @@ module Listing =
     let expire (listingId : ListingId) (fromHere : bool) (now : Instant) conn =
         (fromTable Table.Listing
          |> get listingId)
-            .Update (r.HashMap("isExpired", true).With("wasFilledHere", fromHere).With ("updatedOn", now))
+            .Update {| isExpired = true; wasFilledHere = fromHere; updatedOn = now |}
         |> write conn
 
     /// Search job listings
     let search (search : ListingSearch) conn =
-        (seq<ReqlExpr -> ReqlExpr> {
-            match search.continentId with
-            | Some cId -> yield (fun q -> q.Filter (r.HashMap (nameof search.continentId, ContinentId.ofString cId)))
-            | None -> ()
-            match search.region with
-            | Some rgn ->
-                yield (fun q ->
-                    q.Filter (ReqlFunction1 (fun it -> it.G(nameof search.region).Match (regexContains rgn))))
-            | None -> ()
-            match search.remoteWork with
-            | "" -> ()
-            | _ -> yield (fun q -> q.Filter (r.HashMap (nameof search.remoteWork, search.remoteWork = "yes")))
-            match search.text with
-            | Some text ->
-                yield (fun q ->
-                    q.Filter (ReqlFunction1 (fun it -> it.G(nameof search.text).Match (regexContains text))))
-            | None -> ()
-        }
-        |> Seq.toList
-        |> List.fold
-            (fun q f -> f q)
-            (fromTable Table.Listing
-             |> getAllWithIndex [ false ] "isExpired" :> ReqlExpr))
+        fromTable Table.Listing
+        |> getAllWithIndex [ false ] "isExpired"
+        |> applyFilters
+            [ match search.continentId with
+              | Some contId -> yield filter {| continentId = ContinentId.ofString contId |}
+              | None -> ()
+              match search.region with
+              | Some rgn -> yield filterFunc (fun it -> it.G(nameof search.region).Match (regexContains rgn))
+              | None -> ()
+              match search.remoteWork with
+              | "" -> ()
+              | _ -> yield filter {| remoteWork = search.remoteWork = "yes" |}
+              match search.text with
+              | Some text -> yield filterFunc (fun it -> it.G(nameof search.text).Match (regexContains text))
+              | None -> ()
+            ]
         |> eqJoin "continentId" (fromTable Table.Continent)
-        |> mapFunc (fun it -> r.HashMap("listing", it.G "left").With ("continent", it.G "right"))
+        |> mapFunc toListingForView
         |> result<ListingForView list> conn
 
 
@@ -456,16 +457,11 @@ module Success =
 
     // Retrieve all success stories  
     let all conn =
-        (fromTable Table.Success
-         |> eqJoin "citizenId" (fromTable Table.Citizen))
-            .Without(r.HashMap ("right", "id"))
+        fromTable Table.Success
+        |> eqJoin "citizenId" (fromTable Table.Citizen)
+        |> without [ "right.id" ]
         |> zip
-        |> mergeFunc (fun it ->
-            r.HashMap("citizenName",
-                r.Branch(it.G("realName"   ).Default_("").Ne "", it.G "realName",
-                         it.G("displayName").Default_("").Ne "", it.G "displayName",
-                                                                 it.G "mastodonUser"))
-                .With ("hasStory", it.G("story").Default_("").Gt ""))
+        |> mergeFunc (fun it -> {| citizenName = deriveDisplayName it; hasStory = it.G("story").Default_("").Gt "" |})
         |> pluck [ "id"; "citizenId"; "citizenName"; "recordedOn"; "fromHere"; "hasStory" ]
         |> orderByDescending "recordedOn"
         |> result<StoryEntry list> conn
