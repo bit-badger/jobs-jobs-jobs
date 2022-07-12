@@ -1,5 +1,5 @@
 import { sanitize } from "dompurify"
-import marked from "marked"
+import { marked } from "marked"
 
 /**
  * Transform Markdown to HTML (standardize option, sanitize the output)

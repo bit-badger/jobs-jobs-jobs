@@ -27,9 +27,9 @@ Target.create "Clean" (fun _ ->
 )
 
 Target.create "BuildClient" (fun _ ->
-    let inClientPath (opts : Npm.NpmParams) = { opts with WorkingDirectory = clientPath }
-    Npm.install         inClientPath
-    Npm.run     "build" inClientPath
+    let inClientPath (opts : Npm.NpmParams) = { opts with WorkingDirectory = clientPath;  }
+    Npm.exec "i --legacy-peer-deps" inClientPath
+    Npm.run  "build"                inClientPath
 )
 
 Target.create "BuildServer" (fun _ ->
