@@ -2,17 +2,6 @@
 module JobsJobsJobs.Api.Data
 
 open JobsJobsJobs.Domain.Types
-open Polly
-open RethinkDb.Driver
-open RethinkDb.Driver.Net
-open RethinkDb.Driver.Ast
-
-/// Shorthand for the RethinkDB R variable (how every command starts)
-let private r = RethinkDB.R
-
-/// Shorthand for await task / run sync / ignore (used in non-async contexts)
-let awaitIgnore x = x |> Async.AwaitTask |> Async.RunSynchronously |> ignore
-
 
 /// JSON converters used with RethinkDB persistence
 module Converters =
@@ -100,6 +89,28 @@ module Table =
     let all () = [ Citizen; Continent; Listing; Profile; Success ]
 
 
+open RethinkDb.Driver.FSharp.Functions
+open RethinkDb.Driver.Net
+
+/// Reconnection functions (if the RethinkDB driver has a network error, it will not reconnect on its own)
+[<AutoOpen>]
+module private Reconnect =
+  
+    /// Retrieve a result using the F# driver's default retry policy
+    let result<'T> conn expr = runResult<'T> expr |> withRetryDefault |> withConn conn
+    
+    /// Retrieve an optional result using the F# driver's default retry policy
+    let resultOption<'T> conn expr = runResult<'T> expr |> withRetryDefault |> asOption |> withConn conn
+    
+    /// Write a query using the F# driver's default retry policy, ignoring the result
+    let write conn expr = runWrite expr |> withRetryDefault |> ignoreResult |> withConn conn
+    
+
+open RethinkDb.Driver.Ast
+
+/// Shorthand for the RethinkDB R variable (how every command starts)
+let private r = RethinkDb.Driver.RethinkDB.R
+
 /// Functions run at startup
 [<RequireQualifiedAccess>]
 module Startup =
@@ -108,156 +119,93 @@ module Startup =
     open Microsoft.Extensions.Logging
     open NodaTime
     open NodaTime.Serialization.JsonNet
-  
+    open RethinkDb.Driver.FSharp
+    
     /// Create a RethinkDB connection
     let createConnection (cfg : IConfigurationSection) (log : ILogger) =
-    
         // Add all required JSON converters
         Converter.Serializer.ConfigureForNodaTime DateTimeZoneProviders.Tzdb |> ignore
         Converters.all ()
         |> List.iter Converter.Serializer.Converters.Add
-        // Read the configuration and create a connection
-        let bldr =
-          seq<Connection.Builder -> Connection.Builder> {
-            yield fun b -> match cfg["Hostname"] with null -> b | host -> b.Hostname host
-            yield fun b -> match cfg["Port"]     with null -> b | port -> (int >> b.Port) port
-            yield fun b -> match cfg["AuthKey"]  with null -> b | key  -> b.AuthKey key
-            yield fun b -> match cfg["Db"]       with null -> b | db   -> b.Db db
-            yield fun b -> match cfg["Timeout"]  with null -> b | time -> (int >> b.Timeout) time
-            }
-          |> Seq.fold (fun b step -> step b) (r.Connection ())
-        match log.IsEnabled LogLevel.Debug with
-        | true -> log.LogDebug $"RethinkDB: Connecting to {bldr.Hostname}:{bldr.Port}, database {bldr.Db}"
-        | false -> ()
-        bldr.Connect () :> IConnection
+        // Connect to the database
+        let config = DataConfig.FromConfiguration cfg
+        log.LogInformation $"Connecting to rethinkdb://{config.Hostname}:{config.Port}/{config.Database}"
+        config.CreateConnection ()
 
     /// Ensure the data, tables, and indexes that are required exist
     let establishEnvironment (cfg : IConfigurationSection) (log : ILogger) conn = task {
         // Ensure the database exists
-        match cfg["Db"] |> Option.ofObj with
+        match cfg["database"] |> Option.ofObj with
         | Some database ->
-            let! dbs = r.DbList().RunResultAsync<string list> conn
+            let! dbs = dbList () |> result<string list> conn
             match dbs |> List.contains database with
             | true -> ()
             | false ->
                 log.LogInformation $"Creating database {database}..."
-                let! _ = r.DbCreate(database).RunWriteAsync conn
+                do! dbCreate database |> write conn
                 ()
         | None -> ()
         // Ensure the tables exist
-        let! tables = r.TableList().RunResultAsync<string list> conn
-        Table.all ()
-        |> List.iter (
-            fun tbl ->
-                match tables |> List.contains tbl with
-                | true -> ()
-                | false ->
-                    log.LogInformation $"Creating {tbl} table..."
-                    r.TableCreate(tbl).RunWriteAsync conn |> awaitIgnore)
+        let! tables = tableListFromDefault () |> result<string list> conn
+        for table in Table.all () do
+            if not (List.contains table tables) then
+                log.LogInformation $"Creating {table} table..."
+                do! tableCreateInDefault table |> write conn
         // Ensure the indexes exist
         let ensureIndexes table indexes = task {
-          let! tblIdxs = r.Table(table).IndexList().RunResultAsync<string list> conn
-          indexes
-          |> List.iter (
-              fun idx ->
-                  match tblIdxs |> List.contains idx with
-                  | true -> ()
-                  | false ->
-                      log.LogInformation $"Creating \"{idx}\" index on {table}"
-                      r.Table(table).IndexCreate(idx).RunWriteAsync conn |> awaitIgnore)
-          }
+            let! tblIndexes = fromTable table |> indexList |> result<string list> conn
+            for index in indexes do
+                if not (List.contains index tblIndexes) then
+                    log.LogInformation $"Creating \"{index}\" index on {table}"
+                    do! fromTable table |> indexCreate index |> write conn
+        }
         do! ensureIndexes Table.Listing [ "citizenId"; "continentId"; "isExpired" ]
         do! ensureIndexes Table.Profile [ "continentId" ]
         do! ensureIndexes Table.Success [ "citizenId" ]
         // The instance/user is a compound index
-        let! userIdx = r.Table(Table.Citizen).IndexList().RunResultAsync<string list> conn
-        match userIdx |> List.contains "instanceUser" with
-        | true -> ()
-        | false ->
-            let! _ =
-              r.Table(Table.Citizen)
-                .IndexCreate("instanceUser",
-                    ReqlFunction1 (fun row -> upcast r.Array (row.G "instance", row.G "mastodonUser")))
-                .RunWriteAsync conn
-            ()
+        let! userIdx = fromTable Table.Citizen |> indexList |> result<string list> conn
+        if not (List.contains "instanceUser" userIdx) then
+            do! fromTable Table.Citizen
+                |> indexCreateFunc "instanceUser" (fun row -> r.Array (row.G "instance", row.G "mastodonUser"))
+                |> write conn
     }
 
 
-/// Determine if a record type (not nullable) is null
-let toOption x = match x |> box |> isNull with true -> None | false -> Some x
-
-[<AutoOpen>]
-module private Reconnect =
-  
-    open System.Threading.Tasks
-
-    /// Execute a query with a retry policy that will reconnect to RethinkDB if it has gone away
-    let withReconn (conn : IConnection) (f : IConnection -> Task<'T>)  = 
-        Policy
-            .Handle<ReqlDriverError>()
-            .RetryAsync(System.Action<exn, int> (fun ex _ ->
-                printf "Encountered RethinkDB exception: %s" ex.Message
-                match ex.Message.Contains "socket" with
-                | true ->
-                    printf "Reconnecting to RethinkDB"
-                    (conn :?> Connection).Reconnect false
-                | false -> ()))
-            .ExecuteAsync(fun () -> f conn)
-
-    /// Execute a query that returns one or none item, using the reconnect logic
-    let withReconnOption (conn : IConnection) (f : IConnection -> Task<'T>) =
-        fun c -> task {
-            let! it = f c
-            return toOption it
-        }
-        |> withReconn conn
-
-    /// Execute a query that does not return a result, using the above reconnect logic
-    let withReconnIgnore (conn : IConnection) (f : IConnection -> Task<'T>) =
-        fun c -> task {
-          let! _ = f c
-          ()
-        }
-        |> withReconn conn
+open JobsJobsJobs.Domain
+open JobsJobsJobs.Domain.SharedTypes
 
 /// Sanitize user input, and create a "contains" pattern for use with RethinkDB queries
 let regexContains = System.Text.RegularExpressions.Regex.Escape >> sprintf "(?i)%s"
-
-open JobsJobsJobs.Domain
-open JobsJobsJobs.Domain.SharedTypes
 
 /// Profile data access functions
 [<RequireQualifiedAccess>]
 module Profile =
 
+    /// Count the current profiles
     let count conn =
-        r.Table(Table.Profile)
-            .Count()
-            .RunResultAsync<int64>
-        |> withReconn conn
+        fromTable Table.Profile
+        |> count
+        |> result<int64> conn
 
     /// Find a profile by citizen ID
     let findById (citizenId : CitizenId) conn =
-        r.Table(Table.Profile)
-            .Get(citizenId)
-            .RunResultAsync<Profile>
-        |> withReconnOption conn
+        fromTable Table.Profile
+        |> get citizenId
+        |> resultOption<Profile> conn
   
     /// Insert or update a profile
     let save (profile : Profile) conn =
-        r.Table(Table.Profile)
-            .Get(profile.id)
-            .Replace(profile)
-            .RunWriteAsync
-        |> withReconnIgnore conn
+        fromTable Table.Profile
+        |> get profile.id
+        |> replace profile
+        |> write conn
   
     /// Delete a citizen's profile
     let delete (citizenId : CitizenId) conn =
-        r.Table(Table.Profile)
-            .Get(citizenId)
-            .Delete()
-            .RunWriteAsync
-        |> withReconnIgnore conn
+        fromTable Table.Profile
+        |> get citizenId
+        |> delete
+        |> write conn
   
     /// Search profiles (logged-on users)
     let search (search : ProfileSearch) conn =
@@ -287,32 +235,30 @@ module Profile =
                 .EqJoin("id", r.Table Table.Citizen)
                 .Without(r.HashMap ("right", "id"))
                 .Zip () :> ReqlExpr))
-            .Merge(ReqlFunction1 (fun it ->
-                upcast r
-                    .HashMap("displayName",
-                        r.Branch (it.G("realName"   ).Default_("").Ne "", it.G "realName",
-                                  it.G("displayName").Default_("").Ne "", it.G "displayName",
-                                                                          it.G "mastodonUser"))
-                    .With ("citizenId", it.G "id")))
-            .Pluck("citizenId", "displayName", "seekingEmployment", "remoteWork", "fullTime", "lastUpdatedOn")
-            .OrderBy(ReqlFunction1 (fun it -> upcast it.G("displayName").Downcase ()))
-            .RunResultAsync<ProfileSearchResult list>
-        |> withReconn conn
+        |> mergeFunc (fun it ->
+            r.HashMap("displayName",
+                r.Branch (it.G("realName"   ).Default_("").Ne "", it.G "realName",
+                          it.G("displayName").Default_("").Ne "", it.G "displayName",
+                                                                  it.G "mastodonUser"))
+                .With ("citizenId", it.G "id"))
+        |> pluck [ "citizenId"; "displayName"; "seekingEmployment"; "remoteWork"; "fullTime"; "lastUpdatedOn" ]
+        |> orderByFunc (fun it -> it.G("displayName").Downcase ())
+        |> result<ProfileSearchResult list> conn
 
     // Search profiles (public)
-    let publicSearch (srch : PublicSearch) conn =
+    let publicSearch (search : PublicSearch) conn =
         (seq<ReqlExpr -> ReqlExpr> {
-            match srch.continentId with
-            | Some cId -> yield (fun q -> q.Filter (r.HashMap (nameof srch.continentId, ContinentId.ofString cId)))
+            match search.continentId with
+            | Some cId -> yield (fun q -> q.Filter (r.HashMap (nameof search.continentId, ContinentId.ofString cId)))
             | None -> ()
-            match srch.region with
+            match search.region with
             | Some reg ->
                 yield (fun q -> q.Filter (ReqlFunction1 (fun it -> upcast it.G("region").Match (regexContains reg))))
             | None -> ()
-            match srch.remoteWork with
+            match search.remoteWork with
             | "" -> ()
-            | _ -> yield (fun q -> q.Filter (r.HashMap (nameof srch.remoteWork, srch.remoteWork = "yes")))
-            match srch.skill with
+            | _ -> yield (fun q -> q.Filter (r.HashMap (nameof search.remoteWork, search.remoteWork = "yes")))
+            match search.skill with
             | Some skl ->
                 yield (fun q -> q.Filter (ReqlFunction1 (fun it ->
                     it.G("skills").Contains (ReqlFunction1(fun s -> s.G("description").Match (regexContains skl))))))
@@ -326,16 +272,14 @@ module Profile =
                 .Without(r.HashMap ("right", "id"))
                 .Zip()
                 .Filter(r.HashMap ("isPublic", true))))
-            .Merge(ReqlFunction1 (fun it ->
-                upcast r
-                    .HashMap("skills", 
-                        it.G("skills").Map (ReqlFunction1 (fun skill ->
-                            upcast r.Branch(skill.G("notes").Default_("").Eq "", skill.G "description",
-                                            skill.G("description").Add(" (").Add(skill.G("notes")).Add ")"))))
-                    .With("continent", it.G "name")))
-            .Pluck("continent", "region", "skills", "remoteWork")
-            .RunResultAsync<PublicSearchResult list>
-        |> withReconn conn
+        |> mergeFunc (fun it ->
+            r.HashMap("skills", 
+                it.G("skills").Map (ReqlFunction1 (fun skill ->
+                    r.Branch(skill.G("notes").Default_("").Eq "", skill.G "description",
+                             skill.G("description").Add(" (").Add(skill.G("notes")).Add ")"))))
+                .With("continent", it.G "name"))
+        |> pluck [ "continent"; "region"; "skills"; "remoteWork" ]
+        |> result<PublicSearchResult list> conn
 
 /// Citizen data access functions
 [<RequireQualifiedAccess>]
@@ -343,68 +287,57 @@ module Citizen =
   
     /// Find a citizen by their ID
     let findById (citizenId : CitizenId) conn =
-        r.Table(Table.Citizen)
-            .Get(citizenId)
-            .RunResultAsync<Citizen>
-        |> withReconnOption conn
+        fromTable Table.Citizen
+        |> get citizenId
+        |> resultOption<Citizen> conn
 
     /// Find a citizen by their Mastodon username
-    let findByMastodonUser (instance : string) (mastodonUser : string) conn =
-        fun c -> task {
-            let! u =
-                r.Table(Table.Citizen)
-                    .GetAll(r.Array (instance, mastodonUser)).OptArg("index", "instanceUser").Limit(1)
-                    .RunResultAsync<Citizen list> c
-            return u |> List.tryHead
-        }
-        |> withReconn conn
+    let findByMastodonUser (instance : string) (mastodonUser : string) conn = task {
+        let! u =
+            fromTable Table.Citizen
+            |> getAllWithIndex [ r.Array (instance, mastodonUser) ] "instanceUser"
+            |> limit 1
+            |> result<Citizen list> conn
+        return List.tryHead u
+    }
   
     /// Add a citizen
     let add (citizen : Citizen) conn =
-        r.Table(Table.Citizen)
-            .Insert(citizen)
-            .RunWriteAsync
-        |> withReconnIgnore conn
+        fromTable Table.Citizen
+        |> insert citizen
+        |> write conn
 
     /// Update the display name and last seen on date for a citizen
     let logOnUpdate (citizen : Citizen) conn =
-        r.Table(Table.Citizen)
-            .Get(citizen.id)
-            .Update(r.HashMap( nameof citizen.displayName, citizen.displayName)
-                        .With (nameof citizen.lastSeenOn,  citizen.lastSeenOn))
-            .RunWriteAsync
-        |> withReconnIgnore conn
+        fromTable Table.Citizen
+        |> get citizen.id
+        |> update (r.HashMap( nameof citizen.displayName, citizen.displayName)
+                       .With (nameof citizen.lastSeenOn,  citizen.lastSeenOn))
+        |> write conn
   
     /// Delete a citizen
-    let delete citizenId conn =
-        fun c -> task {
-            do! Profile.delete citizenId c
-            let! _ =
-                r.Table(Table.Success)
-                    .GetAll(citizenId).OptArg("index", "citizenId")
-                    .Delete()
-                    .RunWriteAsync c
-            let! _ =
-                r.Table(Table.Listing)
-                    .GetAll(citizenId).OptArg("index", "citizenId")
-                    .Delete()
-                    .RunWriteAsync c
-            let! _ =
-                r.Table(Table.Citizen)
-                    .Get(citizenId)
-                    .Delete()
-                    .RunWriteAsync c
-            ()
-        }
-        |> withReconnIgnore conn
-  
+    let delete citizenId conn = task {
+        do! Profile.delete citizenId conn
+        do! fromTable Table.Success
+            |> getAllWithIndex [ citizenId ] "citizenId"
+            |> delete
+            |> write conn
+        do! fromTable Table.Listing
+            |> getAllWithIndex [ citizenId ] "citizenId"
+            |> delete
+            |> write conn
+        do! fromTable Table.Citizen
+            |> get citizenId
+            |> delete
+            |> write conn
+    }
+    
     /// Update a citizen's real name
     let realNameUpdate (citizenId : CitizenId) (realName : string option) conn =
-        r.Table(Table.Citizen)
-            .Get(citizenId)
-            .Update(r.HashMap (nameof realName, realName))
-            .RunWriteAsync
-        |> withReconnIgnore conn
+        fromTable Table.Citizen
+        |> get citizenId
+        |> update (r.HashMap (nameof realName, realName))
+        |> write conn
 
 
 /// Continent data access functions
@@ -413,16 +346,14 @@ module Continent =
 
     /// Get all continents
     let all conn =
-        r.Table(Table.Continent)
-            .RunResultAsync<Continent list>
-        |> withReconn conn
+        fromTable Table.Continent
+        |> result<Continent list> conn
   
     /// Get a continent by its ID
     let findById (contId : ContinentId) conn =
-        r.Table(Table.Continent)
-            .Get(contId)
-            .RunResultAsync<Continent>
-        |> withReconnOption conn
+        fromTable Table.Continent
+        |> get contId
+        |> resultOption<Continent> conn
 
 
 /// Job listing data access functions
@@ -433,55 +364,48 @@ module Listing =
 
     /// Find all job listings posted by the given citizen
     let findByCitizen (citizenId : CitizenId) conn =
-        r.Table(Table.Listing)
-            .GetAll(citizenId).OptArg("index", nameof citizenId)
-            .EqJoin("continentId", r.Table Table.Continent)
-            .Map(ReqlFunction1 (fun it -> r.HashMap("listing", it.G "left").With ("continent", it.G "right")))
-            .RunResultAsync<ListingForView list>
-        |> withReconn conn
+        fromTable Table.Listing
+        |> getAllWithIndex [ citizenId ] (nameof citizenId)
+        |> eqJoin "continentId" (fromTable Table.Continent)
+        |> mapFunc (fun it -> r.HashMap("listing", it.G "left").With ("continent", it.G "right"))
+        |> result<ListingForView list> conn
   
     /// Find a listing by its ID
     let findById (listingId : ListingId) conn =
-        r.Table(Table.Listing)
-            .Get(listingId)
-            .RunResultAsync<Listing>
-        |> withReconnOption conn
+        fromTable Table.Listing
+        |> get listingId
+        |> resultOption<Listing> conn
   
     /// Find a listing by its ID for viewing (includes continent information)
-    let findByIdForView (listingId : ListingId) conn =
-        fun c -> task {
-            let! listing =
-                r.Table(Table.Listing)
-                    .Filter(r.HashMap ("id", listingId))
-                    .EqJoin("continentId", r.Table Table.Continent)
-                    .Map(ReqlFunction1 (fun it -> r.HashMap("listing", it.G "left").With ("continent", it.G "right")))
-                    .RunResultAsync<ListingForView list> c
-            return List.tryHead listing
-        }
-        |> withReconn conn
+    let findByIdForView (listingId : ListingId) conn = task {
+        let! listing =
+            fromTable Table.Listing
+            |> filter (r.HashMap ("id", listingId))
+            |> eqJoin "continentId" (fromTable Table.Continent)
+            |> mapFunc (fun it -> r.HashMap("listing", it.G "left").With ("continent", it.G "right"))
+            |> result<ListingForView list> conn
+        return List.tryHead listing
+    }
   
     /// Add a listing
     let add (listing : Listing) conn =
-        r.Table(Table.Listing)
-            .Insert(listing)
-            .RunWriteAsync
-        |> withReconnIgnore conn
+        fromTable Table.Listing
+        |> insert listing
+        |> write conn
   
     /// Update a listing
     let update (listing : Listing) conn =
-        r.Table(Table.Listing)
-            .Get(listing.id)
-            .Replace(listing)
-            .RunWriteAsync
-        |> withReconnIgnore conn
+        fromTable Table.Listing
+        |> get listing.id
+        |> replace listing
+        |> write conn
 
     /// Expire a listing
     let expire (listingId : ListingId) (fromHere : bool) (now : Instant) conn =
-        r.Table(Table.Listing)
-            .Get(listingId)
-            .Update(r.HashMap("isExpired", true).With("wasFilledHere", fromHere).With ("updatedOn", now))
-            .RunWriteAsync
-        |> withReconnIgnore conn
+        (fromTable Table.Listing
+         |> get listingId)
+            .Update (r.HashMap("isExpired", true).With("wasFilledHere", fromHere).With ("updatedOn", now))
+        |> write conn
 
     /// Search job listings
     let search (search : ListingSearch) conn =
@@ -506,12 +430,11 @@ module Listing =
         |> Seq.toList
         |> List.fold
             (fun q f -> f q)
-            (r.Table(Table.Listing)
-                .GetAll(false).OptArg ("index", "isExpired")))
-            .EqJoin("continentId", r.Table Table.Continent)
-            .Map(ReqlFunction1 (fun it -> r.HashMap("listing", it.G "left").With ("continent", it.G "right")))
-            .RunResultAsync<ListingForView list>
-        |> withReconn conn
+            (fromTable Table.Listing
+             |> getAllWithIndex [ false ] "isExpired" :> ReqlExpr))
+        |> eqJoin "continentId" (fromTable Table.Continent)
+        |> mapFunc (fun it -> r.HashMap("listing", it.G "left").With ("continent", it.G "right"))
+        |> result<ListingForView list> conn
 
 
 /// Success story data access functions
@@ -520,32 +443,29 @@ module Success =
 
     /// Find a success report by its ID
     let findById (successId : SuccessId) conn =
-        r.Table(Table.Success)
-            .Get(successId)
-            .RunResultAsync<Success>
-        |> withReconnOption conn
+        fromTable Table.Success
+        |> get successId
+        |> resultOption conn
 
     /// Insert or update a success story
     let save (success : Success) conn =
-        r.Table(Table.Success)
-            .Get(success.id)
-            .Replace(success)
-            .RunWriteAsync
-        |> withReconnIgnore conn
+        fromTable Table.Success
+        |> get success.id
+        |> replace success
+        |> write conn
 
     // Retrieve all success stories  
     let all conn =
-        r.Table(Table.Success)
-            .EqJoin("citizenId", r.Table Table.Citizen)
+        (fromTable Table.Success
+         |> eqJoin "citizenId" (fromTable Table.Citizen))
             .Without(r.HashMap ("right", "id"))
-            .Zip()
-            .Merge(ReqlFunction1 (fun it ->
-                r.HashMap("citizenName",
-                    r.Branch(it.G("realName"   ).Default_("").Ne "", it.G "realName",
-                             it.G("displayName").Default_("").Ne "", it.G "displayName",
-                                                                     it.G "mastodonUser"))
-                    .With ("hasStory", it.G("story").Default_("").Gt "")))
-            .Pluck("id", "citizenId", "citizenName", "recordedOn", "fromHere", "hasStory")
-            .OrderBy(r.Desc "recordedOn")
-            .RunResultAsync<StoryEntry list>
-        |> withReconn conn
+        |> zip
+        |> mergeFunc (fun it ->
+            r.HashMap("citizenName",
+                r.Branch(it.G("realName"   ).Default_("").Ne "", it.G "realName",
+                         it.G("displayName").Default_("").Ne "", it.G "displayName",
+                                                                 it.G "mastodonUser"))
+                .With ("hasStory", it.G("story").Default_("").Gt ""))
+        |> pluck [ "id"; "citizenId"; "citizenName"; "recordedOn"; "fromHere"; "hasStory" ]
+        |> orderByDescending "recordedOn"
+        |> result<StoryEntry list> conn

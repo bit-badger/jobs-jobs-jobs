@@ -63,12 +63,16 @@ Target.create "All" ignore
 "BuildClient"
   ?=> "BuildServer"
 "BuildClient"
-  ==> "RunServer"
+  ?=> "RunServer"
+"BuildClient"
   ==> "BuildAndRun"
 "BuildClient"
   ==> "Publish"
 
 "BuildServer"
   ==> "All"
+
+"RunServer"
+  ==> "BuildAndRun"
 
 Target.runOrDefault "All"
