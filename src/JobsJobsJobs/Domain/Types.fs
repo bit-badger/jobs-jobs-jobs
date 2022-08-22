@@ -7,7 +7,11 @@ open System
 // fsharplint:disable FieldNames
 
 /// The ID of a user (a citizen of Gitmo Nation)
-type CitizenId = CitizenId of Guid
+type CitizenId =
+    CitizenId of Guid
+with
+    /// The GUID value of this citizen ID
+    member this.Value = this |> function CitizenId guid -> guid
 
 /// A user of Jobs, Jobs, Jobs
 [<CLIMutable; NoComparison; NoEquality>]

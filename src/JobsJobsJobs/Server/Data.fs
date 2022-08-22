@@ -1,6 +1,7 @@
 /// Data access functions for Jobs, Jobs, Jobs
 module JobsJobsJobs.Api.Data
 
+open CommonExtensionsAndTypesForNpgsqlFSharp
 open JobsJobsJobs.Domain.Types
 
 /// JSON converters used with RethinkDB persistence
@@ -87,11 +88,19 @@ module Table =
     /// The citizen employment profile table
     let Profile = "profile"
     
+    /// The profile / skill cross-reference
+    let ProfileSkill = "profile_skill"
+    
     /// The success story table
     let Success = "success"
     
     /// All tables
     let all () = [ Citizen; Continent; Listing; Profile; Success ]
+
+open NodaTime
+open Npgsql
+open Npgsql.FSharp
+
 
 
 open RethinkDb.Driver.FSharp.Functions
@@ -122,7 +131,6 @@ module Startup =
   
     open Microsoft.Extensions.Configuration
     open Microsoft.Extensions.Logging
-    open NodaTime
     open NodaTime.Serialization.JsonNet
     open RethinkDb.Driver.FSharp
     
@@ -137,42 +145,93 @@ module Startup =
         log.LogInformation $"Connecting to rethinkdb://{config.Hostname}:{config.Port}/{config.Database}"
         config.CreateConnection ()
 
-    /// Ensure the data, tables, and indexes that are required exist
-    let establishEnvironment (cfg : IConfigurationSection) (log : ILogger) conn = task {
-        // Ensure the database exists
-        match cfg["database"] |> Option.ofObj with
-        | Some database ->
-            let! dbs = dbList () |> result<string list> conn
-            match dbs |> List.contains database with
-            | true -> ()
-            | false ->
-                log.LogInformation $"Creating database {database}..."
-                do! dbCreate database |> write conn
-                ()
-        | None -> ()
-        // Ensure the tables exist
-        let! tables = tableListFromDefault () |> result<string list> conn
-        for table in Table.all () do
-            if not (List.contains table tables) then
-                log.LogInformation $"Creating {table} table..."
-                do! tableCreateInDefault table |> write conn
-        // Ensure the indexes exist
-        let ensureIndexes table indexes = task {
-            let! tblIndexes = fromTable table |> indexList |> result<string list> conn
-            for index in indexes do
-                if not (List.contains index tblIndexes) then
-                    log.LogInformation $"Creating \"{index}\" index on {table}"
-                    do! fromTable table |> indexCreate index |> write conn
+    /// Ensure the tables and indexes that are required exist
+    let establishEnvironment (log : ILogger) conn = task {
+        
+        let! tables =
+            Sql.existingConnection conn
+            |> Sql.query "SELECT tablename FROM pg_tables WHERE schemaname = 'jjj'"
+            |> Sql.executeAsync (fun row -> row.string "tablename")
+        let needsTable table = not (List.contains table tables)
+        
+        let sql = seq {
+            if needsTable "continent" then
+                "CREATE TABLE jjj.continent (
+                    id   UUID NOT NULL PRIMARY KEY,
+                    name TEXT NOT NULL)"
+            if needsTable "citizen" then
+                "CREATE TABLE jjj.citizen (
+                    id           UUID        NOT NULL PRIMARY KEY,
+                    display_name TEXT,
+                    profile_urls TEXT[]      NOT NULL DEFAULT '{}',
+                    joined_on    TIMESTAMPTZ NOT NULL,
+                    last_seen_on TIMESTAMPTZ NOT NULL,
+                    is_legacy    BOOLEAN     NOT NULL)"
+            if needsTable "profile" then
+                "CREATE TABLE jjj.profile (
+                    citizen_id             UUID        NOT NULL PRIMARY KEY,
+                    is_seeking             BOOLEAN     NOT NULL,
+                    is_public_searchable   BOOLEAN     NOT NULL,
+                    is_public_linkable     BOOLEAN     NOT NULL,
+                    continent_id           UUID        NOT NULL,
+                    region                 TEXT        NOT NULL,
+                    is_available_remote    BOOLEAN     NOT NULL,
+                    is_available_full_time BOOLEAN     NOT NULL,
+                    biography              TEXT        NOT NULL,
+                    last_updated_on        TIMESTAMPTZ NOT NULL,
+                    experience             TEXT,
+                    FOREIGN KEY fk_profile_citizen   (citizen_id)   REFERENCES jjj.citizen   (id) ON DELETE CASCADE,
+                    FOREIGN KEY fk_profile_continent (continent_id) REFERENCES jjj.continent (id))"
+                "CREATE INDEX idx_profile_citizen   ON jjj.profile (citizen_id)"
+                "CREATE INDEX idx_profile_continent ON jjj.profile (continent_id)"
+                "CREATE TABLE jjj.profile_skill (
+                    id          UUID NOT NULL PRIMARY KEY,
+                    citizen_id  UUID NOT NULL,
+                    description TEXT NOT NULL,
+                    notes       TEXT,
+                    FOREIGN KEY fk_profile_skill_profile (citizen_id) REFERENCES jjj.profile (citizen_id)
+                        ON DELETE CASCADE)"
+                "CREATE INDEX idx_profile_skill_profile ON jjj.profile_skill (citizen_id)"
+            if needsTable "listing" then
+                "CREATE TABLE jjj.listing (
+                    id              UUID        NOT NULL PRIMARY KEY,
+                    citizen_id      UUID        NOT NULL,
+                    created_on      TIMESTAMPTZ NOT NULL,
+                    title           TEXT        NOT NULL,
+                    continent_id    UUID        NOT NULL,
+                    region          TEXT        NOT NULL,
+                    is_remote       BOOLEAN     NOT NULL,
+                    is_expired      BOOLEAN     NOT NULL,
+                    updated_on      TIMESTAMPTZ NOT NULL,
+                    listing_text    TEXT        NOT NULL,
+                    needed_by       DATE,
+                    was_filled_here BOOLEAN,
+                    FOREIGN KEY fk_listing_citizen   (citizen_id)   REFERENCES jjj.citizen   (id) ON DELETE CASCADE,
+                    FOREIGN KEY fk_listing_continent (continent_id) REFERENCES jjj.continent (id))"
+                "CREATE INDEX idx_listing_citizen   ON jjj.listing (citizen_id)"
+                "CREATE INDEX idx_listing_continent ON jjj.listing (continent_id)"
+            if needsTable "success" then
+                "CREATE TABLE jjj.success (
+                    id            UUID        NOT NULL PRIMARY KEY,
+                    citizen_id    UUID        NOT NULL,
+                    recorded_on   TIMESTAMPTZ NOT NULL,
+                    was_from_here BOOLEAN     NOT NULL,
+                    source        TEXT        NOT NULL,
+                    story         TEXT,
+                    FOREIGN KEY fk_success_citizen (citizen_id) REFERENCES jjj.citizen (id) ON DELETE CASCADE)"
+                "CREATE INDEX idx_success_citizen ON jjj.success (citizen_id)"
         }
-        do! ensureIndexes Table.Listing [ "citizenId"; "continentId"; "isExpired" ]
-        do! ensureIndexes Table.Profile [ "continentId" ]
-        do! ensureIndexes Table.Success [ "citizenId" ]
-        // The instance/user is a compound index
-        let! userIdx = fromTable Table.Citizen |> indexList |> result<string list> conn
-        if not (List.contains "instanceUser" userIdx) then
-            do! fromTable Table.Citizen
-                |> indexCreateFunc "instanceUser" (fun row -> [| row.G "instance"; row.G "mastodonUser" |])
-                |> write conn
+        if not (Seq.isEmpty sql) then
+            let! _ =
+                Sql.existingConnection conn
+                |> Sql.executeTransactionAsync
+                    (sql
+                     |> Seq.map (fun it ->
+                         let parts = it.Split ' '
+                         log.LogInformation $"Creating {parts[2]} {parts[1].ToLowerInvariant ()}..."
+                         it, [ [] ])
+                     |> List.ofSeq)
+            ()
     }
 
 
@@ -196,22 +255,72 @@ let private deriveDisplayName (it : ReqlExpr) =
               it.G("displayName").Default_("").Ne "", it.G "displayName",
                                                       it.G "mastodonUser")
 
+/// Map data results to domain types
+module Map =
+    
+    /// Extract a count from a row
+    let toCount (row : RowReader) =
+        row.int64 "the_count"
+    
+    /// Create a profile from a data row
+    let toProfile (row : RowReader) : Profile =
+        {   id                = CitizenId               (row.uuid "citizen_id")
+            seekingEmployment = row.bool                "is_seeking"
+            isPublic          = row.bool                "is_public_searchable"
+            continentId       = ContinentId             (row.uuid "continent_id")
+            region            = row.string              "region"
+            remoteWork        = row.bool                "is_available_remote"
+            fullTime          = row.bool                "is_available_full_time"
+            biography         = Text                    (row.string "biography")
+            lastUpdatedOn     = row.fieldValue<Instant> "last_updated_on"
+            experience        = row.stringOrNone        "experience" |> Option.map Text
+            skills            = []
+        }
+    
+    /// Create a skill from a data row
+    let toSkill (row : RowReader) : Skill =
+        {   id          = SkillId          (row.uuid "id")
+            description = row.string       "description"
+            notes       = row.stringOrNone "notes"
+        }
+
+
 /// Profile data access functions
 [<RequireQualifiedAccess>]
 module Profile =
 
     /// Count the current profiles
     let count conn =
-        fromTable Table.Profile
-        |> count
-        |> result<int64> conn
+        Sql.existingConnection conn
+        |> Sql.query
+               "SELECT COUNT(p.citizen_id)
+                  FROM jjj.profile p
+                       INNER JOIN jjj.citizen c ON c.id = p.citizen_id
+                 WHERE c.is_legacy = FALSE"
+        |> Sql.executeRowAsync Map.toCount
 
     /// Find a profile by citizen ID
-    let findById (citizenId : CitizenId) conn =
-        fromTable Table.Profile
-        |> get citizenId
-        |> resultOption<Profile> conn
-  
+    let findById (citizenId : CitizenId) conn = backgroundTask {
+        let! tryProfile =
+            Sql.existingConnection conn
+            |> Sql.query
+                "SELECT *
+                   FROM jjj.profile p
+                        INNER JOIN jjj.citizen ON c.id = p.citizen_id
+                  WHERE p.citizen_id = @id
+                    AND c.is_legacy  = FALSE"
+            |> Sql.parameters [ "@id", Sql.uuid citizenId.Value ]
+            |> Sql.executeAsync Map.toProfile
+        match List.tryHead tryProfile with
+        | Some profile ->
+            let! skills =
+                Sql.existingConnection conn
+                |> Sql.query "SELECT * FROM jjj.profile_skill WHERE citizen_id = @id"
+                |> Sql.parameters [ "@id", Sql.uuid citizenId.Value ]
+                |> Sql.executeAsync Map.toSkill
+            return Some { profile with skills = skills }
+        | None -> return None
+    }
     /// Insert or update a profile
     let save (profile : Profile) conn =
         fromTable Table.Profile
@@ -220,11 +329,14 @@ module Profile =
         |> write conn
   
     /// Delete a citizen's profile
-    let delete (citizenId : CitizenId) conn =
-        fromTable Table.Profile
-        |> get citizenId
-        |> delete
-        |> write conn
+    let delete (citizenId : CitizenId) conn = backgroundTask {
+        let! _ =
+            Sql.existingConnection conn
+            |> Sql.query "DELETE FROM jjj.profile WHERE citizen_id = @id"
+            |> Sql.parameters [ "@id", Sql.uuid citizenId.Value ]
+            |> Sql.executeNonQueryAsync
+        ()
+    }
   
     /// Search profiles (logged-on users)
     let search (search : ProfileSearch) conn =
@@ -321,20 +433,13 @@ module Citizen =
         |> write conn
   
     /// Delete a citizen
-    let delete citizenId conn = task {
-        do! Profile.delete citizenId conn
-        do! fromTable Table.Success
-            |> getAllWithIndex [ citizenId ] "citizenId"
-            |> delete
-            |> write conn
-        do! fromTable Table.Listing
-            |> getAllWithIndex [ citizenId ] "citizenId"
-            |> delete
-            |> write conn
-        do! fromTable Table.Citizen
-            |> get citizenId
-            |> delete
-            |> write conn
+    let delete (citizenId : CitizenId) conn = backgroundTask {
+        let! _ =
+            Sql.existingConnection conn
+            |> Sql.query "DELETE FROM citizen WHERE id = @id"
+            |> Sql.parameters [ "@id", Sql.uuid citizenId.Value ]
+            |> Sql.executeNonQueryAsync
+        ()
     }
     
     /// Update a citizen's real name
@@ -364,8 +469,6 @@ module Continent =
 /// Job listing data access functions
 [<RequireQualifiedAccess>]
 module Listing =  
-
-    open NodaTime
 
     /// Convert a joined query to the form needed for ListingForView deserialization
     let private toListingForView (it : ReqlExpr) : obj = {| listing = it.G "left"; continent = it.G "right" |}
