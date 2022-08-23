@@ -1,7 +1,6 @@
 /// Data access functions for Jobs, Jobs, Jobs
 module JobsJobsJobs.Api.Data
 
-open CommonExtensionsAndTypesForNpgsqlFSharp
 open JobsJobsJobs.Domain.Types
 
 /// JSON converters used with RethinkDB persistence
@@ -82,20 +81,14 @@ module Table =
     /// The continent table
     let Continent = "continent"
     
-    /// The job listing table
-    let Listing = "listing"
-    
     /// The citizen employment profile table
     let Profile = "profile"
-    
-    /// The profile / skill cross-reference
-    let ProfileSkill = "profile_skill"
     
     /// The success story table
     let Success = "success"
     
     /// All tables
-    let all () = [ Citizen; Continent; Listing; Profile; Success ]
+    let all () = [ Citizen; Continent; Profile; Success ]
 
 open NodaTime
 open Npgsql
@@ -175,7 +168,7 @@ module Startup =
                     is_public_linkable     BOOLEAN     NOT NULL,
                     continent_id           UUID        NOT NULL,
                     region                 TEXT        NOT NULL,
-                    is_available_remote    BOOLEAN     NOT NULL,
+                    is_available_remotely  BOOLEAN     NOT NULL,
                     is_available_full_time BOOLEAN     NOT NULL,
                     biography              TEXT        NOT NULL,
                     last_updated_on        TIMESTAMPTZ NOT NULL,
@@ -255,33 +248,102 @@ let private deriveDisplayName (it : ReqlExpr) =
               it.G("displayName").Default_("").Ne "", it.G "displayName",
                                                       it.G "mastodonUser")
 
+/// Custom SQL parameter functions
+module Sql =
+    
+    /// Create a citizen ID parameter
+    let citizenId = CitizenId.value >> Sql.uuid
+    
+    /// Create a continent ID parameter
+    let continentId = ContinentId.value >> Sql.uuid
+    
+    /// Create a listing ID parameter
+    let listingId = ListingId.value >> Sql.uuid
+    
+    /// Create a Markdown string parameter
+    let markdown = MarkdownString.toString >> Sql.string
+    
+    /// Create a parameter for the given value
+    let param<'T> name (value : 'T) =
+        name, Sql.parameter (NpgsqlParameter (name, value))
+
+    /// Create a parameter for a possibly-missing value
+    let paramOrNone<'T> name (value : 'T option) =
+        name, Sql.parameter (NpgsqlParameter (name, if Option.isSome value then box value else System.DBNull.Value))
+    
+    /// Create a skill ID parameter
+    let skillId = SkillId.value >> Sql.uuid
+    
+    /// Create a success ID parameter
+    let successId = SuccessId.value >> Sql.uuid
+
+    
 /// Map data results to domain types
 module Map =
+    
+    /// Create a continent from a data row
+    let toContinent (row : RowReader) : Continent =
+        {   id   = (row.uuid >> ContinentId) "continent_id"
+            name = row.string                "continent_name"
+        }
     
     /// Extract a count from a row
     let toCount (row : RowReader) =
         row.int64 "the_count"
     
+    /// Create a job listing from a data row
+    let toListing (row : RowReader) : Listing =
+        {   id            = (row.uuid >> ListingId)         "id"
+            citizenId     = (row.uuid >> CitizenId)         "citizen_id"
+            createdOn     = row.fieldValue<Instant>         "created_on"
+            title         = row.string                      "title"
+            continentId   = (row.uuid >> ContinentId)       "continent_id"
+            region        = row.string                      "region"
+            remoteWork    = row.bool                        "is_remote"
+            isExpired     = row.bool                        "is_expired"
+            updatedOn     = row.fieldValue<Instant>         "updated_on"
+            text          = (row.string >> Text)            "listing_text"
+            neededBy      = row.fieldValueOrNone<LocalDate> "needed_by"
+            wasFilledHere = row.boolOrNone                  "was_filled_here"
+        }
+    
+    /// Create a job listing for viewing from a data row
+    let toListingForView (row : RowReader) : ListingForView =
+        {   listing   = toListing   row
+            continent = toContinent row
+        }
+    
     /// Create a profile from a data row
     let toProfile (row : RowReader) : Profile =
-        {   id                = CitizenId               (row.uuid "citizen_id")
-            seekingEmployment = row.bool                "is_seeking"
-            isPublic          = row.bool                "is_public_searchable"
-            continentId       = ContinentId             (row.uuid "continent_id")
-            region            = row.string              "region"
-            remoteWork        = row.bool                "is_available_remote"
-            fullTime          = row.bool                "is_available_full_time"
-            biography         = Text                    (row.string "biography")
-            lastUpdatedOn     = row.fieldValue<Instant> "last_updated_on"
-            experience        = row.stringOrNone        "experience" |> Option.map Text
+        {   id                = (row.uuid >> CitizenId)   "citizen_id"
+            seekingEmployment = row.bool                  "is_seeking"
+            isPublic          = row.bool                  "is_public_searchable"
+            isPublicLinkable  = row.bool                  "is_public_linkable"
+            continentId       = (row.uuid >> ContinentId) "continent_id"
+            region            = row.string                "region"
+            remoteWork        = row.bool                  "is_available_remotely"
+            fullTime          = row.bool                  "is_available_full_time"
+            biography         = (row.string >> Text)      "biography"
+            lastUpdatedOn     = row.fieldValue<Instant>   "last_updated_on"
+            experience        = row.stringOrNone          "experience" |> Option.map Text
             skills            = []
         }
     
     /// Create a skill from a data row
     let toSkill (row : RowReader) : Skill =
-        {   id          = SkillId          (row.uuid "id")
-            description = row.string       "description"
-            notes       = row.stringOrNone "notes"
+        {   id          = (row.uuid >> SkillId) "id"
+            description = row.string            "description"
+            notes       = row.stringOrNone      "notes"
+        }
+    
+    /// Create a success story from a data row
+    let toSuccess (row : RowReader) : Success =
+        {   id         = (row.uuid >> SuccessId) "id"
+            citizenId  = (row.uuid >> CitizenId) "citizen_id"
+            recordedOn = row.fieldValue<Instant> "recorded_on"
+            fromHere   = row.bool                "was_from_here"
+            source     = row.string              "source"
+            story      = row.stringOrNone        "story" |> Option.map Text
         }
 
 
@@ -300,7 +362,7 @@ module Profile =
         |> Sql.executeRowAsync Map.toCount
 
     /// Find a profile by citizen ID
-    let findById (citizenId : CitizenId) conn = backgroundTask {
+    let findById citizenId conn = backgroundTask {
         let! tryProfile =
             Sql.existingConnection conn
             |> Sql.query
@@ -309,31 +371,82 @@ module Profile =
                         INNER JOIN jjj.citizen ON c.id = p.citizen_id
                   WHERE p.citizen_id = @id
                     AND c.is_legacy  = FALSE"
-            |> Sql.parameters [ "@id", Sql.uuid citizenId.Value ]
+            |> Sql.parameters [ "@id", Sql.citizenId citizenId ]
             |> Sql.executeAsync Map.toProfile
         match List.tryHead tryProfile with
         | Some profile ->
             let! skills =
                 Sql.existingConnection conn
                 |> Sql.query "SELECT * FROM jjj.profile_skill WHERE citizen_id = @id"
-                |> Sql.parameters [ "@id", Sql.uuid citizenId.Value ]
+                |> Sql.parameters [ "@id", Sql.citizenId citizenId ]
                 |> Sql.executeAsync Map.toSkill
             return Some { profile with skills = skills }
         | None -> return None
     }
+    
     /// Insert or update a profile
-    let save (profile : Profile) conn =
-        fromTable Table.Profile
-        |> get profile.id
-        |> replace profile
-        |> write conn
-  
+    let save (profile : Profile) conn = backgroundTask {
+        let! _ =
+            Sql.existingConnection conn
+            |> Sql.executeTransactionAsync [
+                "INSERT INTO jjj.profile (
+                    citizen_id, is_seeking, is_public_searchable, is_public_linkable, continent_id, region,
+                    is_available_remotely, is_available_full_time, biography, last_updated_on, experience
+                ) VALUES (
+                    @citizenId, @isSeeking, @isPublicSearchable, @isPublicLinkable, @continentId, @region,
+                    @isAvailableRemotely, @isAvailableFullTime, @biography, @lastUpdatedOn, @experience
+                ) ON CONFLICT (citizen_id) DO UPDATE
+                SET is_seeking             = EXCLUDED.is_seeking,
+                    is_public_searchable   = EXCLUDED.is_public_searchable,
+                    is_public_linkable     = EXCLUDED.is_public_linkable,
+                    continent_id           = EXCLUDED.continent_id,
+                    region                 = EXCLUDED.region,
+                    is_available_remotely  = EXCLUDED.is_available_remotely,
+                    is_available_full_time = EXCLUDED.is_available_full_time,
+                    biography              = EXCLUDED.biography,
+                    last_updated_on        = EXCLUDED.last_updated_on,
+                    experience             = EXCLUDED.experience",
+                [ [ "@citizenId",           Sql.citizenId    profile.id
+                    "@isSeeking",           Sql.bool         profile.seekingEmployment
+                    "@isPublicSearchable",  Sql.bool         profile.isPublic
+                    "@isPublicLinkable",    Sql.bool         profile.isPublicLinkable
+                    "@continentId",         Sql.continentId  profile.continentId
+                    "@region",              Sql.string       profile.region
+                    "@isAvailableRemotely", Sql.bool         profile.remoteWork
+                    "@isAvailableFullTime", Sql.bool         profile.fullTime
+                    "@biography",           Sql.markdown     profile.biography
+                    "@lastUpdatedOn"        |>Sql.param<|    profile.lastUpdatedOn
+                    "@experience",          Sql.stringOrNone (Option.map MarkdownString.toString profile.experience)
+                ] ]
+                
+                "INSERT INTO jjj.profile (
+                    id, citizen_id, description, notes
+                ) VALUES (
+                    @id, @citizenId, @description, @notes
+                ) ON CONFLICT (id) DO UPDATE
+                SET description = EXCLUDED.description,
+                    notes       = EXCLUDED.notes",
+                profile.skills
+                |> List.map (fun skill -> [
+                    "@id",          Sql.skillId      skill.id
+                    "@citizenId",   Sql.citizenId    profile.id
+                    "@description", Sql.string       skill.description
+                    "@notes"      , Sql.stringOrNone skill.notes
+                ])
+                
+                $"""DELETE FROM jjj.profile
+                    WHERE id NOT IN ({profile.skills |> List.mapi (fun idx _ -> $"@id{idx}") |> String.concat ", "})""",
+                [   profile.skills |> List.mapi (fun idx skill -> $"@id{idx}", Sql.skillId skill.id) ]
+        ]
+        ()
+    }
+    
     /// Delete a citizen's profile
-    let delete (citizenId : CitizenId) conn = backgroundTask {
+    let delete citizenId conn = backgroundTask {
         let! _ =
             Sql.existingConnection conn
             |> Sql.query "DELETE FROM jjj.profile WHERE citizen_id = @id"
-            |> Sql.parameters [ "@id", Sql.uuid citizenId.Value ]
+            |> Sql.parameters [ "@id", Sql.citizenId citizenId ]
             |> Sql.executeNonQueryAsync
         ()
     }
@@ -433,11 +546,11 @@ module Citizen =
         |> write conn
   
     /// Delete a citizen
-    let delete (citizenId : CitizenId) conn = backgroundTask {
+    let delete citizenId conn = backgroundTask {
         let! _ =
             Sql.existingConnection conn
             |> Sql.query "DELETE FROM citizen WHERE id = @id"
-            |> Sql.parameters [ "@id", Sql.uuid citizenId.Value ]
+            |> Sql.parameters [ "@id", Sql.citizenId citizenId ]
             |> Sql.executeNonQueryAsync
         ()
     }
@@ -456,89 +569,138 @@ module Continent =
 
     /// Get all continents
     let all conn =
-        fromTable Table.Continent
-        |> result<Continent list> conn
+        Sql.existingConnection conn
+        |> Sql.query "SELECT id AS continent_id, name AS continent_name FROM jjj.continent"
+        |> Sql.executeAsync Map.toContinent
   
     /// Get a continent by its ID
-    let findById (contId : ContinentId) conn =
-        fromTable Table.Continent
-        |> get contId
-        |> resultOption<Continent> conn
+    let findById contId conn = backgroundTask {
+        let! continent =
+            Sql.existingConnection conn
+            |> Sql.query "SELECT id AS continent_id, name AS continent_name FROM jjj.continent WHERE id = @id"
+            |> Sql.parameters [ "@id", Sql.continentId contId ]
+            |> Sql.executeAsync Map.toContinent
+        return List.tryHead continent
+    }
 
 
 /// Job listing data access functions
 [<RequireQualifiedAccess>]
 module Listing =  
 
-    /// Convert a joined query to the form needed for ListingForView deserialization
-    let private toListingForView (it : ReqlExpr) : obj = {| listing = it.G "left"; continent = it.G "right" |}
+    /// The SQL to select the listing and continent fields
+    let private forViewSql =
+        "SELECT l.*, c.name AS continent_name
+           FROM jjj.listing l
+                INNER JOIN jjj.continent c ON c.id = l.continent_id"
     
     /// Find all job listings posted by the given citizen
-    let findByCitizen (citizenId : CitizenId) conn =
-        fromTable Table.Listing
-        |> getAllWithIndex [ citizenId ] (nameof citizenId)
-        |> eqJoin "continentId" (fromTable Table.Continent)
-        |> mapFunc toListingForView
-        |> result<ListingForView list> conn
+    let findByCitizen citizenId conn =
+        Sql.existingConnection conn
+        |> Sql.query $"{forViewSql} WHERE l.citizen_id = @citizenId"
+        |> Sql.parameters [ "@citizenId", Sql.citizenId citizenId ]
+        |> Sql.executeAsync Map.toListingForView
   
     /// Find a listing by its ID
-    let findById (listingId : ListingId) conn =
-        fromTable Table.Listing
-        |> get listingId
-        |> resultOption<Listing> conn
-  
-    /// Find a listing by its ID for viewing (includes continent information)
-    let findByIdForView (listingId : ListingId) conn = task {
+    let findById listingId conn = backgroundTask {
         let! listing =
-            fromTable Table.Listing
-            |> filter {| id = listingId |}
-            |> eqJoin "continentId" (fromTable Table.Continent)
-            |> mapFunc toListingForView
-            |> result<ListingForView list> conn
+            Sql.existingConnection conn
+            |> Sql.query "SELECT * FROM jjj.listing WHERE id = @id"
+            |> Sql.parameters [ "@id", Sql.listingId listingId ]
+            |> Sql.executeAsync Map.toListing
         return List.tryHead listing
     }
   
-    /// Add a listing
-    let add (listing : Listing) conn =
-        fromTable Table.Listing
-        |> insert listing
-        |> write conn
+    /// Find a listing by its ID for viewing (includes continent information)
+    let findByIdForView (listingId : ListingId) conn = backgroundTask {
+        let! listing =
+            Sql.existingConnection conn
+            |> Sql.query $"{forViewSql} WHERE l.id = @id"
+            |> Sql.parameters [ "@id", Sql.listingId listingId ]
+            |> Sql.executeAsync Map.toListingForView
+        return List.tryHead listing
+    }
   
-    /// Update a listing
-    let update (listing : Listing) conn =
-        fromTable Table.Listing
-        |> get listing.id
-        |> replace listing
-        |> write conn
-
+    /// Add or update a listing
+    let save (listing : Listing) conn = backgroundTask {
+        let! _ =
+            Sql.existingConnection conn
+            |> Sql.query
+                "INSERT INTO jjj.listing (
+                    id, citizen_id, created_on, title, continent_id, region, is_remote, is_expired, updated_on,
+                    listing_text, needed_by, was_filled_here
+                ) VALUES (
+                    @id, @citizenId, @createdOn, @title, @continentId, @region, @isRemote, @isExpired, @updatedOn,
+                    @text, @neededBy, @wasFilledHere
+                ) ON CONFLICT (id) DO UPDATE
+                SET title           = EXCLUDED.title,
+                    continent_id    = EXCLUDED.continent_id,
+                    region          = EXCLUDED.region,
+                    is_remote       = EXCLUDED.is_remote,
+                    is_expired      = EXCLUDED.is_expired,
+                    updated_on      = EXCLUDED.updated_on,
+                    listing_text    = EXCLUDED.listing_text,
+                    needed_by       = EXCLUDED.needed_by,
+                    was_filled_here = EXCLUDED.was_filled_here"
+            |> Sql.parameters
+                [   "@id",            Sql.listingId       listing.id
+                    "@citizenId",     Sql.citizenId       listing.citizenId
+                    "@createdOn"      |>Sql.param<|       listing.createdOn
+                    "@title",         Sql.string          listing.title
+                    "@continentId",   Sql.continentId     listing.continentId
+                    "@region",        Sql.string          listing.region
+                    "@isRemote",      Sql.bool            listing.remoteWork
+                    "@isExpired",     Sql.bool            listing.isExpired
+                    "@updatedOn"      |>Sql.param<|       listing.updatedOn
+                    "@text",          Sql.markdown        listing.text
+                    "@neededBy"       |>Sql.paramOrNone<| listing.neededBy
+                    "@wasFilledHere", Sql.boolOrNone      listing.wasFilledHere
+                    
+                ]
+            |> Sql.executeNonQueryAsync
+        ()
+    }
+  
     /// Expire a listing
-    let expire (listingId : ListingId) (fromHere : bool) (now : Instant) conn =
-        (fromTable Table.Listing
-         |> get listingId)
-            .Update {| isExpired = true; wasFilledHere = fromHere; updatedOn = now |}
-        |> write conn
-
+    let expire listingId fromHere (now : Instant) conn = backgroundTask {
+        let! _ =
+            Sql.existingConnection conn
+            |> Sql.query
+                "UPDATE jjj.listing
+                    SET is_expired      = TRUE,
+                        was_filled_here = @wasFilledHere,
+                        updated_on      = @updatedOn
+                  WHERE id = @id"
+            |> Sql.parameters
+                [   "@wasFilledHere", Sql.bool      fromHere
+                    "@updatedOn"      |>Sql.param<| now
+                    "@id",            Sql.listingId listingId
+                ]
+            |> Sql.executeNonQueryAsync
+        ()
+    }
+    
     /// Search job listings
     let search (search : ListingSearch) conn =
-        fromTable Table.Listing
-        |> getAllWithIndex [ false ] "isExpired"
-        |> applyFilters
-            [ match search.continentId with
-              | Some contId -> yield filter {| continentId = ContinentId.ofString contId |}
-              | None -> ()
-              match search.region with
-              | Some rgn -> yield filterFunc (fun it -> it.G(nameof search.region).Match (regexContains rgn))
-              | None -> ()
-              match search.remoteWork with
-              | "" -> ()
-              | _ -> yield filter {| remoteWork = search.remoteWork = "yes" |}
-              match search.text with
-              | Some text -> yield filterFunc (fun it -> it.G(nameof search.text).Match (regexContains text))
-              | None -> ()
-            ]
-        |> eqJoin "continentId" (fromTable Table.Continent)
-        |> mapFunc toListingForView
-        |> result<ListingForView list> conn
+        let filters = seq {
+            match search.continentId with
+            | Some contId ->
+                "l.continent = @continentId", [ "@continentId", Sql.continentId (ContinentId.ofString contId) ]
+            | None -> ()
+            match search.region with
+            | Some region -> "l.region ILIKE '%@region%'", [ "@region", Sql.string region ]
+            | None -> ()
+            if search.remoteWork <> "" then
+                "l.is_remote = @isRemote", ["@isRemote", Sql.bool (search.remoteWork = "yes") ]
+            match search.text with
+            | Some text -> "l.listing_text ILIKE '%@text%'", [ "@text", Sql.string text ]
+            | None -> ()
+        }
+        let filterSql = filters |> Seq.map fst |> String.concat " AND "
+        Sql.existingConnection conn
+        |> Sql.query $"{forViewSql} WHERE l.is_expired = FALSE{filterSql}"
+        |> Sql.parameters (filters |> Seq.collect snd |> List.ofSeq)
+        |> Sql.executeAsync Map.toListingForView
 
 
 /// Success story data access functions
@@ -546,18 +708,39 @@ module Listing =
 module Success =
 
     /// Find a success report by its ID
-    let findById (successId : SuccessId) conn =
-        fromTable Table.Success
-        |> get successId
-        |> resultOption conn
+    let findById successId conn = backgroundTask {
+        let! success =
+            Sql.existingConnection conn
+            |> Sql.query "SELECT * FROM jjj.success WHERE id = @id"
+            |> Sql.parameters [ "@id", Sql.successId successId ]
+            |> Sql.executeAsync Map.toSuccess
+        return List.tryHead success
+    }
 
     /// Insert or update a success story
-    let save (success : Success) conn =
-        fromTable Table.Success
-        |> get success.id
-        |> replace success
-        |> write conn
-
+    let save (success : Success) conn = backgroundTask {
+        let! _ =
+            Sql.existingConnection conn
+            |> Sql.query
+                "INSERT INTO jjj.success (
+                    id, citizen_id, recorded_on, was_from_here, source, story
+                ) VALUES (
+                    @id, @citizenId, @recordedOn, @wasFromHere, @source, @story
+                ) ON CONFLICT (id) DO UPDATE
+                SET was_from_here = EXCLUDED.was_from_here,
+                    story         = EXCLUDED.story"
+            |> Sql.parameters
+                [   "@id",          Sql.successId    success.id
+                    "@citizenId",   Sql.citizenId    success.citizenId
+                    "@recordedOn"   |>Sql.param<|    success.recordedOn
+                    "@wasFromHere", Sql.bool         success.fromHere
+                    "@source",      Sql.string       success.source
+                    "@story",       Sql.stringOrNone (Option.map MarkdownString.toString success.story)
+                ]
+            |> Sql.executeNonQueryAsync
+        ()
+    }
+    
     // Retrieve all success stories  
     let all conn =
         fromTable Table.Success

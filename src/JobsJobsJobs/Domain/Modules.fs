@@ -26,6 +26,9 @@ module CitizenId =
     
     /// Parse a string into a citizen ID
     let ofString = fromShortGuid >> CitizenId
+    
+    /// Get the GUID value of a citizen ID
+    let value = function CitizenId guid -> guid
 
 
 /// Support functions for citizens
@@ -49,6 +52,9 @@ module ContinentId =
     
     /// Parse a string into a continent ID
     let ofString = fromShortGuid >> ContinentId
+    
+    /// Get the GUID value of a continent ID
+    let value = function ContinentId guid -> guid
 
 
 /// Support functions for listing IDs
@@ -62,6 +68,9 @@ module ListingId =
     
     /// Parse a string into a listing ID
     let ofString = fromShortGuid >> ListingId
+    
+    /// Get the GUID value of a listing ID
+    let value = function ListingId guid -> guid
 
 
 /// Support functions for Markdown strings
@@ -85,6 +94,7 @@ module Profile =
         { id                = CitizenId Guid.Empty
           seekingEmployment = false
           isPublic          = false
+          isPublicLinkable  = false
           continentId       = ContinentId Guid.Empty
           region            = ""
           remoteWork        = false
@@ -107,6 +117,9 @@ module SkillId =
     
     /// Parse a string into a skill ID
     let ofString = fromShortGuid >> SkillId
+    
+    /// Get the GUID value of a skill ID
+    let value = function SkillId guid -> guid
 
 
 /// Support functions for success report IDs
@@ -120,3 +133,6 @@ module SuccessId =
     
     /// Parse a string into a success report ID
     let ofString = fromShortGuid >> SuccessId
+    
+    /// Get the GUID value of a success ID
+    let value = function SuccessId guid -> guid

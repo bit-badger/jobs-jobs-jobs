@@ -7,11 +7,7 @@ open System
 // fsharplint:disable FieldNames
 
 /// The ID of a user (a citizen of Gitmo Nation)
-type CitizenId =
-    CitizenId of Guid
-with
-    /// The GUID value of this citizen ID
-    member this.Value = this |> function CitizenId guid -> guid
+type CitizenId = CitizenId of Guid
 
 /// A user of Jobs, Jobs, Jobs
 [<CLIMutable; NoComparison; NoEquality>]
@@ -131,6 +127,9 @@ type Profile =
         
         /// Whether this citizen allows their profile to be a part of the publicly-viewable, anonymous data
         isPublic          : bool
+        
+        /// Whether this citizen allows their profile to be viewed via a public link
+        isPublicLinkable  : bool
         
         /// The ID of the continent on which the citizen resides
         continentId       : ContinentId
