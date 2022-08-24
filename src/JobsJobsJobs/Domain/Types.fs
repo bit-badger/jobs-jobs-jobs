@@ -97,6 +97,28 @@ type Listing =
     }
 
 
+/// Security settings for a user
+type SecurityInfo =
+    {   /// The ID of the citizen to whom these settings apply
+        Id : CitizenId
+        
+        /// The number of failed log on attempts (reset to 0 on successful log on)
+        FailedLogOnAttempts : int16
+        
+        /// Whether the account is locked
+        AccountLocked : bool
+        
+        /// The token the user must provide to take their desired action
+        Token : string option
+        
+        /// The action to which the token applies
+        TokenUsage : string option
+        
+        /// When the token expires
+        TokenExpires : Instant option
+    }
+
+
 /// A skill the job seeker possesses
 type Skill =
     {   /// The ID of the skill

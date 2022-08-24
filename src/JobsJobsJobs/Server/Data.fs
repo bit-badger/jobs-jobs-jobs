@@ -163,6 +163,24 @@ module Startup =
                     is_legacy      BOOLEAN     NOT NULL,
                     display_name   TEXT,
                     other_contacts TEXT)"
+            if needsTable "listing" then
+                "CREATE TABLE jjj.listing (
+                    id              UUID        NOT NULL PRIMARY KEY,
+                    citizen_id      UUID        NOT NULL,
+                    created_on      TIMESTAMPTZ NOT NULL,
+                    title           TEXT        NOT NULL,
+                    continent_id    UUID        NOT NULL,
+                    region          TEXT        NOT NULL,
+                    is_remote       BOOLEAN     NOT NULL,
+                    is_expired      BOOLEAN     NOT NULL,
+                    updated_on      TIMESTAMPTZ NOT NULL,
+                    listing_text    TEXT        NOT NULL,
+                    needed_by       DATE,
+                    was_filled_here BOOLEAN,
+                    FOREIGN KEY fk_listing_citizen   (citizen_id)   REFERENCES jjj.citizen   (id) ON DELETE CASCADE,
+                    FOREIGN KEY fk_listing_continent (continent_id) REFERENCES jjj.continent (id))"
+                "CREATE INDEX idx_listing_citizen   ON jjj.listing (citizen_id)"
+                "CREATE INDEX idx_listing_continent ON jjj.listing (continent_id)"
             if needsTable "profile" then
                 "CREATE TABLE jjj.profile (
                     citizen_id             UUID        NOT NULL PRIMARY KEY,
@@ -188,24 +206,16 @@ module Startup =
                     FOREIGN KEY fk_profile_skill_profile (citizen_id) REFERENCES jjj.profile (citizen_id)
                         ON DELETE CASCADE)"
                 "CREATE INDEX idx_profile_skill_profile ON jjj.profile_skill (citizen_id)"
-            if needsTable "listing" then
-                "CREATE TABLE jjj.listing (
-                    id              UUID        NOT NULL PRIMARY KEY,
-                    citizen_id      UUID        NOT NULL,
-                    created_on      TIMESTAMPTZ NOT NULL,
-                    title           TEXT        NOT NULL,
-                    continent_id    UUID        NOT NULL,
-                    region          TEXT        NOT NULL,
-                    is_remote       BOOLEAN     NOT NULL,
-                    is_expired      BOOLEAN     NOT NULL,
-                    updated_on      TIMESTAMPTZ NOT NULL,
-                    listing_text    TEXT        NOT NULL,
-                    needed_by       DATE,
-                    was_filled_here BOOLEAN,
-                    FOREIGN KEY fk_listing_citizen   (citizen_id)   REFERENCES jjj.citizen   (id) ON DELETE CASCADE,
-                    FOREIGN KEY fk_listing_continent (continent_id) REFERENCES jjj.continent (id))"
-                "CREATE INDEX idx_listing_citizen   ON jjj.listing (citizen_id)"
-                "CREATE INDEX idx_listing_continent ON jjj.listing (continent_id)"
+            if needsTable "security_info" then
+                "CREATE TABLE jjj.security_info (
+                    id              UUID     NOT NULL PRIMARY KEY,
+                    failed_attempts SMALLINT NOT NULL,
+                    is_locked       BOOLEAN  NOT NULL,
+                    token           TEXT,
+                    token_usage     TEXT,
+                    token_expires   TIMESTAMPTZ,
+                    FOREIGN KEY fk_security_info_citizen (id) REFERENCES jjj.citizen (id) ON DELETE CASCADE)"
+                "CREATE INDEX idx_security_info_expires ON jjj.security_info (token_expires)"
             if needsTable "success" then
                 "CREATE TABLE jjj.success (
                     id            UUID        NOT NULL PRIMARY KEY,
