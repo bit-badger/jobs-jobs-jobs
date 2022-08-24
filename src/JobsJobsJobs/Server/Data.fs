@@ -1,12 +1,11 @@
 /// Data access functions for Jobs, Jobs, Jobs
 module JobsJobsJobs.Api.Data
 
-open JobsJobsJobs.Domain.Types
+open JobsJobsJobs.Domain
 
 /// JSON converters used with RethinkDB persistence
 module Converters =
   
-    open JobsJobsJobs.Domain
     open Microsoft.FSharpLu.Json
     open Newtonsoft.Json
     open System
@@ -154,12 +153,16 @@ module Startup =
                     name TEXT NOT NULL)"
             if needsTable "citizen" then
                 "CREATE TABLE jjj.citizen (
-                    id           UUID        NOT NULL PRIMARY KEY,
-                    display_name TEXT,
-                    profile_urls TEXT[]      NOT NULL DEFAULT '{}',
-                    joined_on    TIMESTAMPTZ NOT NULL,
-                    last_seen_on TIMESTAMPTZ NOT NULL,
-                    is_legacy    BOOLEAN     NOT NULL)"
+                    id             UUID        NOT NULL PRIMARY KEY,
+                    joined_on      TIMESTAMPTZ NOT NULL,
+                    last_seen_on   TIMESTAMPTZ NOT NULL,
+                    email          TEXT        NOT NULL UNIQUE,
+                    first_name     TEXT        NOT NULL,
+                    last_name      TEXT        NOT NULL,
+                    password_hash  TEXT        NOT NULL,
+                    is_legacy      BOOLEAN     NOT NULL,
+                    display_name   TEXT,
+                    other_contacts TEXT)"
             if needsTable "profile" then
                 "CREATE TABLE jjj.profile (
                     citizen_id             UUID        NOT NULL PRIMARY KEY,
@@ -228,7 +231,6 @@ module Startup =
     }
 
 
-open JobsJobsJobs.Domain
 open JobsJobsJobs.Domain.SharedTypes
 
 /// Sanitize user input, and create a "contains" pattern for use with RethinkDB queries
@@ -281,6 +283,20 @@ module Sql =
 /// Map data results to domain types
 module Map =
     
+    /// Create a citizen from a data row
+    let toCitizen (row : RowReader) : Citizen =
+        {   id            = (row.uuid >> CitizenId) "id"
+            joinedOn      = row.fieldValue<Instant> "joined_on"
+            lastSeenOn    = row.fieldValue<Instant> "last_seen_on"
+            email         = row.string              "email"
+            firstName     = row.string              "first_name"
+            lastName      = row.string              "last_name"
+            passwordHash  = row.string              "password_hash"
+            displayName   = row.stringOrNone        "display_name"
+            // TODO: deserialize from JSON
+            otherContacts = [] // row.stringOrNone        "other_contacts"
+        }
+        
     /// Create a continent from a data row
     let toContinent (row : RowReader) : Continent =
         {   id   = (row.uuid >> ContinentId) "continent_id"
@@ -517,33 +533,67 @@ module Profile =
 module Citizen =
   
     /// Find a citizen by their ID
-    let findById (citizenId : CitizenId) conn =
-        fromTable Table.Citizen
-        |> get citizenId
-        |> resultOption<Citizen> conn
+    let findById citizenId conn = backgroundTask {
+        let! citizen =
+            Sql.existingConnection conn
+            |> Sql.query "SELECT * FROM jjj.citizen WHERE id = @id AND is_legacy = FALSE"
+            |> Sql.parameters [ "@id", Sql.citizenId citizenId ]
+            |> Sql.executeAsync Map.toCitizen
+        return List.tryHead citizen
+    }
 
-    /// Find a citizen by their Mastodon username
-    let findByMastodonUser (instance : string) (mastodonUser : string) conn = task {
-        let! u =
-            fromTable Table.Citizen
-            |> getAllWithIndex [ [| instance; mastodonUser |] ] "instanceUser"
-            |> limit 1
-            |> result<Citizen list> conn
-        return List.tryHead u
+    /// Find a citizen by their e-mail address
+    let findByEmail email conn = backgroundTask {
+        let! citizen =
+            Sql.existingConnection conn
+            |> Sql.query "SELECT * FROM jjj.citizen WHERE email = @email AND is_legacy = FALSE"
+            |> Sql.parameters [ "@email", Sql.string email ]
+            |> Sql.executeAsync Map.toCitizen
+        return List.tryHead citizen
     }
   
-    /// Add a citizen
-    let add (citizen : Citizen) conn =
-        fromTable Table.Citizen
-        |> insert citizen
-        |> write conn
+    /// Add or update a citizen
+    let save (citizen : Citizen) conn = backgroundTask {
+        let! _ =
+            Sql.existingConnection conn
+            |> Sql.query
+                "INSERT INTO jjj.citizen (
+                    id, joined_on, last_seen_on, email, first_name, last_name, password_hash, display_name,
+                    other_contacts, is_legacy
+                ) VALUES (
+                    @id, @joinedOn, @lastSeenOn, @email, @firstName, @lastName, @passwordHash, @displayName,
+                    @otherContacts, FALSE
+                ) ON CONFLICT (id) DO UPDATE
+                SET email          = EXCLUDED.email,
+                    first_name     = EXCLUDED.first_name,
+                    last_name      = EXCLUDED.last_name,
+                    password_hash  = EXCLUDED.password_hash,
+                    display_name   = EXCLUDED.display_name,
+                    other_contacts = EXCLUDED.other_contacts"
+            |> Sql.parameters
+                [   "@id",            Sql.citizenId    citizen.id
+                    "@joinedOn"       |>Sql.param<|    citizen.joinedOn
+                    "@lastSeenOn"     |>Sql.param<|    citizen.lastSeenOn
+                    "@email",         Sql.string       citizen.email
+                    "@firstName",     Sql.string       citizen.firstName
+                    "@lastName",      Sql.string       citizen.lastName
+                    "@passwordHash",  Sql.string       citizen.passwordHash
+                    "@displayName",   Sql.stringOrNone citizen.displayName
+                    "@otherContacts", Sql.stringOrNone (if List.isEmpty citizen.otherContacts then None else Some "")
+                ]
+            |> Sql.executeNonQueryAsync
+        ()
+    }
 
-    /// Update the display name and last seen on date for a citizen
-    let logOnUpdate (citizen : Citizen) conn =
-        fromTable Table.Citizen
-        |> get citizen.id
-        |> update {| displayName = citizen.displayName; lastSeenOn = citizen.lastSeenOn |}
-        |> write conn
+    /// Update the last seen on date for a citizen
+    let logOnUpdate (citizen : Citizen) conn = backgroundTask {
+        let! _ =
+            Sql.existingConnection conn
+            |> Sql.query "UPDATE jjj.citizen SET last_seen_on = @lastSeenOn WHERE id = @id"
+            |> Sql.parameters [ "@id", Sql.citizenId citizen.id; "@lastSeenOn" |>Sql.param<| citizen.lastSeenOn ]
+            |> Sql.executeNonQueryAsync
+        ()
+    }
   
     /// Delete a citizen
     let delete citizenId conn = backgroundTask {
@@ -555,13 +605,6 @@ module Citizen =
         ()
     }
     
-    /// Update a citizen's real name
-    let realNameUpdate (citizenId : CitizenId) (realName : string option) conn =
-        fromTable Table.Citizen
-        |> get citizenId
-        |> update {| realName = realName |}
-        |> write conn
-
 
 /// Continent data access functions
 [<RequireQualifiedAccess>]

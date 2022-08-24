@@ -1,45 +1,49 @@
-﻿/// Types within Jobs, Jobs, Jobs
-module JobsJobsJobs.Domain.Types
+﻿namespace JobsJobsJobs.Domain
 
 open NodaTime
 open System
 
 // fsharplint:disable FieldNames
 
-/// The ID of a user (a citizen of Gitmo Nation)
-type CitizenId = CitizenId of Guid
-
-/// A user of Jobs, Jobs, Jobs
+/// A user of Jobs, Jobs, Jobs; a citizen of Gitmo Nation
 [<CLIMutable; NoComparison; NoEquality>]
 type Citizen =
     {   /// The ID of the user
-        id           : CitizenId
-        
-        /// The Mastodon instance abbreviation from which this citizen is authorized
-        instance     : string
-        
-        /// The handle by which the user is known on Mastodon
-        mastodonUser : string
-        
-        /// The user's display name from Mastodon (updated every login)
-        displayName  : string option
-        
-        /// The user's real name
-        realName     : string option
-        
-        /// The URL for the user's Mastodon profile
-        profileUrl   : string
+        id : CitizenId
         
         /// When the user joined Jobs, Jobs, Jobs
-        joinedOn     : Instant
+        joinedOn : Instant
         
         /// When the user last logged in
-        lastSeenOn   : Instant
+        lastSeenOn : Instant
+        
+        /// The user's e-mail address
+        email : string
+        
+        /// The user's first name
+        firstName : string
+        
+        /// The user's last name
+        lastName : string
+        
+        /// The hash of the user's password
+        passwordHash : string
+        
+        /// The name displayed for this user throughout the site
+        displayName : string option
+        
+        /// The other contacts for this user
+        otherContacts : OtherContact list
+        
     }
 
+/// Support functions for citizens
+module Citizen =
+    
+    /// Get the name of the citizen (either their preferred display name or first/last names)
+    let name x =
+        match x.displayName with Some it -> it | None -> $"{x.firstName} {x.lastName}"
 
-/// The ID of a continent
-type ContinentId = ContinentId of Guid
 
 /// A continent
 [<CLIMutable; NoComparison; NoEquality>]
@@ -51,13 +55,6 @@ type Continent =
         name : string
     }
 
-
-/// A string of Markdown text
-type MarkdownString = Text of string
-
-
-/// The ID of a job listing
-type ListingId = ListingId of Guid
 
 /// A job listing
 [<CLIMutable; NoComparison; NoEquality>]
@@ -99,9 +96,6 @@ type Listing =
         wasFilledHere : bool option
     }
 
-
-/// The ID of a skill
-type SkillId = SkillId of Guid
 
 /// A skill the job seeker possesses
 type Skill =
@@ -156,8 +150,25 @@ type Profile =
         skills            : Skill list
     }
 
-/// The ID of a success report
-type SuccessId = SuccessId of Guid
+/// Support functions for Profiles
+module Profile =
+    
+    // An empty profile
+    let empty =
+        { id                = CitizenId Guid.Empty
+          seekingEmployment = false
+          isPublic          = false
+          isPublicLinkable  = false
+          continentId       = ContinentId Guid.Empty
+          region            = ""
+          remoteWork        = false
+          fullTime          = false
+          biography         = Text ""
+          lastUpdatedOn     = Instant.MinValue
+          experience        = None
+          skills            = []
+        }
+
 
 /// A record of success finding employment
 [<CLIMutable; NoComparison; NoEquality>]

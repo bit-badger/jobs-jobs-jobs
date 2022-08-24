@@ -1,19 +1,10 @@
-/// Modules to provide support functions for types
-[<AutoOpen>]
-module JobsJobsJobs.Domain.Modules
+namespace JobsJobsJobs.Domain
 
-open Markdig
 open System
-open Types
+open Giraffe
 
-/// Format a GUID as a Short GUID
-let private toShortGuid (guid : Guid) =
-    Convert.ToBase64String(guid.ToByteArray ()).Replace('/', '_').Replace('+', '-')[0..21]
-
-/// Turn a Short GUID back into a GUID
-let private fromShortGuid (it : string) =
-    (Convert.FromBase64String >> Guid) $"{it.Replace('_', '/').Replace('-', '+')}=="
-
+/// The ID of a user (a citizen of Gitmo Nation)
+type CitizenId = CitizenId of Guid
 
 /// Support functions for citizen IDs
 module CitizenId =
@@ -22,24 +13,17 @@ module CitizenId =
     let create () = (Guid.NewGuid >> CitizenId) ()
     
     /// A string representation of a citizen ID
-    let toString = function CitizenId it -> toShortGuid it
+    let toString = function CitizenId it -> ShortGuid.fromGuid it
     
     /// Parse a string into a citizen ID
-    let ofString = fromShortGuid >> CitizenId
+    let ofString = ShortGuid.toGuid >> CitizenId
     
     /// Get the GUID value of a citizen ID
     let value = function CitizenId guid -> guid
 
 
-/// Support functions for citizens
-module Citizen =
-    
-    /// Get the name of the citizen (the first of real name, display name, or handle that is filled in)
-    let name x =
-        [ x.realName; x.displayName; Some x.mastodonUser ]
-        |> List.find Option.isSome
-        |> Option.get
-
+/// The ID of a continent
+type ContinentId = ContinentId of Guid
 
 /// Support functions for continent IDs
 module ContinentId =
@@ -48,14 +32,17 @@ module ContinentId =
     let create () = (Guid.NewGuid >> ContinentId) ()
     
     /// A string representation of a continent ID
-    let toString = function ContinentId it -> toShortGuid it
+    let toString = function ContinentId it -> ShortGuid.fromGuid it
     
     /// Parse a string into a continent ID
-    let ofString = fromShortGuid >> ContinentId
+    let ofString = ShortGuid.toGuid >> ContinentId
     
     /// Get the GUID value of a continent ID
     let value = function ContinentId guid -> guid
 
+
+/// The ID of a job listing
+type ListingId = ListingId of Guid
 
 /// Support functions for listing IDs
 module ListingId =
@@ -64,17 +51,22 @@ module ListingId =
     let create () = (Guid.NewGuid >> ListingId) ()
     
     /// A string representation of a listing ID
-    let toString = function ListingId it -> toShortGuid it
+    let toString = function ListingId it -> ShortGuid.fromGuid it
     
     /// Parse a string into a listing ID
-    let ofString = fromShortGuid >> ListingId
+    let ofString = ShortGuid.toGuid >> ListingId
     
     /// Get the GUID value of a listing ID
     let value = function ListingId guid -> guid
 
 
+/// A string of Markdown text
+type MarkdownString = Text of string
+
 /// Support functions for Markdown strings
 module MarkdownString =
+    
+    open Markdig
     
     /// The Markdown conversion pipeline (enables all advanced features)
     let private pipeline = MarkdownPipelineBuilder().UseAdvancedExtensions().Build ()
@@ -86,25 +78,18 @@ module MarkdownString =
     let toString = function Text text -> text
 
 
-/// Support functions for Profiles
-module Profile =
-    
-    // An empty profile
-    let empty =
-        { id                = CitizenId Guid.Empty
-          seekingEmployment = false
-          isPublic          = false
-          isPublicLinkable  = false
-          continentId       = ContinentId Guid.Empty
-          region            = ""
-          remoteWork        = false
-          fullTime          = false
-          biography         = Text ""
-          lastUpdatedOn     = NodaTime.Instant.MinValue
-          experience        = None
-          skills            = []
-        }
+/// Another way to contact a citizen from this site 
+type OtherContact =
+    {   /// The name of the contact (Email, No Agenda Social, LinkedIn, etc.) 
+        Name : string
+        
+        /// The value for the contact (e-mail address, user name, URL, etc.)
+        Value : string
+    }
 
+
+/// The ID of a skill
+type SkillId = SkillId of Guid
 
 /// Support functions for skill IDs
 module SkillId =
@@ -113,14 +98,17 @@ module SkillId =
     let create () = (Guid.NewGuid >> SkillId) ()
     
     /// A string representation of a skill ID
-    let toString = function SkillId it -> toShortGuid it
+    let toString = function SkillId it -> ShortGuid.fromGuid it
     
     /// Parse a string into a skill ID
-    let ofString = fromShortGuid >> SkillId
+    let ofString = ShortGuid.toGuid >> SkillId
     
     /// Get the GUID value of a skill ID
     let value = function SkillId guid -> guid
 
+
+/// The ID of a success report
+type SuccessId = SuccessId of Guid
 
 /// Support functions for success report IDs
 module SuccessId =
@@ -129,10 +117,10 @@ module SuccessId =
     let create () = (Guid.NewGuid >> SuccessId) ()
     
     /// A string representation of a success report ID
-    let toString = function SuccessId it -> toShortGuid it
+    let toString = function SuccessId it -> ShortGuid.fromGuid it
     
     /// Parse a string into a success report ID
-    let ofString = fromShortGuid >> SuccessId
+    let ofString = ShortGuid.toGuid >> SuccessId
     
     /// Get the GUID value of a success ID
     let value = function SuccessId guid -> guid
