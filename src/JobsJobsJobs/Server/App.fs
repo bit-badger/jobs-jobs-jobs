@@ -24,49 +24,61 @@ let configureApp (app : IApplicationBuilder) =
 
 open Newtonsoft.Json
 open NodaTime
+open Marten
 open Microsoft.AspNetCore.Authentication.JwtBearer
 open Microsoft.Extensions.Configuration
 open Microsoft.Extensions.Logging
 open Microsoft.IdentityModel.Tokens
 open System.Text
+open JobsJobsJobs.Domain
 open JobsJobsJobs.Domain.SharedTypes
 
 /// Configure dependency injection
 let configureServices (svc : IServiceCollection) =
-    svc.AddGiraffe ()                             |> ignore
-    svc.AddSingleton<IClock> SystemClock.Instance |> ignore
-    svc.AddLogging ()                             |> ignore
-    svc.AddCors ()                                |> ignore
+    let _ = svc.AddGiraffe ()
+    let _ = svc.AddSingleton<IClock> SystemClock.Instance
+    let _ = svc.AddLogging ()
+    let _ = svc.AddCors ()
     
     let jsonCfg = JsonSerializerSettings ()
     Data.Converters.all () |> List.iter jsonCfg.Converters.Add
-    svc.AddSingleton<Json.ISerializer> (NewtonsoftJson.Serializer jsonCfg) |> ignore
+    let _ = svc.AddSingleton<Json.ISerializer> (NewtonsoftJson.Serializer jsonCfg)
 
     let svcs = svc.BuildServiceProvider ()
     let cfg  = svcs.GetRequiredService<IConfiguration> ()
     
-    svc.AddAuthentication(fun o ->
-        o.DefaultAuthenticateScheme <- JwtBearerDefaults.AuthenticationScheme
-        o.DefaultChallengeScheme    <- JwtBearerDefaults.AuthenticationScheme
-        o.DefaultScheme             <- JwtBearerDefaults.AuthenticationScheme)
-        .AddJwtBearer(fun o ->
-            o.RequireHttpsMetadata      <- false
-            o.TokenValidationParameters <- TokenValidationParameters (
-                ValidateIssuer   = true,
-                ValidateAudience = true,
-                ValidAudience    = "https://noagendacareers.com",
-                ValidIssuer      = "https://noagendacareers.com",
-                IssuerSigningKey = SymmetricSecurityKey (
-                    Encoding.UTF8.GetBytes (cfg.GetSection "Auth").["ServerSecret"])))
-    |> ignore
-    svc.AddAuthorization () |> ignore
-    svc.Configure<AuthOptions> (cfg.GetSection "Auth") |> ignore
+    let _ =
+        svc.AddAuthentication(fun o ->
+            o.DefaultAuthenticateScheme <- JwtBearerDefaults.AuthenticationScheme
+            o.DefaultChallengeScheme    <- JwtBearerDefaults.AuthenticationScheme
+            o.DefaultScheme             <- JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(fun opt ->
+                opt.RequireHttpsMetadata      <- false
+                opt.TokenValidationParameters <- TokenValidationParameters (
+                    ValidateIssuer   = true,
+                    ValidateAudience = true,
+                    ValidAudience    = "https://noagendacareers.com",
+                    ValidIssuer      = "https://noagendacareers.com",
+                    IssuerSigningKey = SymmetricSecurityKey (
+                        Encoding.UTF8.GetBytes (cfg.GetSection "Auth").["ServerSecret"])))
+    let _ = svc.AddAuthorization ()
+    let _ = svc.Configure<AuthOptions> (cfg.GetSection "Auth")
     
     let dbCfg = cfg.GetSection "Rethink"
     let log   = svcs.GetRequiredService<ILoggerFactory>().CreateLogger "JobsJobsJobs.Api.Data.Startup"
     let conn  = Data.Startup.createConnection dbCfg log
-    svc.AddSingleton conn |> ignore
-    Data.Startup.establishEnvironment dbCfg log conn |> Async.AwaitTask |> Async.RunSynchronously
+    let _ = svc.AddSingleton conn |> ignore
+    //Data.Startup.establishEnvironment dbCfg log conn |> Async.AwaitTask |> Async.RunSynchronously
+    
+    let _ =
+        svc.AddMarten(fun (opts : StoreOptions) ->
+            opts.Connection (cfg.GetConnectionString "PostgreSQL")
+            opts.RegisterDocumentTypes [
+                typeof<Citizen>; typeof<Continent>; typeof<Listing>; typeof<Profile>; typeof<SecurityInfo>
+                typeof<Success>
+            ])
+            .UseLightweightSessions()
+    ()
 
 [<EntryPoint>]
 let main _ =

@@ -35,6 +35,8 @@ type Citizen =
         /// The other contacts for this user
         otherContacts : OtherContact list
         
+        /// Whether this is a legacy citizen
+        isLegacy : bool
     }
 
 /// Support functions for citizens
@@ -94,6 +96,9 @@ type Listing =
         
         /// Was this job filled as part of its appearance on Jobs, Jobs, Jobs?
         wasFilledHere : bool option
+        
+        /// Whether this is a legacy listing
+        isLegacy : bool
     }
 
 
@@ -170,6 +175,9 @@ type Profile =
         
         /// Skills this citizen possesses
         skills            : Skill list
+        
+        /// Whether this is a legacy profile
+        isLegacy : bool
     }
 
 /// Support functions for Profiles
@@ -189,6 +197,7 @@ module Profile =
           lastUpdatedOn     = Instant.MinValue
           experience        = None
           skills            = []
+          isLegacy          = false
         }
 
 

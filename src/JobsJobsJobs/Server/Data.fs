@@ -113,6 +113,7 @@ module private Reconnect =
     
 
 open RethinkDb.Driver.Ast
+open Marten
 
 /// Shorthand for the RethinkDB R variable (how every command starts)
 let private r = RethinkDb.Driver.RethinkDB.R
@@ -305,6 +306,7 @@ module Map =
             displayName   = row.stringOrNone        "display_name"
             // TODO: deserialize from JSON
             otherContacts = [] // row.stringOrNone        "other_contacts"
+            isLegacy      = false
         }
         
     /// Create a continent from a data row
@@ -331,6 +333,7 @@ module Map =
             text          = (row.string >> Text)            "listing_text"
             neededBy      = row.fieldValueOrNone<LocalDate> "needed_by"
             wasFilledHere = row.boolOrNone                  "was_filled_here"
+            isLegacy      = false
         }
     
     /// Create a job listing for viewing from a data row
@@ -353,6 +356,7 @@ module Map =
             lastUpdatedOn     = row.fieldValue<Instant>   "last_updated_on"
             experience        = row.stringOrNone          "experience" |> Option.map Text
             skills            = []
+            isLegacy          = false
         }
     
     /// Create a skill from a data row
@@ -373,99 +377,34 @@ module Map =
         }
 
 
+/// Convert a possibly-null record type to an option
+let optional<'T> (value : 'T) = if isNull (box value) then None else Some value
+
+open System
+open System.Linq
+
 /// Profile data access functions
 [<RequireQualifiedAccess>]
 module Profile =
 
     /// Count the current profiles
-    let count conn =
-        Sql.existingConnection conn
-        |> Sql.query
-               "SELECT COUNT(p.citizen_id)
-                  FROM jjj.profile p
-                       INNER JOIN jjj.citizen c ON c.id = p.citizen_id
-                 WHERE c.is_legacy = FALSE"
-        |> Sql.executeRowAsync Map.toCount
+    let count (session : IQuerySession) =
+        session.Query<Profile>().Where(fun p -> not p.isLegacy).LongCountAsync ()
 
     /// Find a profile by citizen ID
-    let findById citizenId conn = backgroundTask {
-        let! tryProfile =
-            Sql.existingConnection conn
-            |> Sql.query
-                "SELECT *
-                   FROM jjj.profile p
-                        INNER JOIN jjj.citizen ON c.id = p.citizen_id
-                  WHERE p.citizen_id = @id
-                    AND c.is_legacy  = FALSE"
-            |> Sql.parameters [ "@id", Sql.citizenId citizenId ]
-            |> Sql.executeAsync Map.toProfile
-        match List.tryHead tryProfile with
-        | Some profile ->
-            let! skills =
-                Sql.existingConnection conn
-                |> Sql.query "SELECT * FROM jjj.profile_skill WHERE citizen_id = @id"
-                |> Sql.parameters [ "@id", Sql.citizenId citizenId ]
-                |> Sql.executeAsync Map.toSkill
-            return Some { profile with skills = skills }
-        | None -> return None
+    let findById citizenId (session : IQuerySession) = backgroundTask {
+        let! profile = session.LoadAsync<Profile> (CitizenId.value citizenId)
+        return
+            match optional profile with
+            | Some p when not p.isLegacy -> Some p
+            | Some _
+            | None -> None
     }
     
     /// Insert or update a profile
-    let save (profile : Profile) conn = backgroundTask {
-        let! _ =
-            Sql.existingConnection conn
-            |> Sql.executeTransactionAsync [
-                "INSERT INTO jjj.profile (
-                    citizen_id, is_seeking, is_public_searchable, is_public_linkable, continent_id, region,
-                    is_available_remotely, is_available_full_time, biography, last_updated_on, experience
-                ) VALUES (
-                    @citizenId, @isSeeking, @isPublicSearchable, @isPublicLinkable, @continentId, @region,
-                    @isAvailableRemotely, @isAvailableFullTime, @biography, @lastUpdatedOn, @experience
-                ) ON CONFLICT (citizen_id) DO UPDATE
-                SET is_seeking             = EXCLUDED.is_seeking,
-                    is_public_searchable   = EXCLUDED.is_public_searchable,
-                    is_public_linkable     = EXCLUDED.is_public_linkable,
-                    continent_id           = EXCLUDED.continent_id,
-                    region                 = EXCLUDED.region,
-                    is_available_remotely  = EXCLUDED.is_available_remotely,
-                    is_available_full_time = EXCLUDED.is_available_full_time,
-                    biography              = EXCLUDED.biography,
-                    last_updated_on        = EXCLUDED.last_updated_on,
-                    experience             = EXCLUDED.experience",
-                [ [ "@citizenId",           Sql.citizenId    profile.id
-                    "@isSeeking",           Sql.bool         profile.seekingEmployment
-                    "@isPublicSearchable",  Sql.bool         profile.isPublic
-                    "@isPublicLinkable",    Sql.bool         profile.isPublicLinkable
-                    "@continentId",         Sql.continentId  profile.continentId
-                    "@region",              Sql.string       profile.region
-                    "@isAvailableRemotely", Sql.bool         profile.remoteWork
-                    "@isAvailableFullTime", Sql.bool         profile.fullTime
-                    "@biography",           Sql.markdown     profile.biography
-                    "@lastUpdatedOn"        |>Sql.param<|    profile.lastUpdatedOn
-                    "@experience",          Sql.stringOrNone (Option.map MarkdownString.toString profile.experience)
-                ] ]
-                
-                "INSERT INTO jjj.profile (
-                    id, citizen_id, description, notes
-                ) VALUES (
-                    @id, @citizenId, @description, @notes
-                ) ON CONFLICT (id) DO UPDATE
-                SET description = EXCLUDED.description,
-                    notes       = EXCLUDED.notes",
-                profile.skills
-                |> List.map (fun skill -> [
-                    "@id",          Sql.skillId      skill.id
-                    "@citizenId",   Sql.citizenId    profile.id
-                    "@description", Sql.string       skill.description
-                    "@notes"      , Sql.stringOrNone skill.notes
-                ])
-                
-                $"""DELETE FROM jjj.profile
-                    WHERE id NOT IN ({profile.skills |> List.mapi (fun idx _ -> $"@id{idx}") |> String.concat ", "})""",
-                [   profile.skills |> List.mapi (fun idx skill -> $"@id{idx}", Sql.skillId skill.id) ]
-        ]
-        ()
-    }
+    [<Obsolete "Inline this">]
+    let save (profile : Profile) (session : IDocumentSession) =
+        session.Store profile
     
     /// Delete a citizen's profile
     let delete citizenId conn = backgroundTask {
@@ -543,13 +482,13 @@ module Profile =
 module Citizen =
   
     /// Find a citizen by their ID
-    let findById citizenId conn = backgroundTask {
-        let! citizen =
-            Sql.existingConnection conn
-            |> Sql.query "SELECT * FROM jjj.citizen WHERE id = @id AND is_legacy = FALSE"
-            |> Sql.parameters [ "@id", Sql.citizenId citizenId ]
-            |> Sql.executeAsync Map.toCitizen
-        return List.tryHead citizen
+    let findById citizenId (session : IQuerySession) = backgroundTask {
+        let! citizen = session.LoadAsync<Citizen> (CitizenId.value citizenId)
+        return
+            match optional citizen with
+            | Some c when not c.isLegacy -> Some c
+            | Some _
+            | None -> None
     }
 
     /// Find a citizen by their e-mail address

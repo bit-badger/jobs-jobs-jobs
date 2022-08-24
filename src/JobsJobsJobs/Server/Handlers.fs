@@ -1,10 +1,10 @@
 /// Route handlers for Giraffe endpoints
 module JobsJobsJobs.Api.Handlers
 
+open System.Threading
 open Giraffe
 open JobsJobsJobs.Domain
 open JobsJobsJobs.Domain.SharedTypes
-open JobsJobsJobs.Domain.Types
 open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.Logging
 
@@ -54,11 +54,13 @@ module Error =
 [<AutoOpen>]
 module Helpers =
 
+    open System.Security.Claims
+    open System.Threading.Tasks
     open NodaTime
+    open Marten
     open Microsoft.Extensions.Configuration
     open Microsoft.Extensions.Options
     open RethinkDb.Driver.Net
-    open System.Security.Claims
 
     /// Get the NodaTime clock from the request context
     let clock (ctx : HttpContext) = ctx.GetService<IClock> ()
@@ -74,6 +76,12 @@ module Helpers =
 
     /// Get the RethinkDB connection from the request context
     let conn (ctx : HttpContext) = ctx.GetService<IConnection> ()
+    
+    /// Get a query session
+    let querySession (ctx : HttpContext) = ctx.GetService<IQuerySession> ()
+    
+    /// Get a full document session
+    let docSession (ctx : HttpContext) = ctx.GetService<IDocumentSession> ()
 
     /// `None` if a `string option` is `None`, whitespace, or empty
     let noneIfBlank (s : string option) =
@@ -98,8 +106,19 @@ module Helpers =
 
     /// Return an empty OK response
     let ok : HttpHandler = Successful.OK ""
+    
+    /// Convert a potentially-null record type to an option
+    let opt<'T> (it : Task<'T>) = task {
+        match! it with
+        | x when isNull (box x) -> return None
+        | x -> return Some x
+    }
+    
+    /// Shorthand for no cancellation token
+    let noCnx = CancellationToken.None
 
 
+open System
 
 /// Handlers for /api/citizen routes
 [<RequireQualifiedAccess>]
@@ -152,15 +171,18 @@ module Citizen =
     }
     
     // GET: /api/citizen/[id]
-    let get citizenId : HttpHandler = authorize >=> fun next ctx -> task {
-        match! Data.Citizen.findById (CitizenId citizenId) (conn ctx) with
+    let get (citizenId : Guid) : HttpHandler = authorize >=> fun next ctx -> task {
+        use session = querySession ctx
+        match! session.LoadAsync<Citizen> citizenId |> opt with
         | Some citizen -> return! json citizen next ctx
         | None -> return! Error.notFound next ctx
     }
 
     // DELETE: /api/citizen
     let delete : HttpHandler = authorize >=> fun next ctx -> task {
-        do! Data.Citizen.delete (currentCitizenId ctx) (conn ctx)
+        use session = docSession ctx
+        session.Delete<Citizen> (CitizenId.value (currentCitizenId ctx))
+        do! session.SaveChangesAsync ()
         return! ok next ctx
     }
 
@@ -171,7 +193,8 @@ module Continent =
   
     // GET: /api/continent/all
     let all : HttpHandler = fun next ctx -> task {
-        let! continents = Data.Continent.all (conn ctx)
+        use session = querySession ctx
+        let! continents = session.Query<Continent>().ToListAsync noCnx
         return! json continents next ctx
     }
 
@@ -230,20 +253,23 @@ module Listing =
     let add : HttpHandler = authorize >=> fun next ctx -> task {
         let! form = ctx.BindJsonAsync<ListingForm> ()
         let  now  = (clock ctx).GetCurrentInstant ()
-        do! Data.Listing.add
-                { id            = ListingId.create ()
-                  citizenId     = currentCitizenId ctx
-                  createdOn     = now
-                  title         = form.title
-                  continentId   = ContinentId.ofString form.continentId
-                  region        = form.region
-                  remoteWork    = form.remoteWork
-                  isExpired     = false
-                  updatedOn     = now
-                  text          = Text form.text
-                  neededBy      = (form.neededBy |> Option.map parseDate)
-                  wasFilledHere = None
-                  } (conn ctx)
+        use  session = docSession ctx
+        session.Store<Listing>({
+            id            = ListingId.create ()
+            citizenId     = currentCitizenId ctx
+            createdOn     = now
+            title         = form.title
+            continentId   = ContinentId.ofString form.continentId
+            region        = form.region
+            remoteWork    = form.remoteWork
+            isExpired     = false
+            updatedOn     = now
+            text          = Text form.text
+            neededBy      = (form.neededBy |> Option.map parseDate)
+            wasFilledHere = None
+            isLegacy      = false
+        })
+        do! session.SaveChangesAsync ()
         return! ok next ctx
     }
 

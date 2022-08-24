@@ -24,6 +24,9 @@
   
   <ItemGroup>
     <PackageReference Include="Giraffe" Version="6.0.0" />
+    <PackageReference Include="Marten" Version="5.8.0" />
+    <PackageReference Include="Marten.NodaTime" Version="5.8.0" />
+    <PackageReference Include="Marten.PLv8" Version="5.8.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.6" />
     <PackageReference Include="Microsoft.FSharpLu.Json" Version="0.11.7" />
     <PackageReference Include="NodaTime.Serialization.JsonNet" Version="3.0.0" />
