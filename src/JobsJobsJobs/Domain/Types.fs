@@ -38,6 +38,9 @@ type Citizen =
         /// Whether this is a legacy citizen
         isLegacy : bool
     }
+with
+    /// Unwrapped ID for database PK use
+    member this.DbId = CitizenId.value this.id
 
 /// Support functions for citizens
 module Citizen =
@@ -56,6 +59,18 @@ type Continent =
         /// The name of the continent
         name : string
     }
+with
+    /// Unwrapped ID for database PK use
+    member this.DbId = ContinentId.value this.id
+
+/// Support functions for continents
+module Continent =
+    
+    /// An empty continent
+    let empty =
+        {   id   = ContinentId Guid.Empty
+            name = ""
+        }
 
 
 /// A job listing
@@ -108,7 +123,7 @@ type SecurityInfo =
         Id : CitizenId
         
         /// The number of failed log on attempts (reset to 0 on successful log on)
-        FailedLogOnAttempts : int16
+        FailedLogOnAttempts : int
         
         /// Whether the account is locked
         AccountLocked : bool
@@ -122,6 +137,22 @@ type SecurityInfo =
         /// When the token expires
         TokenExpires : Instant option
     }
+with
+    /// Unwrapped ID for database PK use
+    member this.DbId = CitizenId.value this.Id
+
+/// Functions to support security info
+module SecurityInfo =
+    
+    /// An empty set of security info
+    let empty =
+        {   Id                  = CitizenId Guid.Empty
+            FailedLogOnAttempts = 0
+            AccountLocked       = false
+            Token               = None
+            TokenUsage          = None
+            TokenExpires        = None
+        }
 
 
 /// A skill the job seeker possesses

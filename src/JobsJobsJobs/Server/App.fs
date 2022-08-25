@@ -24,13 +24,12 @@ let configureApp (app : IApplicationBuilder) =
 
 open Newtonsoft.Json
 open NodaTime
-open Marten
 open Microsoft.AspNetCore.Authentication.JwtBearer
 open Microsoft.Extensions.Configuration
 open Microsoft.Extensions.Logging
 open Microsoft.IdentityModel.Tokens
 open System.Text
-open JobsJobsJobs.Domain
+open JobsJobsJobs.Data
 open JobsJobsJobs.Domain.SharedTypes
 
 /// Configure dependency injection
@@ -47,6 +46,7 @@ let configureServices (svc : IServiceCollection) =
     let svcs = svc.BuildServiceProvider ()
     let cfg  = svcs.GetRequiredService<IConfiguration> ()
     
+    // Set up JWTs for API access
     let _ =
         svc.AddAuthentication(fun o ->
             o.DefaultAuthenticateScheme <- JwtBearerDefaults.AuthenticationScheme
@@ -68,16 +68,8 @@ let configureServices (svc : IServiceCollection) =
     let log   = svcs.GetRequiredService<ILoggerFactory>().CreateLogger "JobsJobsJobs.Api.Data.Startup"
     let conn  = Data.Startup.createConnection dbCfg log
     let _ = svc.AddSingleton conn |> ignore
-    //Data.Startup.establishEnvironment dbCfg log conn |> Async.AwaitTask |> Async.RunSynchronously
-    
-    let _ =
-        svc.AddMarten(fun (opts : StoreOptions) ->
-            opts.Connection (cfg.GetConnectionString "PostgreSQL")
-            opts.RegisterDocumentTypes [
-                typeof<Citizen>; typeof<Continent>; typeof<Listing>; typeof<Profile>; typeof<SecurityInfo>
-                typeof<Success>
-            ])
-            .UseLightweightSessions()
+    // Set up the Marten data store
+    let _ = Connection.setUp cfg
     ()
 
 [<EntryPoint>]

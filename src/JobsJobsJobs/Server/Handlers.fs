@@ -119,6 +119,7 @@ module Helpers =
 
 
 open System
+open JobsJobsJobs.Data
 
 /// Handlers for /api/citizen routes
 [<RequireQualifiedAccess>]
@@ -171,18 +172,15 @@ module Citizen =
     }
     
     // GET: /api/citizen/[id]
-    let get (citizenId : Guid) : HttpHandler = authorize >=> fun next ctx -> task {
-        use session = querySession ctx
-        match! session.LoadAsync<Citizen> citizenId |> opt with
+    let get citizenId : HttpHandler = authorize >=> fun next ctx -> task {
+        match! Citizens.findById (CitizenId citizenId) with
         | Some citizen -> return! json citizen next ctx
         | None -> return! Error.notFound next ctx
     }
 
     // DELETE: /api/citizen
     let delete : HttpHandler = authorize >=> fun next ctx -> task {
-        use session = docSession ctx
-        session.Delete<Citizen> (CitizenId.value (currentCitizenId ctx))
-        do! session.SaveChangesAsync ()
+        do! Citizens.deleteById (currentCitizenId ctx)
         return! ok next ctx
     }
 
@@ -193,8 +191,7 @@ module Continent =
   
     // GET: /api/continent/all
     let all : HttpHandler = fun next ctx -> task {
-        use session = querySession ctx
-        let! continents = session.Query<Continent>().ToListAsync noCnx
+        let! continents = Continents.all ()
         return! json continents next ctx
     }
 
@@ -224,27 +221,26 @@ module Instances =
 module Listing =
 
     open NodaTime
-    open System
 
     /// Parse the string we receive from JSON into a NodaTime local date
     let private parseDate = DateTime.Parse >> LocalDate.FromDateTime
 
     // GET: /api/listings/mine
     let mine : HttpHandler = authorize >=> fun next ctx -> task {
-        let! listings = Data.Listing.findByCitizen (currentCitizenId ctx) (conn ctx)
+        let! listings = Listings.findByCitizen (currentCitizenId ctx)
         return! json listings next ctx
     }
 
     // GET: /api/listing/[id]
     let get listingId : HttpHandler = authorize >=> fun next ctx -> task {
-        match! Data.Listing.findById (ListingId listingId) (conn ctx) with
+        match! Listings.findById (ListingId listingId) with
         | Some listing -> return! json listing next ctx
         | None -> return! Error.notFound next ctx
     }
   
     // GET: /api/listing/view/[id]
     let view listingId : HttpHandler = authorize >=> fun next ctx -> task {
-        match! Data.Listing.findByIdForView (ListingId listingId) (conn ctx) with
+        match! Listings.findByIdForView (ListingId listingId) with
         | Some listing -> return! json listing next ctx
         | None -> return! Error.notFound next ctx
     }
@@ -253,8 +249,7 @@ module Listing =
     let add : HttpHandler = authorize >=> fun next ctx -> task {
         let! form = ctx.BindJsonAsync<ListingForm> ()
         let  now  = (clock ctx).GetCurrentInstant ()
-        use  session = docSession ctx
-        session.Store<Listing>({
+        do! Listings.save {
             id            = ListingId.create ()
             citizenId     = currentCitizenId ctx
             createdOn     = now
@@ -268,19 +263,18 @@ module Listing =
             neededBy      = (form.neededBy |> Option.map parseDate)
             wasFilledHere = None
             isLegacy      = false
-        })
-        do! session.SaveChangesAsync ()
+        }
         return! ok next ctx
     }
 
     // PUT: /api/listing/[id]
     let update listingId : HttpHandler = authorize >=> fun next ctx -> task {
         let dbConn = conn ctx
-        match! Data.Listing.findById (ListingId listingId) dbConn with
+        match! Listings.findById (ListingId listingId) with
         | Some listing when listing.citizenId <> (currentCitizenId ctx) -> return! Error.notAuthorized next ctx
         | Some listing ->
             let! form = ctx.BindJsonAsync<ListingForm> ()
-            do! Data.Listing.update
+            do! Listings.save
                     { listing with
                         title       = form.title
                         continentId = ContinentId.ofString form.continentId
@@ -289,7 +283,7 @@ module Listing =
                         text        = Text form.text
                         neededBy    = form.neededBy |> Option.map parseDate
                         updatedOn   = (clock ctx).GetCurrentInstant ()
-                    } dbConn
+                    }
             return! ok next ctx
         | None -> return! Error.notFound next ctx
       }
@@ -298,21 +292,26 @@ module Listing =
     let expire listingId : HttpHandler = authorize >=> fun next ctx -> task {
         let dbConn = conn ctx
         let now    = clock(ctx).GetCurrentInstant ()
-        match! Data.Listing.findById (ListingId listingId) dbConn with
+        match! Listings.findById (ListingId listingId) with
         | Some listing when listing.citizenId <> (currentCitizenId ctx) -> return! Error.notAuthorized next ctx
         | Some listing ->
             let! form = ctx.BindJsonAsync<ListingExpireForm> ()
-            do! Data.Listing.expire listing.id form.fromHere now dbConn
+            do! Listings.save
+                    { listing with
+                        isExpired     = true
+                        wasFilledHere = Some form.fromHere
+                        updatedOn     = now
+                    }
             match form.successStory with
             | Some storyText ->
-                do! Data.Success.save
+                do! Successes.save
                         { id         = SuccessId.create()
                           citizenId  = currentCitizenId ctx
                           recordedOn = now
                           fromHere   = form.fromHere
                           source     = "listing"
                           story      = (Text >> Some) storyText
-                          } dbConn
+                          }
             | None -> ()
             return! ok next ctx
         | None -> return! Error.notFound next ctx
@@ -321,7 +320,7 @@ module Listing =
     // GET: /api/listing/search
     let search : HttpHandler = authorize >=> fun next ctx -> task {
         let  search  = ctx.BindQueryString<ListingSearch> ()
-        let! results = Data.Listing.search search (conn ctx)
+        let! results = Listings.search search
         return! json results next ctx
     }
   
