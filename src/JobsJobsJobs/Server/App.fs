@@ -8,7 +8,6 @@ open Microsoft.Extensions.Hosting
 open Giraffe
 open Giraffe.EndpointRouting
 
-
 /// Configure the ASP.NET Core pipeline to use Giraffe
 let configureApp (app : IApplicationBuilder) =
     app.UseCors(fun p -> p.AllowAnyOrigin().AllowAnyHeader() |> ignore)
@@ -22,13 +21,11 @@ let configureApp (app : IApplicationBuilder) =
             e.MapFallbackToFile "index.html" |> ignore)
     |> ignore
 
-open Newtonsoft.Json
-open NodaTime
+open System.Text
 open Microsoft.AspNetCore.Authentication.JwtBearer
 open Microsoft.Extensions.Configuration
-open Microsoft.Extensions.Logging
 open Microsoft.IdentityModel.Tokens
-open System.Text
+open NodaTime
 open JobsJobsJobs.Data
 open JobsJobsJobs.Domain.SharedTypes
 
@@ -39,9 +36,7 @@ let configureServices (svc : IServiceCollection) =
     let _ = svc.AddLogging ()
     let _ = svc.AddCors ()
     
-    let jsonCfg = JsonSerializerSettings ()
-    Data.Converters.all () |> List.iter jsonCfg.Converters.Add
-    let _ = svc.AddSingleton<Json.ISerializer> (NewtonsoftJson.Serializer jsonCfg)
+    let _ = svc.AddSingleton<Json.ISerializer> (SystemTextJson.Serializer Json.options)
 
     let svcs = svc.BuildServiceProvider ()
     let cfg  = svcs.GetRequiredService<IConfiguration> ()
@@ -64,13 +59,11 @@ let configureServices (svc : IServiceCollection) =
     let _ = svc.AddAuthorization ()
     let _ = svc.Configure<AuthOptions> (cfg.GetSection "Auth")
     
-    let dbCfg = cfg.GetSection "Rethink"
-    let log   = svcs.GetRequiredService<ILoggerFactory>().CreateLogger "JobsJobsJobs.Api.Data.Startup"
-    let conn  = Data.Startup.createConnection dbCfg log
-    let _ = svc.AddSingleton conn |> ignore
     // Set up the Marten data store
-    let _ = Connection.setUp cfg
-    ()
+    match Connection.setUp cfg |> Async.AwaitTask |> Async.RunSynchronously with
+    | Ok _ -> ()
+    | Error msg -> failwith $"Error initializing data store: {msg}"
+
 
 [<EntryPoint>]
 let main _ =

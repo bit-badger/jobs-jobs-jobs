@@ -18,7 +18,9 @@
       <PackageReference Include="FSharp.SystemTextJson" Version="0.19.13" />
       <PackageReference Include="Marten" Version="5.8.0" />
       <PackageReference Include="Marten.NodaTime" Version="5.8.0" />
-      <PackageReference Include="Marten.PLv8" Version="5.8.0" />
+      <PackageReference Update="FSharp.Core" Version="6.0.5" />
+      <PackageReference Include="Npgsql" Version="6.0.6" />
+      <PackageReference Include="Npgsql.NodaTime" Version="6.0.6" />
     </ItemGroup>
 
 </Project>

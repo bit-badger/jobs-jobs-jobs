@@ -45,6 +45,19 @@ with
 /// Support functions for citizens
 module Citizen =
     
+    /// An empty citizen
+    let empty =
+        {   id            = CitizenId Guid.Empty
+            joinedOn      = Instant.MinValue
+            lastSeenOn    = Instant.MinValue
+            email         = ""
+            firstName     = ""
+            lastName      = ""
+            passwordHash  = ""
+            displayName   = None
+            otherContacts = []
+            isLegacy      = false
+        }
     /// Get the name of the citizen (either their preferred display name or first/last names)
     let name x =
         match x.displayName with Some it -> it | None -> $"{x.firstName} {x.lastName}"
@@ -115,6 +128,26 @@ type Listing =
         /// Whether this is a legacy listing
         isLegacy : bool
     }
+
+/// Support functions for job listings
+module Listing =
+    
+    /// An empty job listing
+    let empty =
+        {   id            = ListingId Guid.Empty
+            citizenId     = CitizenId Guid.Empty
+            createdOn     = Instant.MinValue
+            title         = ""
+            continentId   = ContinentId Guid.Empty
+            region        = ""
+            remoteWork    = false
+            isExpired     = false
+            updatedOn     = Instant.MinValue
+            text          = Text ""
+            neededBy      = None
+            wasFilledHere = None
+            isLegacy      = false
+        }
 
 
 /// Security settings for a user
@@ -253,3 +286,16 @@ type Success =
         /// The success story
         story      : MarkdownString option
     }
+
+/// Support functions for success stories
+module Success =
+    
+    /// An empty success story
+    let empty =
+        {   id         = SuccessId Guid.Empty
+            citizenId  = CitizenId Guid.Empty
+            recordedOn = Instant.MinValue
+            fromHere   = false
+            source     = ""
+            story      = None
+        }

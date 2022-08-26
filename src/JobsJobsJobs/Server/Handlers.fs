@@ -1,7 +1,6 @@
 /// Route handlers for Giraffe endpoints
 module JobsJobsJobs.Api.Handlers
 
-open System.Threading
 open Giraffe
 open JobsJobsJobs.Domain
 open JobsJobsJobs.Domain.SharedTypes
@@ -55,15 +54,12 @@ module Error =
 module Helpers =
 
     open System.Security.Claims
-    open System.Threading.Tasks
     open NodaTime
-    open Marten
     open Microsoft.Extensions.Configuration
     open Microsoft.Extensions.Options
-    open RethinkDb.Driver.Net
 
     /// Get the NodaTime clock from the request context
-    let clock (ctx : HttpContext) = ctx.GetService<IClock> ()
+    let now (ctx : HttpContext) = ctx.GetService<IClock>().GetCurrentInstant ()
 
     /// Get the application configuration from the request context
     let config (ctx : HttpContext) = ctx.GetService<IConfiguration> ()
@@ -73,15 +69,6 @@ module Helpers =
 
     /// Get the logger factory from the request context
     let logger (ctx : HttpContext) = ctx.GetService<ILoggerFactory> ()
-
-    /// Get the RethinkDB connection from the request context
-    let conn (ctx : HttpContext) = ctx.GetService<IConnection> ()
-    
-    /// Get a query session
-    let querySession (ctx : HttpContext) = ctx.GetService<IQuerySession> ()
-    
-    /// Get a full document session
-    let docSession (ctx : HttpContext) = ctx.GetService<IDocumentSession> ()
 
     /// `None` if a `string option` is `None`, whitespace, or empty
     let noneIfBlank (s : string option) =
@@ -106,16 +93,6 @@ module Helpers =
 
     /// Return an empty OK response
     let ok : HttpHandler = Successful.OK ""
-    
-    /// Convert a potentially-null record type to an option
-    let opt<'T> (it : Task<'T>) = task {
-        match! it with
-        | x when isNull (box x) -> return None
-        | x -> return Some x
-    }
-    
-    /// Shorthand for no cancellation token
-    let noCnx = CancellationToken.None
 
 
 open System
@@ -127,48 +104,59 @@ module Citizen =
 
     // GET: /api/citizen/log-on/[code]
     let logOn (abbr, authCode) : HttpHandler = fun next ctx -> task {
+        match! Citizens.tryLogOn "to@do.com" (fun _ -> false) (now ctx) with
+        | Ok citizen ->
+            return!
+                json
+                    { jwt       = Auth.createJwt citizen (authConfig ctx)
+                      citizenId = CitizenId.toString citizen.id
+                      name      = Citizen.name citizen
+                    } next ctx
+        | Error msg ->
+            // TODO: return error message
+            return! RequestErrors.BAD_REQUEST msg next ctx
         // Step 1 - Verify with Mastodon
-        let cfg = authConfig ctx
-        
-        match cfg.Instances |> Array.tryFind (fun it -> it.Abbr = abbr) with
-        | Some instance ->
-            let log = (logger ctx).CreateLogger (nameof JobsJobsJobs.Api.Auth)
-            
-            match! Auth.verifyWithMastodon authCode instance cfg.ReturnHost log with
-            | Ok account ->
-                // Step 2 - Find / establish Jobs, Jobs, Jobs account
-                let  now     = (clock ctx).GetCurrentInstant ()
-                let  dbConn  = conn ctx
-                let! citizen = task {
-                    match! Data.Citizen.findByMastodonUser instance.Abbr account.Username dbConn with
-                    | None ->
-                        let it : Citizen =
-                            { id           = CitizenId.create ()
-                              instance     = instance.Abbr
-                              mastodonUser = account.Username
-                              displayName  = noneIfEmpty account.DisplayName
-                              realName     = None
-                              profileUrl   = account.Url
-                              joinedOn     = now
-                              lastSeenOn   = now
-                            }
-                        do! Data.Citizen.add it dbConn
-                        return it
-                    | Some citizen ->
-                        let it = { citizen with displayName = noneIfEmpty account.DisplayName; lastSeenOn = now }
-                        do! Data.Citizen.logOnUpdate it dbConn
-                        return it
-                    }
-                
-                // Step 3 - Generate JWT
-                return!
-                    json
-                        { jwt       = Auth.createJwt citizen cfg
-                          citizenId = CitizenId.toString citizen.id
-                          name      = Citizen.name citizen
-                        } next ctx
-            | Error err -> return! RequestErrors.BAD_REQUEST err next ctx
-        | None -> return! Error.notFound next ctx
+        // let cfg = authConfig ctx
+        //
+        // match cfg.Instances |> Array.tryFind (fun it -> it.Abbr = abbr) with
+        // | Some instance ->
+        //     let log = (logger ctx).CreateLogger (nameof JobsJobsJobs.Api.Auth)
+        //     
+        //     match! Auth.verifyWithMastodon authCode instance cfg.ReturnHost log with
+        //     | Ok account ->
+        //         // Step 2 - Find / establish Jobs, Jobs, Jobs account
+        //         let  now     = (clock ctx).GetCurrentInstant ()
+        //         let  dbConn  = conn ctx
+        //         let! citizen = task {
+        //             match! Data.Citizen.findByMastodonUser instance.Abbr account.Username dbConn with
+        //             | None ->
+        //                 let it : Citizen =
+        //                     { id           = CitizenId.create ()
+        //                       instance     = instance.Abbr
+        //                       mastodonUser = account.Username
+        //                       displayName  = noneIfEmpty account.DisplayName
+        //                       realName     = None
+        //                       profileUrl   = account.Url
+        //                       joinedOn     = now
+        //                       lastSeenOn   = now
+        //                     }
+        //                 do! Data.Citizen.add it dbConn
+        //                 return it
+        //             | Some citizen ->
+        //                 let it = { citizen with displayName = noneIfEmpty account.DisplayName; lastSeenOn = now }
+        //                 do! Data.Citizen.logOnUpdate it dbConn
+        //                 return it
+        //             }
+        //         
+        //         // Step 3 - Generate JWT
+        //         return!
+        //             json
+        //                 { jwt       = Auth.createJwt citizen cfg
+        //                   citizenId = CitizenId.toString citizen.id
+        //                   name      = Citizen.name citizen
+        //                 } next ctx
+        //     | Error err -> return! RequestErrors.BAD_REQUEST err next ctx
+        // | None -> return! Error.notFound next ctx
     }
     
     // GET: /api/citizen/[id]
@@ -248,7 +236,7 @@ module Listing =
     // POST: /listings
     let add : HttpHandler = authorize >=> fun next ctx -> task {
         let! form = ctx.BindJsonAsync<ListingForm> ()
-        let  now  = (clock ctx).GetCurrentInstant ()
+        let  now  = now ctx
         do! Listings.save {
             id            = ListingId.create ()
             citizenId     = currentCitizenId ctx
@@ -269,7 +257,6 @@ module Listing =
 
     // PUT: /api/listing/[id]
     let update listingId : HttpHandler = authorize >=> fun next ctx -> task {
-        let dbConn = conn ctx
         match! Listings.findById (ListingId listingId) with
         | Some listing when listing.citizenId <> (currentCitizenId ctx) -> return! Error.notAuthorized next ctx
         | Some listing ->
@@ -282,7 +269,7 @@ module Listing =
                         remoteWork  = form.remoteWork
                         text        = Text form.text
                         neededBy    = form.neededBy |> Option.map parseDate
-                        updatedOn   = (clock ctx).GetCurrentInstant ()
+                        updatedOn   = now ctx
                     }
             return! ok next ctx
         | None -> return! Error.notFound next ctx
@@ -290,8 +277,7 @@ module Listing =
   
     // PATCH: /api/listing/[id]
     let expire listingId : HttpHandler = authorize >=> fun next ctx -> task {
-        let dbConn = conn ctx
-        let now    = clock(ctx).GetCurrentInstant ()
+        let now = now ctx
         match! Listings.findById (ListingId listingId) with
         | Some listing when listing.citizenId <> (currentCitizenId ctx) -> return! Error.notAuthorized next ctx
         | Some listing ->
@@ -333,56 +319,41 @@ module Profile =
     //      This returns the current citizen's profile, or a 204 if it is not found (a citizen not having a profile yet
     //      is not an error). The "get" handler returns a 404 if a profile is not found.
     let current : HttpHandler = authorize >=> fun next ctx -> task {
-        match! Data.Profile.findById (currentCitizenId ctx) (conn ctx) with
+        match! Profiles.findById (currentCitizenId ctx) with
         | Some profile -> return! json profile next ctx
         | None -> return! Successful.NO_CONTENT next ctx
     }
   
     // GET: /api/profile/get/[id]
     let get citizenId : HttpHandler = authorize >=> fun next ctx -> task {
-        match! Data.Profile.findById (CitizenId citizenId) (conn ctx) with
+        match! Profiles.findById (CitizenId citizenId) with
         | Some profile -> return! json profile next ctx
         | None -> return! Error.notFound next ctx
     }
 
     // GET: /api/profile/view/[id]
     let view citizenId : HttpHandler = authorize >=> fun next ctx -> task {
-        let citId  = CitizenId citizenId
-        let dbConn = conn ctx
-        match! Data.Profile.findById citId dbConn with
-        | Some profile ->
-            match! Data.Citizen.findById citId dbConn with
-            | Some citizen ->
-                match! Data.Continent.findById profile.continentId dbConn with
-                | Some continent ->
-                    return!
-                        json
-                            { profile   = profile
-                              citizen   = citizen
-                              continent = continent
-                            } next ctx
-                | None -> return! Error.notFound next ctx
-            | None -> return! Error.notFound next ctx
+        match! Profiles.findByIdForView (CitizenId citizenId) with
+        | Some profile -> return! json profile next ctx
         | None -> return! Error.notFound next ctx
     }
   
     // GET: /api/profile/count
     let count : HttpHandler = authorize >=> fun next ctx -> task {
-        let! theCount = Data.Profile.count (conn ctx)
+        let! theCount = Profiles.count ()
         return! json { count = theCount } next ctx
     }
   
     // POST: /api/profile/save
     let save : HttpHandler = authorize >=> fun next ctx -> task {
         let  citizenId = currentCitizenId ctx
-        let  dbConn    = conn ctx
         let! form      = ctx.BindJsonAsync<ProfileForm>()
         let! profile   = task {
-            match! Data.Profile.findById citizenId dbConn with
+            match! Profiles.findById citizenId with
             | Some p -> return p
             | None -> return { Profile.empty with id = citizenId }
         }
-        do! Data.Profile.save
+        do! Profiles.save
                 { profile with
                     seekingEmployment = form.isSeekingEmployment
                     isPublic          = form.isPublic
@@ -391,48 +362,45 @@ module Profile =
                     remoteWork        = form.remoteWork
                     fullTime          = form.fullTime
                     biography         = Text form.biography
-                    lastUpdatedOn     = (clock ctx).GetCurrentInstant ()
+                    lastUpdatedOn     = now ctx
                     experience        = noneIfBlank form.experience |> Option.map Text
                     skills            = form.skills
                                         |> List.map (fun s ->
-                                            { id          = match s.id.StartsWith "new" with
-                                                            | true -> SkillId.create ()
-                                                            | false -> SkillId.ofString s.id
-                                              description = s.description
-                                              notes       = noneIfBlank s.notes
-                                              })
-                } dbConn
-        do! Data.Citizen.realNameUpdate citizenId (noneIfBlank (Some form.realName)) dbConn
+                                            {   id          = if s.id.StartsWith "new" then SkillId.create ()
+                                                              else SkillId.ofString s.id
+                                                description = s.description
+                                                notes       = noneIfBlank s.notes
+                                            })
+                }
         return! ok next ctx
     }
   
     // PATCH: /api/profile/employment-found
     let employmentFound : HttpHandler = authorize >=> fun next ctx -> task {
-        let dbConn = conn ctx
-        match! Data.Profile.findById (currentCitizenId ctx) dbConn with
+        match! Profiles.findById (currentCitizenId ctx) with
         | Some profile ->
-            do! Data.Profile.save { profile with seekingEmployment = false } dbConn
+            do! Profiles.save { profile with seekingEmployment = false }
             return! ok next ctx
         | None -> return! Error.notFound next ctx
     }
   
     // DELETE: /api/profile
     let delete : HttpHandler = authorize >=> fun next ctx -> task {
-        do! Data.Profile.delete (currentCitizenId ctx) (conn ctx)
+        do! Profiles.deleteById (currentCitizenId ctx)
         return! ok next ctx
     }
   
     // GET: /api/profile/search
     let search : HttpHandler = authorize >=> fun next ctx -> task {
         let  search  = ctx.BindQueryString<ProfileSearch> ()
-        let! results = Data.Profile.search search (conn ctx)
+        let! results = Profiles.search search
         return! json results next ctx
     }
   
     // GET: /api/profile/public-search
     let publicSearch : HttpHandler = fun next ctx -> task {
         let  search  = ctx.BindQueryString<PublicSearch> ()
-        let! results = Data.Profile.publicSearch search (conn ctx)
+        let! results = Profiles.publicSearch search
         return! json results next ctx
     }
 
@@ -441,39 +409,35 @@ module Profile =
 [<RequireQualifiedAccess>]
 module Success =
 
-    open System
-
     // GET: /api/success/[id]
     let get successId : HttpHandler = authorize >=> fun next ctx -> task {
-        match! Data.Success.findById (SuccessId successId) (conn ctx) with
+        match! Successes.findById (SuccessId successId) with
         | Some story -> return! json story next ctx
         | None -> return! Error.notFound next ctx
     }
 
     // GET: /api/success/list
     let all : HttpHandler = authorize >=> fun next ctx -> task {
-        let! stories = Data.Success.all (conn ctx)
+        let! stories = Successes.all ()
         return! json stories next ctx
     }
   
     // POST: /api/success/save
     let save : HttpHandler = authorize >=> fun next ctx -> task {
         let  citizenId = currentCitizenId ctx
-        let  dbConn    = conn ctx
-        let  now       = (clock ctx).GetCurrentInstant ()
         let! form      = ctx.BindJsonAsync<StoryForm> ()
         let! success = task {
             match form.id with
             | "new" ->
                 return Some { id         = SuccessId.create ()
                               citizenId  = citizenId
-                              recordedOn = now
+                              recordedOn = now ctx
                               fromHere   = form.fromHere
                               source     = "profile"
                               story      = noneIfEmpty form.story |> Option.map Text
                               }
             | successId ->
-                match! Data.Success.findById (SuccessId.ofString successId) dbConn with
+                match! Successes.findById (SuccessId.ofString successId) with
                 | Some story when story.citizenId = citizenId ->
                     return Some { story with
                                     fromHere = form.fromHere
@@ -483,7 +447,7 @@ module Success =
         }
         match success with
         | Some story ->
-            do! Data.Success.save story dbConn
+            do! Successes.save story
             return! ok next ctx
         | None -> return! Error.notFound next ctx
     }

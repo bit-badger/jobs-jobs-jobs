@@ -13,9 +13,9 @@
 
   <ItemGroup>
     <PackageReference Include="Giraffe" Version="6.0.0" />
-    <PackageReference Include="Markdig" Version="0.30.2" />
+    <PackageReference Include="Markdig" Version="0.30.3" />
     <PackageReference Include="Microsoft.Extensions.Options" Version="6.0.0" />
-    <PackageReference Include="NodaTime" Version="3.1.0" />
+    <PackageReference Include="NodaTime" Version="3.1.2" />
     <PackageReference Update="FSharp.Core" Version="6.0.5" />
   </ItemGroup>
 

@@ -1,7 +1,7 @@
 /// Types intended to be shared between the API and the client application
 module JobsJobsJobs.Domain.SharedTypes
 
-open JobsJobsJobs.Domain.Types
+open JobsJobsJobs.Domain
 open Microsoft.Extensions.Options
 open NodaTime
 
@@ -202,7 +202,7 @@ type ProfileForm =
 module ProfileForm =
   
     /// Create an instance of this form from the given profile
-    let fromProfile (profile : Types.Profile) =
+    let fromProfile (profile : Profile) =
         { isSeekingEmployment = profile.seekingEmployment
           isPublic            = profile.isPublic
           realName            = ""

@@ -78,7 +78,6 @@ let verifyWithMastodon (authCode : string) (inst : MastodonInstance) rtnHost (lo
 
 
 open JobsJobsJobs.Domain
-open JobsJobsJobs.Domain.Types
 open Microsoft.IdentityModel.Tokens
 open System.IdentityModel.Tokens.Jwt
 open System.Security.Claims
