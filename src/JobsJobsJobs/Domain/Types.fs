@@ -38,9 +38,6 @@ type Citizen =
         /// Whether this is a legacy citizen
         isLegacy : bool
     }
-with
-    /// Unwrapped ID for database PK use
-    member this.DbId = CitizenId.value this.id
 
 /// Support functions for citizens
 module Citizen =
@@ -72,9 +69,6 @@ type Continent =
         /// The name of the continent
         name : string
     }
-with
-    /// Unwrapped ID for database PK use
-    member this.DbId = ContinentId.value this.id
 
 /// Support functions for continents
 module Continent =
@@ -170,9 +164,6 @@ type SecurityInfo =
         /// When the token expires
         TokenExpires : Instant option
     }
-with
-    /// Unwrapped ID for database PK use
-    member this.DbId = CitizenId.value this.Id
 
 /// Functions to support security info
 module SecurityInfo =

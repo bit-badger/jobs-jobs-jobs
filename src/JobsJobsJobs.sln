@@ -19,6 +19,8 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Api", "JobsJobsJobs\Server\
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "JobsJobsJobs.Data", "JobsJobsJobs\JobsJobsJobs.Data\JobsJobsJobs.Data.fsproj", "{30CC1E7C-A843-4DAC-9058-E7C6ACBCE85D}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "JobsJobsJobs.V3Migration", "JobsJobsJobs\JobsJobsJobs.V3Migration\JobsJobsJobs.V3Migration.fsproj", "{DC3E225D-9720-44E8-86AE-DEE71262C9F0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -37,6 +39,10 @@ Global
 		{30CC1E7C-A843-4DAC-9058-E7C6ACBCE85D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{30CC1E7C-A843-4DAC-9058-E7C6ACBCE85D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{30CC1E7C-A843-4DAC-9058-E7C6ACBCE85D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DC3E225D-9720-44E8-86AE-DEE71262C9F0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DC3E225D-9720-44E8-86AE-DEE71262C9F0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DC3E225D-9720-44E8-86AE-DEE71262C9F0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DC3E225D-9720-44E8-86AE-DEE71262C9F0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -48,5 +54,6 @@ Global
 		{C81278DA-DA97-4E55-AB39-4B88565B615D} = {FA833B24-B8F6-4CE6-A044-99257EAC02FF}
 		{8F5A3D1E-562B-4F27-9787-6CB14B35E69E} = {FA833B24-B8F6-4CE6-A044-99257EAC02FF}
 		{30CC1E7C-A843-4DAC-9058-E7C6ACBCE85D} = {FA833B24-B8F6-4CE6-A044-99257EAC02FF}
+		{DC3E225D-9720-44E8-86AE-DEE71262C9F0} = {FA833B24-B8F6-4CE6-A044-99257EAC02FF}
 	EndGlobalSection
 EndGlobal

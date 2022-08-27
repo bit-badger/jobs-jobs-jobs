@@ -60,7 +60,7 @@ let configureServices (svc : IServiceCollection) =
     let _ = svc.Configure<AuthOptions> (cfg.GetSection "Auth")
     
     // Set up the Marten data store
-    match Connection.setUp cfg |> Async.AwaitTask |> Async.RunSynchronously with
+    match DataConnection.setUp cfg |> Async.AwaitTask |> Async.RunSynchronously with
     | Ok _ -> ()
     | Error msg -> failwith $"Error initializing data store: {msg}"
 

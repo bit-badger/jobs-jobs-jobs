@@ -1,137 +1,124 @@
 ﻿namespace JobsJobsJobs.Data
 
-open System
-open JobsJobsJobs.Domain
-
-/// Wrapper documents for our record types
-module Documents =
+/// Constants for tables used by Jobs, Jobs, Jobs
+module Table =
     
-    /// A generic type that keeps its ID in sync with the ID value for its content
-    [<AllowNullLiteral>]
-    type Document<'T> (initialValue : 'T, toId : 'T -> Guid) =
-        
-        /// The current value for this document
-        let mutable value = initialValue
-        
-        /// The ID for this document
-        member val Id = toId initialValue with get, set
-        
-        /// The value for this document
-        member this.Value
-          with get () = value
-           and set (v : 'T) =
-               value   <- v
-               this.Id <- toId v
-        
-        /// Convert a document to its value
-        static member ToValue (doc : Document<'T>) =
-            doc.Value
-        
-        /// Convert a document to its value, or None if the document is null
-        static member TryValue (doc : Document<'T>) =
-            if isNull doc then None else Some doc.Value
+    /// Citizens
+    [<Literal>]
+    let Citizen = "citizen"
     
-    /// A citizen document
-    [<AllowNullLiteral>]
-    type CitizenDocument (citizen : Citizen) =
-        inherit Document<Citizen> (citizen, fun c -> CitizenId.value c.id)
-        new() = CitizenDocument Citizen.empty
+    /// Continents
+    [<Literal>]
+    let Continent = "continent"
     
-    /// A continent document
-    [<AllowNullLiteral>]
-    type ContinentDocument (continent : Continent) =
-        inherit Document<Continent> (continent, fun c -> ContinentId.value c.id)
-        new () = ContinentDocument Continent.empty
+    /// Job Listings
+    [<Literal>]
+    let Listing = "listing"
     
-    /// A job listing document
-    [<AllowNullLiteral>]
-    type ListingDocument (listing : Listing) =
-        inherit Document<Listing> (listing, fun l -> ListingId.value l.id)
-        new () = ListingDocument Listing.empty
+    /// Employment Profiles
+    [<Literal>]
+    let Profile = "profile"
     
-    /// A profile document
-    [<AllowNullLiteral>]
-    type ProfileDocument (profile : Profile) =
-        inherit Document<Profile> (profile, fun p -> CitizenId.value p.id)
-        new () = ProfileDocument Profile.empty
+    /// User Security Information
+    [<Literal>]
+    let SecurityInfo = "security_info"
     
-    /// A security information document
-    [<AllowNullLiteral>]
-    type SecurityInfoDocument (securityInfo : SecurityInfo) =
-        inherit Document<SecurityInfo> (securityInfo, fun si -> CitizenId.value si.Id)
-        new () = SecurityInfoDocument SecurityInfo.empty
-    
-    /// A success story document
-    [<AllowNullLiteral>]
-    type SuccessDocument (success : Success) =
-        inherit Document<Success> (success, fun s -> SuccessId.value s.id)
-        new () = SuccessDocument Success.empty
+    /// Success Stories
+    [<Literal>]
+    let Success = "success"
 
 
-open Documents
-open Marten
+open Npgsql.FSharp
 
 /// Connection management for the Marten document store
-module Connection =
+module DataConnection =
     
-    open Marten.NodaTime
     open Microsoft.Extensions.Configuration
-    open Weasel.Core
     
     /// The configuration from which a document store will be created
     let mutable private config : IConfiguration option = None
     
-    /// Lazy initialization for the Marten document store, constructed when setUp() is called
-    let private lazyStore = lazy (task {
+    /// Get the connection string
+    let connection () =
         match config with
-        | Some cfg ->
-            let store =
-                DocumentStore.For(fun opts ->
-                    opts.Connection (cfg.GetConnectionString "PostgreSQL")
-                    opts.RegisterDocumentTypes [
-                        typeof<CitizenDocument>; typeof<ContinentDocument>;    typeof<ListingDocument>
-                        typeof<ProfileDocument>; typeof<SecurityInfoDocument>; typeof<SuccessDocument>
-                    ]
-                    opts.DatabaseSchemaName      <- "jjj"
-                    opts.AutoCreateSchemaObjects <- AutoCreate.CreateOrUpdate
-                    opts.UseNodaTime ()
-                    
-                    let _ = opts.Schema.For<CitizenDocument>().DocumentAlias      "citizen"
-                    let _ = opts.Schema.For<ContinentDocument>().DocumentAlias    "continent"
-                    let _ = opts.Schema.For<ListingDocument>().DocumentAlias      "listing"
-                    let _ = opts.Schema.For<ProfileDocument>().DocumentAlias      "profile"
-                    let _ = opts.Schema.For<SecurityInfoDocument>().DocumentAlias "security_info"
-                    let _ = opts.Schema.For<SuccessDocument>().DocumentAlias      "success"
-                    ())
-            do! store.Storage.ApplyAllConfiguredChangesToDatabaseAsync ()
-            return Ok store
-        | None -> return Error "Connection.setUp() must be called before accessing a document session"
-    })
-
+        | Some cfg -> Sql.connect (cfg.GetConnectionString "PostgreSQL")
+        | None -> invalidOp "Connection.setUp() must be called before accessing the database"
+    
+    /// Create tables
+    let private createTables () = backgroundTask {
+        let sql =
+            [ Table.Citizen; Table.Continent; Table.Listing; Table.Profile; Table.SecurityInfo; Table.Success ]
+            |> List.map (fun table ->
+                $"CREATE TABLE IF NOT EXISTS jjj.{table} (id TEXT NOT NULL PRIMARY KEY, data JSONB NOT NULL)")
+            |> String.concat "; "
+        let! _ =
+            connection ()
+            |> Sql.executeTransactionAsync [ sql, [ [] ] ]
+        // TODO: prudent indexes
+        ()
+    }
+    
     /// Set up the data connection from the given configuration
-    let setUp (cfg : IConfiguration) =
+    let setUp (cfg : IConfiguration) = backgroundTask {
         config <- Some cfg
-        lazyStore.Force ()
+        do! createTables ()
+    }
+
+
+open DataConnection
+
+/// Helper functions for data manipulation
+[<AutoOpen>]
+module private Helpers =
     
-    /// A read-only document session
-    let querySession () =
-        match lazyStore.Force().Result with
-        | Ok store -> store.QuerySession ()
-        | Error msg -> raise (invalidOp msg)
+    open System.Text.Json
+    open System.Threading.Tasks
     
-    /// A read/write document session
-    let docSession () =
-        match lazyStore.Force().Result with
-        | Ok store -> store.LightweightSession ()
-        | Error msg -> raise (invalidOp msg)
+    /// Map the data field to the requested document type
+    let toDocumentFrom<'T> fieldName (row : RowReader) =
+        JsonSerializer.Deserialize<'T> (row.string fieldName, Json.options)
+    
+    /// Map the data field to the requested document type
+    let toDocument<'T> (row : RowReader) = toDocumentFrom<'T> "data" row
+    
+    /// Get a document
+    let getDocument<'T> table docId sqlProps : Task<'T option> = backgroundTask {
+        let! doc =
+            Sql.query $"SELECT * FROM jjj.%s{table} where id = @id" sqlProps
+            |> Sql.parameters [ "@id", Sql.string docId ]
+            |> Sql.executeAsync toDocument
+        return List.tryHead doc
+    }
+    
+    /// Save a document
+    let saveDocument<'T> table docId (doc : 'T) sqlProps = backgroundTask {
+        let! _ =
+            Sql.query
+                $"INSERT INTO jjj.%s{table} (id, data) VALUES (@id, @data)
+                  ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data"
+                sqlProps
+            |> Sql.parameters
+                   [ "@id",   Sql.string docId
+                     "@data", Sql.jsonb (JsonSerializer.Serialize (doc, Json.options)) ]
+            |> Sql.executeNonQueryAsync
+        ()
+    }
+    
+    /// Create a match-anywhere clause for a LIKE or ILIKE clause
+    let like value =
+        Sql.string $"%%%s{value}%%"
+    
+    /// The JSON access operator ->> makes values text; this makes a parameter that will compare the properly
+    let jsonBool value =
+        Sql.string (if value then "true" else "false")
+    
+    /// Get the SQL for a search WHERE clause
+    let searchSql criteria =
+        let sql = criteria |> List.map fst |> String.concat " AND "
+        if sql = "" then "" else $"AND {sql}"
 
 
-/// Shorthand for the generic dictionary
-type Dict<'TKey, 'TValue> = System.Collections.Generic.Dictionary<'TKey, 'TValue>
-
-
-open System.Linq
-open Connection
+open JobsJobsJobs.Domain
 
 /// Citizen data access functions
 [<RequireQualifiedAccess>]
@@ -139,67 +126,61 @@ module Citizens =
 
     /// Delete a citizen by their ID
     let deleteById citizenId = backgroundTask {
-        use session = docSession ()
-        session.DeleteWhere<SuccessDocument>(fun s -> s.Value.citizenId = citizenId)
-        session.DeleteWhere<ListingDocument>(fun l -> l.Value.citizenId = citizenId)
-        let docId = CitizenId.value citizenId
-        session.Delete<ProfileDocument>      docId
-        session.Delete<SecurityInfoDocument> docId
-        session.Delete<CitizenDocument>      docId
-        do! session.SaveChangesAsync ()
+        let! _ =
+            connection ()
+            |> Sql.executeTransactionAsync [
+                "DELETE FROM jjj.success       WHERE data->>'citizenId' = @id;
+                 DELETE FROM jjj.listing       WHERE data->>'citizenId' = @id;
+                 DELETE FROM jjj.profile       WHERE id                 = @id;
+                 DELETE FROM jjj.security_info WHERE id                 = @id;
+                 DELETE FROM jjj.citizen       WHERE id                 = @id",
+                [ [ "@id", Sql.string (CitizenId.toString citizenId) ] ]
+            ]
+        ()
     }
     
     /// Find a citizen by their ID
     let findById citizenId = backgroundTask {
-        use session = querySession ()
-        let! citizen = session.LoadAsync<CitizenDocument> (CitizenId.value citizenId)
-        return
-            match Document.TryValue citizen with
-            | Some c when not c.isLegacy -> Some c
-            | Some _
-            | None -> None
+        match! connection () |> getDocument<Citizen> Table.Citizen (CitizenId.toString citizenId) with
+        | Some c when not c.isLegacy -> return Some c
+        | Some _
+        | None -> return None
     }
     
     /// Save a citizen
-    let save (citizen : Citizen) = backgroundTask {
-        use session = docSession ()
-        session.Store (CitizenDocument citizen)
-        do! session.SaveChangesAsync ()
-    }
+    let save (citizen : Citizen) =
+        connection () |> saveDocument Table.Citizen (CitizenId.toString citizen.id) citizen
     
     /// Attempt a user log on
     let tryLogOn email (pwCheck : string -> bool) now = backgroundTask {
-        use session = docSession ()
+        let  connProps  = connection ()
         let! tryCitizen =
-            session.Query<CitizenDocument>()
-                .Where(fun c -> c.Value.email = email && not c.Value.isLegacy)
-                .SingleOrDefaultAsync ()
-        match Document.TryValue tryCitizen with
+            connProps
+            |> Sql.query $"SELECT * FROM jjj.{Table.Citizen} WHERE data->>email = @email AND data->>isValue <> 'true'"
+            |> Sql.parameters [ "@email", Sql.string email ]
+            |> Sql.executeAsync toDocument<Citizen>
+        match List.tryHead tryCitizen with
         | Some citizen ->
-            let! tryInfo = session.LoadAsync<SecurityInfoDocument> (CitizenId.value citizen.id)
+            let citizenId = CitizenId.toString citizen.id
+            let! tryInfo = getDocument<SecurityInfo> Table.SecurityInfo citizenId connProps
             let! info = backgroundTask {
-                match Document.TryValue tryInfo with
+                match tryInfo with
                 | Some it -> return it
                 | None ->
                     let it = { SecurityInfo.empty with Id = citizen.id }
-                    session.Store (SecurityInfoDocument it)
-                    do! session.SaveChangesAsync ()
+                    do! saveDocument Table.SecurityInfo citizenId it connProps
                     return it
             }
             if info.AccountLocked then return Error "Log on unsuccessful (Account Locked)"
             elif pwCheck citizen.passwordHash then
-                session.Store (SecurityInfoDocument { info with FailedLogOnAttempts = 0})
-                session.Store (CitizenDocument { citizen with lastSeenOn = now})
-                do! session.SaveChangesAsync ()
+                do! saveDocument Table.SecurityInfo citizenId { info    with FailedLogOnAttempts = 0   } connProps
+                do! saveDocument Table.Citizen      citizenId { citizen with lastSeenOn          = now } connProps
                 return Ok { citizen with lastSeenOn = now }
             else
                 let locked = info.FailedLogOnAttempts >= 4
-                session.Store (SecurityInfoDocument {
-                    info with
-                        FailedLogOnAttempts = info.FailedLogOnAttempts + 1
-                        AccountLocked       = locked
-                })
-                do! session.SaveChangesAsync ()
+                do! saveDocument Table.SecurityInfo citizenId
+                        { info with FailedLogOnAttempts = info.FailedLogOnAttempts + 1; AccountLocked = locked }
+                        connProps
                 return Error $"""Log on unsuccessful{if locked then " - Account is now locked" else ""}"""
         | None -> return Error "Log on unsuccessful"
     }
@@ -210,18 +191,14 @@ module Citizens =
 module Continents =
     
     /// Retrieve all continents
-    let all () = backgroundTask {
-        use session = querySession ()
-        let! it = session.Query<ContinentDocument>().AsQueryable().ToListAsync ()
-        return it |> Seq.map Document.ToValue |> List.ofSeq
-    }
+    let all () =
+        connection ()
+        |> Sql.query $"SELECT * FROM jjj.{Table.Continent}"
+        |> Sql.executeAsync toDocument<Continent>
     
     /// Retrieve a continent by its ID
-    let findById continentId = backgroundTask {
-        use session = querySession ()
-        let! tryContinent = session.LoadAsync<ContinentDocument> (ContinentId.value continentId)
-        return Document.TryValue tryContinent
-    }
+    let findById continentId =
+        connection () |> getDocument<Continent> Table.Continent (ContinentId.toString continentId)
 
 
 open JobsJobsJobs.Domain.SharedTypes
@@ -230,29 +207,26 @@ open JobsJobsJobs.Domain.SharedTypes
 [<RequireQualifiedAccess>]
 module Listings =
     
+    /// The SQL to select a listing view
+    let viewSql =
+        $"SELECT l.*, c.data AS cont_data
+            FROM jjj.{Table.Listing} l
+                 INNER JOIN jjj.{Table.Continent} c ON c.id = l.data->>'continentId'"
+    
+    /// Map a result for a listing view
+    let private toListingForView row =
+        { listing = toDocument<Listing> row; continent = toDocumentFrom<Continent> "cont_data" row }
+    
     /// Find all job listings posted by the given citizen
-    let findByCitizen citizenId = backgroundTask {
-        use  session    = querySession ()
-        let  continents = Dict<Guid, ContinentDocument> ()
-        let! listings   =
-            session.Query<ListingDocument>()
-                .Include((fun l -> l.Value.continentId :> obj), continents)
-                .Where(fun l -> l.Value.citizenId = citizenId && not l.Value.isLegacy)
-                .ToListAsync ()
-        return
-            listings
-            |> Seq.map (fun l -> {
-                listing   = l.Value
-                continent = continents[ContinentId.value l.Value.continentId].Value
-            })
-            |> List.ofSeq
-    }
+    let findByCitizen citizenId =
+        connection ()
+        |> Sql.query $"{viewSql} WHERE l.data->>'citizenId' = @citizenId AND l.data->>'isLegacy' <> 'true'"
+        |> Sql.parameters [ "@citizenId", Sql.string (CitizenId.toString citizenId) ]
+        |> Sql.executeAsync toListingForView
     
     /// Find a listing by its ID
     let findById listingId = backgroundTask {
-        use  session    = querySession ()
-        let! tryListing = session.LoadAsync<ListingDocument> (ListingId.value listingId)
-        match Document.TryValue tryListing with
+        match! connection () |> getDocument<Listing> Table.Listing (ListingId.toString listingId) with
         | Some listing when not listing.isLegacy -> return Some listing
         | Some _
         | None -> return None
@@ -260,60 +234,40 @@ module Listings =
     
     /// Find a listing by its ID for viewing (includes continent information)
     let findByIdForView listingId = backgroundTask {
-        use session = querySession ()
-        let mutable continent : ContinentDocument = null
         let! tryListing =
-            session.Query<ListingDocument>()
-                .Include((fun l -> l.Value.continentId :> obj), fun c -> continent <- c)
-                .Where(fun l -> l.Id = ListingId.value listingId && not l.Value.isLegacy)
-                .SingleOrDefaultAsync ()
-        match Document.TryValue tryListing with
-        | Some listing when not (isNull continent) -> return Some { listing = listing; continent = continent.Value }
-        | Some _
-        | None -> return None
+            connection ()
+            |> Sql.query $"{viewSql} WHERE id = @id AND l.data->>'isLegacy' <> 'true'"
+            |> Sql.parameters [ "@id", Sql.string (ListingId.toString listingId) ]
+            |> Sql.executeAsync toListingForView
+        return List.tryHead tryListing
     }
     
     /// Save a listing
-    let save (listing : Listing) = backgroundTask {
-        use session = docSession ()
-        session.Store (ListingDocument listing)
-        do! session.SaveChangesAsync ()
-    }
+    let save (listing : Listing) =
+        connection () |> saveDocument Table.Listing (ListingId.toString listing.id) listing
     
     /// Search job listings
-    let search (search : ListingSearch) = backgroundTask {
-        use session     = querySession ()
-        let continents  = Dict<Guid, ContinentDocument> ()
-        let searchQuery =
-            seq<ListingDocument -> bool> {
-                match search.continentId with
-                | Some contId ->
-                    fun (l : ListingDocument) -> l.Value.continentId = (ContinentId.ofString contId)
-                | None -> ()
-                match search.region with
-                | Some region ->
-                    fun (l : ListingDocument) -> l.Value.region.Contains (region, StringComparison.OrdinalIgnoreCase)
-                | None -> ()
-                if search.remoteWork <> "" then
-                    fun (l : ListingDocument) -> l.Value.remoteWork = (search.remoteWork = "yes")
-                // match search.text with
-                // | Some text -> fun (l : Listing) -> l.text.Contains (text, StringComparison.OrdinalIgnoreCase)
-                // | None -> ()
-            }
-            |> Seq.fold
-                   (fun q filter -> Queryable.Where(q, filter))
-                   (session.Query<ListingDocument>()
-                        .Include((fun l -> l.Value.continentId :> obj), continents)
-                        .Where(fun l -> not l.Value.isExpired && not l.Value.isLegacy))
-        let! results = searchQuery.ToListAsync ()
-        return
-            results
-            |> Seq.map (fun l -> {
-                listing   = l.Value
-                continent = continents[ContinentId.value l.Value.continentId].Value
-            })
-            |> List.ofSeq
-    }
+    let search (search : ListingSearch) =
+        let searches = [
+            match search.continentId with
+            | Some contId -> "l.data->>'continentId' = @continentId", [ "@continentId", Sql.string contId ]
+            | None -> ()
+            match search.region with
+            | Some region -> "l.data->>'region' ILIKE @region", [ "@region", like region ]
+            | None -> ()
+            if search.remoteWork <> "" then
+                "l.data->>'remoteWork' = @remote", [ "@remote", jsonBool (search.remoteWork = "yes") ]
+            match search.text with
+            | Some text -> "l.data->>'text' ILIKE @text", [ "@text", like text ]
+            | None -> ()
+        ]
+        connection ()
+        |> Sql.query $"
+            {viewSql}
+             WHERE l.data->>'isExpired' = 'false' AND l.data->>'isLegacy' = 'false'
+               {searchSql searches}"
+        |> Sql.parameters (searches |> List.collect snd)
+        |> Sql.executeAsync toListingForView
 
 
 /// Profile data access functions
@@ -322,174 +276,154 @@ module Profiles =
     
     /// Count the current profiles
     let count () =
-        use session = querySession ()
-        session.Query<ProfileDocument>().Where(fun p -> not p.Value.isLegacy).LongCountAsync ()
+        connection ()
+        |> Sql.query $"SELECT COUNT(id) AS the_count FROM jjj.{Table.Profile} WHERE data->>'isLegacy' <> 'true'"
+        |> Sql.executeRowAsync (fun row -> row.int64 "the_count")
     
     /// Delete a profile by its ID
     let deleteById citizenId = backgroundTask {
-        use session = docSession ()
-        session.Delete<ProfileDocument> (CitizenId.value citizenId)
-        do! session.SaveChangesAsync ()
-    }
-    /// Find a profile by citizen ID
-    let findById citizenId = backgroundTask {
-        use  session = querySession ()
-        let! profile = session.LoadAsync<ProfileDocument> (CitizenId.value citizenId)
-        return
-            match Document.TryValue profile with
-            | Some p when not p.isLegacy -> Some p
-            | Some _
-            | None -> None
+        let! _ =
+            connection ()
+            |> Sql.query $"DELETE FROM jjj.{Table.Profile} WHERE id = @id"
+            |> Sql.parameters [ "@id", Sql.string (CitizenId.toString citizenId) ]
+            |> Sql.executeNonQueryAsync
+        ()
     }
     
-    /// Find a profile by citizen ID for viewing (includes citizen and continent information)
-    let findByIdForView citizenId = backgroundTask {
-        use session = querySession ()
-        let mutable citizen   : CitizenDocument   = null
-        let mutable continent : ContinentDocument = null
-        let! tryProfile =
-            session.Query<ProfileDocument>()
-                .Include<CitizenDocument>((fun p -> p.Id :> obj), fun c -> citizen <- c)
-                .Include<ContinentDocument>((fun p -> p.Value.continentId :> obj), fun c -> continent <- c)
-                .Where(fun p -> p.Id = CitizenId.value citizenId && not p.Value.isLegacy)
-                .SingleOrDefaultAsync ()
-        match Document.TryValue tryProfile with
-        | Some profile when not (isNull citizen) && not (isNull continent) ->
-            return Some { profile = profile; citizen = citizen.Value; continent = continent.Value }
+    /// Find a profile by citizen ID
+    let findById citizenId = backgroundTask {
+        match! connection () |> getDocument<Profile> Table.Profile (CitizenId.toString citizenId) with
+        | Some profile when not profile.isLegacy -> return Some profile
         | Some _
         | None -> return None
     }
     
-    /// Save a profile
-    let save (profile : Profile) = backgroundTask {
-        use session = docSession ()
-        session.Store (ProfileDocument profile)
-        do! session.SaveChangesAsync ()
+    /// Find a profile by citizen ID for viewing (includes citizen and continent information)
+    let findByIdForView citizenId = backgroundTask {
+        let! tryCitizen =
+            connection ()
+            |> Sql.query $"
+                SELECT p.*, c.data AS cit_data, o.data AS cont_data
+                  FROM jjj.{Table.Profile} p
+                       INNER JOIN jjj.{Table.Citizen}   c ON c.id = p.id
+                       INNER JOIN jjj.{Table.Continent} o ON o.id = p.data->>'continentId'
+                 WHERE p.id                = @id
+                   AND p.data->>'isLegacy' = 'false'"
+            |> Sql.parameters [ "@id", Sql.string (CitizenId.toString citizenId) ]
+            |> Sql.executeAsync (fun row ->
+                {   profile   = toDocument<Profile> row
+                    citizen   = toDocumentFrom<Citizen>   "cit_data"  row
+                    continent = toDocumentFrom<Continent> "cont_data" row
+                })
+        return List.tryHead tryCitizen
     }
+    
+    /// Save a profile
+    let save (profile : Profile) =
+        connection () |> saveDocument Table.Profile (CitizenId.toString profile.id) profile
     
     /// Search profiles (logged-on users)
     let search (search : ProfileSearch) = backgroundTask {
-        use session     = querySession ()
-        let citizens    = Dict<Guid, CitizenDocument> ()
-        let searchQuery =
-            seq<ProfileDocument -> bool> {
-                match search.continentId with
-                | Some contId -> fun (p : ProfileDocument) -> p.Value.continentId = ContinentId.ofString contId
-                | None -> ()
-                if search.remoteWork <> "" then
-                    fun (p : ProfileDocument) -> p.Value.remoteWork = (search.remoteWork = "yes")
-                match search.skill with
-                | Some skl ->
-                    fun (p : ProfileDocument) ->
-                        p.Value.skills.Any(fun s -> s.description.Contains (skl, StringComparison.OrdinalIgnoreCase))
-                | None -> ()
-                // match search.bioExperience with
-                // | Some text ->
-                //     let txt = regexContains text
-                //     yield filterFunc (fun it -> it.G("biography").Match(txt).Or (it.G("experience").Match txt))
-                // | None -> ()
-            }
-            |> Seq.fold
-                (fun q filter -> Queryable.Where(q, filter))
-                (session.Query<ProfileDocument>()
-                    .Include((fun p -> p.Id :> obj), citizens)
-                    .Where(fun p -> not p.Value.isLegacy))
-        let! results = searchQuery.ToListAsync ()
-        return
-            results
-            |> Seq.map (fun profileDoc ->
-                let p = profileDoc.Value
-                {   citizenId         = p.id
-                    displayName       = Citizen.name citizens[CitizenId.value p.id].Value
-                    seekingEmployment = p.seekingEmployment
-                    remoteWork        = p.remoteWork
-                    fullTime          = p.fullTime
-                    lastUpdatedOn     = p.lastUpdatedOn
+        let searches = [
+            match search.continentId with
+            | Some contId -> "p.data ->>'continentId' = @continentId", [ "@continentId", Sql.string contId ]
+            | None -> ()
+            if search.remoteWork <> "" then
+                "p.data->>'remoteWork' = @remote", [ "@remote", jsonBool (search.remoteWork = "yes") ]
+            match search.skill with
+            | Some skl -> "p.data->'skills'->>'description' ILIKE @description", [ "@description", like skl ]
+            | None -> ()
+            match search.bioExperience with
+            | Some text ->
+                "(p.data->>'biography' ILIKE @text OR p.data->>'experience' ILIKE @text)", [ "@text", Sql.string text ]
+            | None -> ()
+        ]
+        let! results =
+            connection ()
+            |> Sql.query $"
+                SELECT p.*, c.data AS cit_data
+                  FROM jjj.{Table.Profile} p
+                       INNER JOIN jjj.{Table.Citizen} c ON c.id = p.id
+                 WHERE p.data->>'isLegacy' = 'false'
+                   {searchSql searches}"
+            |> Sql.parameters (searches |> List.collect snd)
+            |> Sql.executeAsync (fun row ->
+                let profile = toDocument<Profile> row
+                let citizen = toDocumentFrom<Citizen> "cit_data" row
+                {   citizenId         = profile.id
+                    displayName       = Citizen.name citizen
+                    seekingEmployment = profile.seekingEmployment
+                    remoteWork        = profile.remoteWork
+                    fullTime          = profile.fullTime
+                    lastUpdatedOn     = profile.lastUpdatedOn
                 })
-            |> Seq.sortBy (fun psr -> psr.displayName.ToLowerInvariant ())
-            |> List.ofSeq
+        return results |> List.sortBy (fun psr -> psr.displayName.ToLowerInvariant ())
     }
 
     // Search profiles (public)
-    let publicSearch (search : PublicSearch) = backgroundTask {
-        use session     = querySession ()
-        let continents  = Dict<Guid, ContinentDocument> ()
-        let searchQuery =
-            seq<ProfileDocument -> bool> {
-                match search.continentId with
-                | Some contId -> fun (p : ProfileDocument) -> p.Value.continentId = ContinentId.ofString contId
-                | None -> ()
-                match search.region with
-                | Some region ->
-                    fun (p : ProfileDocument) -> p.Value.region.Contains (region, StringComparison.OrdinalIgnoreCase)
-                | None -> ()
-                if search.remoteWork <> "" then
-                    fun (p : ProfileDocument) -> p.Value.remoteWork = (search.remoteWork = "yes")
-                match search.skill with
-                | Some skl ->
-                    fun (p : ProfileDocument) ->
-                        p.Value.skills.Any(fun s -> s.description.Contains (skl, StringComparison.OrdinalIgnoreCase))
-                | None -> ()
-            }
-            |> Seq.fold
-                (fun q filter -> Queryable.Where(q, filter))
-                (session.Query<ProfileDocument>()
-                    .Include((fun p -> p.Value.continentId :> obj), continents)
-                    .Where(fun p -> p.Value.isPublic && not p.Value.isLegacy))
-        let! results = searchQuery.ToListAsync ()
-        return
-            results
-            |> Seq.map (fun profileDoc ->
-                let p = profileDoc.Value
-                {   continent         = continents[ContinentId.value p.continentId].Value.name
-                    region            = p.region
-                    remoteWork        = p.remoteWork
-                    skills            = p.skills
-                                        |> List.map (fun s ->
-                                            let notes = match s.notes with Some n -> $" ({n})" | None -> ""
-                                            $"{s.description}{notes}")
-                })
-            |> List.ofSeq
-    }
+    let publicSearch (search : PublicSearch) =
+        let searches = [
+            match search.continentId with
+            | Some contId -> "p.data->>'continentId' = @continentId", [ "@continentId", Sql.string contId ]
+            | None -> ()
+            match search.region with
+            | Some region -> "p.data->>'region' ILIKE @region", [ "@region", like region ]
+            | None -> ()
+            if search.remoteWork <> "" then
+                "p.data->>'remoteWork' = @remote", [ "@remote", jsonBool (search.remoteWork = "yes") ]
+            match search.skill with
+            | Some skl ->
+                "p.data->'skills'->>'description' ILIKE @description", [ "@description", like skl ]
+            | None -> ()
+        ]
+        connection ()
+        |> Sql.query $"
+            SELECT p.*, c.data AS cont_data
+              FROM jjj.{Table.Profile} p
+                   INNER JOIN jjj.{Table.Continent} c ON c.id = p.data->>'continentId'
+             WHERE p.data->>'isPublic' = 'true'
+               AND p.data->>'isLegacy' = 'false'
+               {searchSql searches}"
+        |> Sql.executeAsync (fun row ->
+            let profile = toDocument<Profile> row
+            let continent = toDocumentFrom<Continent> "cont_data" row
+            {   continent  = continent.name
+                region     = profile.region
+                remoteWork = profile.remoteWork
+                skills     = profile.skills
+                             |> List.map (fun s ->
+                                 let notes = match s.notes with Some n -> $" ({n})" | None -> ""
+                                 $"{s.description}{notes}")
+            })
 
 /// Success story data access functions
 [<RequireQualifiedAccess>]
 module Successes =
     
     // Retrieve all success stories  
-    let all () = backgroundTask {
-        use  session  = querySession ()
-        let  citizens = Dict<Guid, CitizenDocument> ()
-        let! stories  =
-            session.Query<SuccessDocument>()
-                .Include((fun s -> s.Value.citizenId :> obj), citizens)
-                .OrderByDescending(fun s -> s.Value.recordedOn)
-                .ToListAsync ()
-        return
-            stories
-            |> Seq.map (fun storyDoc ->
-                let s = storyDoc.Value
-                {   id          = s.id
-                    citizenId   = s.citizenId
-                    citizenName = Citizen.name citizens[CitizenId.value s.citizenId].Value
-                    recordedOn  = s.recordedOn
-                    fromHere    = s.fromHere
-                    hasStory    = Option.isSome s.story
-                })
-            |> List.ofSeq
-    }
+    let all () =
+        connection ()
+        |> Sql.query $"
+            SELECT s.*, c.data AS cit_data
+              FROM jjj.{Table.Success} s
+                   INNER JOIN jjj.{Table.Citizen} c ON c.id = s.data->>'citizenId'
+             ORDER BY s.data->>'recordedOn' DESC"
+        |> Sql.executeAsync (fun row ->
+            let success = toDocument<Success> row
+            let citizen = toDocumentFrom<Citizen> "cit_data" row
+            {   id          = success.id
+                citizenId   = success.citizenId
+                citizenName = Citizen.name citizen
+                recordedOn  = success.recordedOn
+                fromHere    = success.fromHere
+                hasStory    = Option.isSome success.story
+            })
     
     /// Find a success story by its ID
-    let findById successId = backgroundTask {
-        use  session = querySession ()
-        let! success = session.LoadAsync<SuccessDocument> (SuccessId.value successId)
-        return Document.TryValue success
-    }
+    let findById successId =
+        connection () |> getDocument<Success> Table.Success (SuccessId.toString successId)
     
     /// Save a success story
-    let save (success : Success) = backgroundTask {
-        use session = docSession ()
-        session.Store (SuccessDocument success)
-        do! session.SaveChangesAsync ()
-    }
+    let save (success : Success) =
+        connection () |> saveDocument Table.Success (SuccessId.toString success.id) success
     

@@ -1,6 +1,5 @@
 ﻿module JobsJobsJobs.Data.Json
 
-open System
 open System.Text.Json
 open System.Text.Json.Serialization
 open JobsJobsJobs.Domain
@@ -13,24 +12,15 @@ type WrappedJsonConverter<'T> (wrap : string -> 'T, unwrap : 'T -> string) =
     override _.Write(writer, value, _) =
         writer.WriteStringValue (unwrap value)
 
-/// Convert a wrapped GUID to/from its string representation
-type WrappedIdJsonConverter<'T> (wrap : Guid -> 'T, unwrap : 'T -> Guid) =
-    inherit JsonConverter<'T> ()
-    override _.Read(reader, _, _) =
-        wrap (Guid.Parse (reader.GetString ())) 
-    override _.Write(writer, value, _) =
-        writer.WriteStringValue ((unwrap value).ToString ())
-
-
 /// JsonSerializer options that use the custom converters
 let options =
     let opts = JsonSerializerOptions ()
-    [   WrappedIdJsonConverter (CitizenId,   CitizenId.value) :> JsonConverter
-        WrappedIdJsonConverter (ContinentId, ContinentId.value)
-        WrappedIdJsonConverter (ListingId,   ListingId.value)
-        WrappedJsonConverter   (Text,        MarkdownString.toString)
-        WrappedIdJsonConverter (SkillId,     SkillId.value)
-        WrappedIdJsonConverter (SuccessId,   SuccessId.value)
+    [   WrappedJsonConverter (CitizenId.ofString,   CitizenId.toString) :> JsonConverter
+        WrappedJsonConverter (ContinentId.ofString, ContinentId.toString)
+        WrappedJsonConverter (ListingId.ofString,   ListingId.toString)
+        WrappedJsonConverter (Text,                 MarkdownString.toString)
+        WrappedJsonConverter (SkillId.ofString,     SkillId.toString)
+        WrappedJsonConverter (SuccessId.ofString,   SuccessId.toString)
         JsonFSharpConverter    ()
     ]
     |> List.iter opts.Converters.Add
