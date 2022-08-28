@@ -37,9 +37,7 @@ let configureServices (svc : IServiceCollection) =
     let _ = svc.AddCors ()
     
     let _ = svc.AddSingleton<Json.ISerializer> (SystemTextJson.Serializer Json.options)
-
-    let svcs = svc.BuildServiceProvider ()
-    let cfg  = svcs.GetRequiredService<IConfiguration> ()
+    let cfg = svc.BuildServiceProvider().GetRequiredService<IConfiguration> ()
     
     // Set up JWTs for API access
     let _ =
@@ -59,11 +57,9 @@ let configureServices (svc : IServiceCollection) =
     let _ = svc.AddAuthorization ()
     let _ = svc.Configure<AuthOptions> (cfg.GetSection "Auth")
     
-    // Set up the Marten data store
-    match DataConnection.setUp cfg |> Async.AwaitTask |> Async.RunSynchronously with
-    | Ok _ -> ()
-    | Error msg -> failwith $"Error initializing data store: {msg}"
-
+    // Set up the data store
+    let _ = DataConnection.setUp cfg |> Async.AwaitTask |> Async.RunSynchronously
+    ()
 
 [<EntryPoint>]
 let main _ =

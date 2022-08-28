@@ -7,6 +7,27 @@ open NodaTime
 
 // fsharplint:disable FieldNames
 
+/// The data required to register a new citizen (user)
+type CitizenRegistrationForm =
+    {   /// The first name of the new citizen
+        FirstName : string
+        
+        /// The last name of the new citizen
+        LastName : string
+        
+        /// The display name for the new citizen
+        DisplayName : string
+        
+        /// The citizen's e-mail address
+        Email : string
+        
+        /// The citizen's password
+        Password : string
+        
+        /// Confirmation of the citizen's password
+        ConfirmPassword : string
+    }
+
 /// The data required to add or edit a job listing
 type ListingForm =
     {   /// The ID of the listing

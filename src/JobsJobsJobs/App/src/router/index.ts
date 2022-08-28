@@ -51,6 +51,18 @@ const routes: Array<RouteRecordRaw> = [
   },
   // Citizen URLs
   {
+    path: "/citizen/register",
+    name: "CitizenRegistration",
+    component: () => import(/* webpackChunkName: "register" */ "../views/citizen/Register.vue"),
+    meta: { title: "Register" }
+  },
+  {
+    path: "/citizen/registered",
+    name: "CitizenRegistered",
+    component: () => import(/* webpackChunkName: "register" */ "../views/citizen/Registered.vue"),
+    meta: { title: "Registration Successful" }
+  },
+  {
     path: "/citizen/log-on",
     name: "LogOn",
     component: LogOn,

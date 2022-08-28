@@ -101,7 +101,32 @@ open JobsJobsJobs.Data
 /// Handlers for /api/citizen routes
 [<RequireQualifiedAccess>]
 module Citizen =
+    
+    open Microsoft.AspNetCore.Identity
 
+    // POST: /api/citizen/register
+    let register : HttpHandler = fun next ctx -> task {
+        let! form = ctx.BindJsonAsync<CitizenRegistrationForm> ()
+        if form.Password.Length < 8 || form.ConfirmPassword.Length < 8 || form.Password <> form.ConfirmPassword then
+            return! RequestErrors.BAD_REQUEST "Password out of range" next ctx
+        else
+            let now    = now ctx
+            let noPass =
+                { Citizen.empty with
+                    Id          = CitizenId.create ()
+                    Email       = form.Email
+                    FirstName   = form.FirstName
+                    LastName    = form.LastName
+                    DisplayName = noneIfEmpty form.DisplayName
+                    JoinedOn    = now
+                    LastSeenOn  = now
+                }
+            let citizen = { noPass with PasswordHash = PasswordHasher().HashPassword (noPass, form.Password) }
+            do! Citizens.save citizen
+            // TODO: generate auth code and e-mail confirmation
+            return! ok next ctx
+    }
+    
     // GET: /api/citizen/log-on/[code]
     let logOn (abbr, authCode) : HttpHandler = fun next ctx -> task {
         match! Citizens.tryLogOn "to@do.com" (fun _ -> false) (now ctx) with
@@ -463,6 +488,7 @@ let allEndpoints = [
                 routef "/log-on/%s/%s" Citizen.logOn
                 routef "/%O"           Citizen.get
             ]
+            POST [ route "/register" Citizen.register ]
             DELETE [ route "" Citizen.delete ]
         ]
         GET_HEAD [ route "/continents" Continent.all ]

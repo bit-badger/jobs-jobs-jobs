@@ -1,5 +1,6 @@
 import {
   Citizen,
+  CitizenRegistrationForm,
   Continent,
   Count,
   Instance,
@@ -33,12 +34,14 @@ const apiUrl = (url : string) : string => `/api/${url}`
  *
  * @param method The method by which the request should be executed
  * @param user The currently logged-on user
+ * @param body The body of teh request
  * @returns RequestInit parameters
  */
 // eslint-disable-next-line
-const reqInit = (method : string, user : LogOnSuccess, body : any | undefined = undefined) : RequestInit => {
+const reqInit = (method : string, user : LogOnSuccess | undefined, body : any | undefined = undefined)
+    : RequestInit => {
   const headers = new Headers()
-  headers.append("Authorization", `Bearer ${user.jwt}`)
+  if (user) headers.append("Authorization", `Bearer ${user.jwt}`)
   if (body) {
     headers.append("Content-Type", "application/json")
     return {
@@ -97,6 +100,15 @@ export default {
 
   /** API functions for citizens */
   citizen: {
+
+    /**
+     * Register a citizen
+     *
+     * @param form The registration details for the citizen
+     * @returns True if the registration was successful, an error message if it was not
+     */
+    register: async (form : CitizenRegistrationForm) : Promise<boolean | string> =>
+      apiSend(await fetch(apiUrl("citizen/register"), reqInit("POST", undefined, form)), "registering citizen"),
 
     /**
      * Log a citizen on
@@ -172,12 +184,12 @@ export default {
      * Expire a job listing
      *
      * @param id The ID of the job listing to be expired
-     * @param form The information needed to expire the form
+     * @param form The information needed to expire the listing
      * @param user The currently logged-on user
      * @returns True if the action was successful, an error string if not
      */
-    expire: async (id : string, listing : ListingExpireForm, user : LogOnSuccess) : Promise<boolean | string> =>
-      apiSend(await fetch(apiUrl(`listing/${id}`), reqInit("PATCH", user, listing)), "expiring job listing"),
+    expire: async (id : string, form : ListingExpireForm, user : LogOnSuccess) : Promise<boolean | string> =>
+      apiSend(await fetch(apiUrl(`listing/${id}`), reqInit("PATCH", user, form)), "expiring job listing"),
 
     /**
      * Retrieve the job listings posted by the current citizen
