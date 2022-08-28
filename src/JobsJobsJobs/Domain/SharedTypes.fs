@@ -203,20 +203,20 @@ module ProfileForm =
   
     /// Create an instance of this form from the given profile
     let fromProfile (profile : Profile) =
-        { isSeekingEmployment = profile.seekingEmployment
-          isPublic            = profile.isPublic
+        { isSeekingEmployment = profile.IsSeekingEmployment
+          isPublic            = profile.IsPubliclySearchable
           realName            = ""
-          continentId         = string profile.continentId
-          region              = profile.region
-          remoteWork          = profile.remoteWork
-          fullTime            = profile.fullTime
-          biography           = MarkdownString.toString profile.biography
-          experience          = profile.experience |> Option.map MarkdownString.toString
-          skills              = profile.skills
+          continentId         = string profile.ContinentId
+          region              = profile.Region
+          remoteWork          = profile.IsRemote
+          fullTime            = profile.IsFullTime
+          biography           = MarkdownString.toString profile.Biography
+          experience          = profile.Experience |> Option.map MarkdownString.toString
+          skills              = profile.Skills
                                 |> List.map (fun s ->
-                                    { id          = string s.id
-                                      description = s.description
-                                      notes       = s.notes
+                                    { id          = string s.Id
+                                      description = s.Description
+                                      notes       = s.Notes
                                       })
         }
 

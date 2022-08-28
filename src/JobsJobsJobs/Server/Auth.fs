@@ -91,7 +91,7 @@ let createJwt (citizen : Citizen) (cfg : AuthOptions) =
         tokenHandler.CreateToken (
             SecurityTokenDescriptor (
                 Subject = ClaimsIdentity [|
-                    Claim (ClaimTypes.NameIdentifier, CitizenId.toString citizen.id)
+                    Claim (ClaimTypes.NameIdentifier, CitizenId.toString citizen.Id)
                     Claim (ClaimTypes.Name, Citizen.name citizen)
                     |],
                 Expires  = DateTime.UtcNow.AddHours 2.,

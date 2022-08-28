@@ -12,6 +12,9 @@ type WrappedJsonConverter<'T> (wrap : string -> 'T, unwrap : 'T -> string) =
     override _.Write(writer, value, _) =
         writer.WriteStringValue (unwrap value)
 
+open NodaTime
+open NodaTime.Serialization.SystemTextJson
+
 /// JsonSerializer options that use the custom converters
 let options =
     let opts = JsonSerializerOptions ()
@@ -24,4 +27,6 @@ let options =
         JsonFSharpConverter    ()
     ]
     |> List.iter opts.Converters.Add
+    let _ = opts.ConfigureForNodaTime DateTimeZoneProviders.Tzdb
+    opts.PropertyNamingPolicy <- JsonNamingPolicy.CamelCase
     opts

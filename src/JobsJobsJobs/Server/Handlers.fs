@@ -109,7 +109,7 @@ module Citizen =
             return!
                 json
                     { jwt       = Auth.createJwt citizen (authConfig ctx)
-                      citizenId = CitizenId.toString citizen.id
+                      citizenId = CitizenId.toString citizen.Id
                       name      = Citizen.name citizen
                     } next ctx
         | Error msg ->
@@ -238,19 +238,19 @@ module Listing =
         let! form = ctx.BindJsonAsync<ListingForm> ()
         let  now  = now ctx
         do! Listings.save {
-            id            = ListingId.create ()
-            citizenId     = currentCitizenId ctx
-            createdOn     = now
-            title         = form.title
-            continentId   = ContinentId.ofString form.continentId
-            region        = form.region
-            remoteWork    = form.remoteWork
-            isExpired     = false
-            updatedOn     = now
-            text          = Text form.text
-            neededBy      = (form.neededBy |> Option.map parseDate)
-            wasFilledHere = None
-            isLegacy      = false
+            Id            = ListingId.create ()
+            CitizenId     = currentCitizenId ctx
+            CreatedOn     = now
+            Title         = form.title
+            ContinentId   = ContinentId.ofString form.continentId
+            Region        = form.region
+            IsRemote      = form.remoteWork
+            IsExpired     = false
+            UpdatedOn     = now
+            Text          = Text form.text
+            NeededBy      = (form.neededBy |> Option.map parseDate)
+            WasFilledHere = None
+            IsLegacy      = false
         }
         return! ok next ctx
     }
@@ -258,18 +258,18 @@ module Listing =
     // PUT: /api/listing/[id]
     let update listingId : HttpHandler = authorize >=> fun next ctx -> task {
         match! Listings.findById (ListingId listingId) with
-        | Some listing when listing.citizenId <> (currentCitizenId ctx) -> return! Error.notAuthorized next ctx
+        | Some listing when listing.CitizenId <> (currentCitizenId ctx) -> return! Error.notAuthorized next ctx
         | Some listing ->
             let! form = ctx.BindJsonAsync<ListingForm> ()
             do! Listings.save
                     { listing with
-                        title       = form.title
-                        continentId = ContinentId.ofString form.continentId
-                        region      = form.region
-                        remoteWork  = form.remoteWork
-                        text        = Text form.text
-                        neededBy    = form.neededBy |> Option.map parseDate
-                        updatedOn   = now ctx
+                        Title       = form.title
+                        ContinentId = ContinentId.ofString form.continentId
+                        Region      = form.region
+                        IsRemote    = form.remoteWork
+                        Text        = Text form.text
+                        NeededBy    = form.neededBy |> Option.map parseDate
+                        UpdatedOn   = now ctx
                     }
             return! ok next ctx
         | None -> return! Error.notFound next ctx
@@ -279,24 +279,24 @@ module Listing =
     let expire listingId : HttpHandler = authorize >=> fun next ctx -> task {
         let now = now ctx
         match! Listings.findById (ListingId listingId) with
-        | Some listing when listing.citizenId <> (currentCitizenId ctx) -> return! Error.notAuthorized next ctx
+        | Some listing when listing.CitizenId <> (currentCitizenId ctx) -> return! Error.notAuthorized next ctx
         | Some listing ->
             let! form = ctx.BindJsonAsync<ListingExpireForm> ()
             do! Listings.save
                     { listing with
-                        isExpired     = true
-                        wasFilledHere = Some form.fromHere
-                        updatedOn     = now
+                        IsExpired     = true
+                        WasFilledHere = Some form.fromHere
+                        UpdatedOn     = now
                     }
             match form.successStory with
             | Some storyText ->
                 do! Successes.save
-                        { id         = SuccessId.create()
-                          citizenId  = currentCitizenId ctx
-                          recordedOn = now
-                          fromHere   = form.fromHere
-                          source     = "listing"
-                          story      = (Text >> Some) storyText
+                        { Id         = SuccessId.create()
+                          CitizenId  = currentCitizenId ctx
+                          RecordedOn = now
+                          IsFromHere = form.fromHere
+                          Source     = "listing"
+                          Story      = (Text >> Some) storyText
                           }
             | None -> ()
             return! ok next ctx
@@ -351,26 +351,26 @@ module Profile =
         let! profile   = task {
             match! Profiles.findById citizenId with
             | Some p -> return p
-            | None -> return { Profile.empty with id = citizenId }
+            | None -> return { Profile.empty with Id = citizenId }
         }
         do! Profiles.save
                 { profile with
-                    seekingEmployment = form.isSeekingEmployment
-                    isPublic          = form.isPublic
-                    continentId       = ContinentId.ofString form.continentId
-                    region            = form.region
-                    remoteWork        = form.remoteWork
-                    fullTime          = form.fullTime
-                    biography         = Text form.biography
-                    lastUpdatedOn     = now ctx
-                    experience        = noneIfBlank form.experience |> Option.map Text
-                    skills            = form.skills
-                                        |> List.map (fun s ->
-                                            {   id          = if s.id.StartsWith "new" then SkillId.create ()
-                                                              else SkillId.ofString s.id
-                                                description = s.description
-                                                notes       = noneIfBlank s.notes
-                                            })
+                    IsSeekingEmployment  = form.isSeekingEmployment
+                    IsPubliclySearchable = form.isPublic
+                    ContinentId          = ContinentId.ofString form.continentId
+                    Region               = form.region
+                    IsRemote             = form.remoteWork
+                    IsFullTime           = form.fullTime
+                    Biography            = Text form.biography
+                    LastUpdatedOn        = now ctx
+                    Experience           = noneIfBlank form.experience |> Option.map Text
+                    Skills               = form.skills
+                                           |> List.map (fun s ->
+                                               {   Id          = if s.id.StartsWith "new" then SkillId.create ()
+                                                                 else SkillId.ofString s.id
+                                                   Description = s.description
+                                                   Notes       = noneIfBlank s.notes
+                                               })
                 }
         return! ok next ctx
     }
@@ -379,7 +379,7 @@ module Profile =
     let employmentFound : HttpHandler = authorize >=> fun next ctx -> task {
         match! Profiles.findById (currentCitizenId ctx) with
         | Some profile ->
-            do! Profiles.save { profile with seekingEmployment = false }
+            do! Profiles.save { profile with IsSeekingEmployment = false }
             return! ok next ctx
         | None -> return! Error.notFound next ctx
     }
@@ -429,19 +429,19 @@ module Success =
         let! success = task {
             match form.id with
             | "new" ->
-                return Some { id         = SuccessId.create ()
-                              citizenId  = citizenId
-                              recordedOn = now ctx
-                              fromHere   = form.fromHere
-                              source     = "profile"
-                              story      = noneIfEmpty form.story |> Option.map Text
+                return Some { Id         = SuccessId.create ()
+                              CitizenId  = citizenId
+                              RecordedOn = now ctx
+                              IsFromHere = form.fromHere
+                              Source     = "profile"
+                              Story      = noneIfEmpty form.story |> Option.map Text
                               }
             | successId ->
                 match! Successes.findById (SuccessId.ofString successId) with
-                | Some story when story.citizenId = citizenId ->
+                | Some story when story.CitizenId = citizenId ->
                     return Some { story with
-                                    fromHere = form.fromHere
-                                    story    = noneIfEmpty form.story |> Option.map Text
+                                    IsFromHere = form.fromHere
+                                    Story    = noneIfEmpty form.story |> Option.map Text
                                 }
                 | Some _ | None -> return None
         }

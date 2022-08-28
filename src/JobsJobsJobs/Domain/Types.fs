@@ -9,139 +9,140 @@ open System
 [<CLIMutable; NoComparison; NoEquality>]
 type Citizen =
     {   /// The ID of the user
-        id : CitizenId
+        Id : CitizenId
         
         /// When the user joined Jobs, Jobs, Jobs
-        joinedOn : Instant
+        JoinedOn : Instant
         
         /// When the user last logged in
-        lastSeenOn : Instant
+        LastSeenOn : Instant
         
         /// The user's e-mail address
-        email : string
+        Email : string
         
         /// The user's first name
-        firstName : string
+        FirstName : string
         
         /// The user's last name
-        lastName : string
+        LastName : string
         
         /// The hash of the user's password
-        passwordHash : string
+        PasswordHash : string
         
         /// The name displayed for this user throughout the site
-        displayName : string option
+        DisplayName : string option
         
         /// The other contacts for this user
-        otherContacts : OtherContact list
+        OtherContacts : OtherContact list
         
         /// Whether this is a legacy citizen
-        isLegacy : bool
+        IsLegacy : bool
     }
 
 /// Support functions for citizens
 module Citizen =
     
     /// An empty citizen
-    let empty =
-        {   id            = CitizenId Guid.Empty
-            joinedOn      = Instant.MinValue
-            lastSeenOn    = Instant.MinValue
-            email         = ""
-            firstName     = ""
-            lastName      = ""
-            passwordHash  = ""
-            displayName   = None
-            otherContacts = []
-            isLegacy      = false
-        }
+    let empty = {
+        Id            = CitizenId Guid.Empty
+        JoinedOn      = Instant.MinValue
+        LastSeenOn    = Instant.MinValue
+        Email         = ""
+        FirstName     = ""
+        LastName      = ""
+        PasswordHash  = ""
+        DisplayName   = None
+        OtherContacts = []
+        IsLegacy      = false
+    }
+    
     /// Get the name of the citizen (either their preferred display name or first/last names)
     let name x =
-        match x.displayName with Some it -> it | None -> $"{x.firstName} {x.lastName}"
+        match x.DisplayName with Some it -> it | None -> $"{x.FirstName} {x.LastName}"
 
 
 /// A continent
 [<CLIMutable; NoComparison; NoEquality>]
 type Continent =
     {   /// The ID of the continent
-        id   : ContinentId
+        Id : ContinentId
         
         /// The name of the continent
-        name : string
+        Name : string
     }
 
 /// Support functions for continents
 module Continent =
     
     /// An empty continent
-    let empty =
-        {   id   = ContinentId Guid.Empty
-            name = ""
-        }
+    let empty ={
+        Id   = ContinentId Guid.Empty
+        Name = ""
+    }
 
 
 /// A job listing
 [<CLIMutable; NoComparison; NoEquality>]
 type Listing =
     {   /// The ID of the job listing
-        id            : ListingId
+        Id : ListingId
         
         /// The ID of the citizen who posted the job listing
-        citizenId     : CitizenId
+        CitizenId : CitizenId
         
         /// When this job listing was created
-        createdOn     : Instant
+        CreatedOn : Instant
         
         /// The short title of the job listing
-        title         : string
+        Title : string
         
         /// The ID of the continent on which the job is located
-        continentId   : ContinentId
+        ContinentId : ContinentId
         
         /// The region in which the job is located
-        region        : string
+        Region : string
         
         /// Whether this listing is for remote work
-        remoteWork    : bool
+        IsRemote : bool
         
         /// Whether this listing has expired
-        isExpired     : bool
+        IsExpired : bool
         
         /// When this listing was last updated
-        updatedOn     : Instant
+        UpdatedOn : Instant
         
         /// The details of this job
-        text          : MarkdownString
+        Text : MarkdownString
         
         /// When this job needs to be filled
-        neededBy      : LocalDate option
+        NeededBy : LocalDate option
         
         /// Was this job filled as part of its appearance on Jobs, Jobs, Jobs?
-        wasFilledHere : bool option
+        WasFilledHere : bool option
         
         /// Whether this is a legacy listing
-        isLegacy : bool
+        IsLegacy : bool
     }
 
 /// Support functions for job listings
 module Listing =
     
     /// An empty job listing
-    let empty =
-        {   id            = ListingId Guid.Empty
-            citizenId     = CitizenId Guid.Empty
-            createdOn     = Instant.MinValue
-            title         = ""
-            continentId   = ContinentId Guid.Empty
-            region        = ""
-            remoteWork    = false
-            isExpired     = false
-            updatedOn     = Instant.MinValue
-            text          = Text ""
-            neededBy      = None
-            wasFilledHere = None
-            isLegacy      = false
-        }
+    let empty = {
+        Id            = ListingId Guid.Empty
+        CitizenId     = CitizenId Guid.Empty
+        CreatedOn     = Instant.MinValue
+        Title         = ""
+        ContinentId   = ContinentId Guid.Empty
+        Region        = ""
+        IsRemote      = false
+        IsExpired     = false
+        UpdatedOn     = Instant.MinValue
+        Text          = Text ""
+        NeededBy      = None
+        WasFilledHere = None
+        IsLegacy      = false
+    }
 
 
 /// Security settings for a user
@@ -169,26 +170,26 @@ type SecurityInfo =
 module SecurityInfo =
     
     /// An empty set of security info
-    let empty =
-        {   Id                  = CitizenId Guid.Empty
-            FailedLogOnAttempts = 0
-            AccountLocked       = false
-            Token               = None
-            TokenUsage          = None
-            TokenExpires        = None
-        }
+    let empty = {
+        Id                  = CitizenId Guid.Empty
+        FailedLogOnAttempts = 0
+        AccountLocked       = false
+        Token               = None
+        TokenUsage          = None
+        TokenExpires        = None
+    }
 
 
 /// A skill the job seeker possesses
 type Skill =
     {   /// The ID of the skill
-        id          : SkillId
+        Id          : SkillId
         
         /// A description of the skill
-        description : string
+        Description : string
         
         /// Notes regarding this skill (level, duration, etc.)
-        notes       : string option
+        Notes       : string option
     }
 
 
@@ -196,97 +197,97 @@ type Skill =
 [<CLIMutable; NoComparison; NoEquality>]
 type Profile =
     {   /// The ID of the citizen to whom this profile belongs
-        id                : CitizenId
+        Id : CitizenId
         
         /// Whether this citizen is actively seeking employment
-        seekingEmployment : bool
+        IsSeekingEmployment : bool
         
         /// Whether this citizen allows their profile to be a part of the publicly-viewable, anonymous data
-        isPublic          : bool
+        IsPubliclySearchable : bool
         
         /// Whether this citizen allows their profile to be viewed via a public link
-        isPublicLinkable  : bool
+        IsPubliclyLinkable : bool
         
         /// The ID of the continent on which the citizen resides
-        continentId       : ContinentId
+        ContinentId : ContinentId
         
         /// The region in which the citizen resides
-        region            : string
+        Region : string
         
         /// Whether the citizen is looking for remote work
-        remoteWork        : bool
+        IsRemote : bool
         
         /// Whether the citizen is looking for full-time work
-        fullTime          : bool
+        IsFullTime : bool
         
         /// The citizen's professional biography
-        biography         : MarkdownString
+        Biography : MarkdownString
         
         /// When the citizen last updated their profile
-        lastUpdatedOn     : Instant
+        LastUpdatedOn : Instant
         
         /// The citizen's experience (topical / chronological)
-        experience        : MarkdownString option
+        Experience : MarkdownString option
         
         /// Skills this citizen possesses
-        skills            : Skill list
+        Skills : Skill list
         
         /// Whether this is a legacy profile
-        isLegacy : bool
+        IsLegacy : bool
     }
 
 /// Support functions for Profiles
 module Profile =
     
     // An empty profile
-    let empty =
-        { id                = CitizenId Guid.Empty
-          seekingEmployment = false
-          isPublic          = false
-          isPublicLinkable  = false
-          continentId       = ContinentId Guid.Empty
-          region            = ""
-          remoteWork        = false
-          fullTime          = false
-          biography         = Text ""
-          lastUpdatedOn     = Instant.MinValue
-          experience        = None
-          skills            = []
-          isLegacy          = false
-        }
+    let empty = {
+        Id                   = CitizenId Guid.Empty
+        IsSeekingEmployment  = false
+        IsPubliclySearchable = false
+        IsPubliclyLinkable   = false
+        ContinentId          = ContinentId Guid.Empty
+        Region               = ""
+        IsRemote             = false
+        IsFullTime           = false
+        Biography            = Text ""
+        LastUpdatedOn        = Instant.MinValue
+        Experience           = None
+        Skills               = []
+        IsLegacy             = false
+    }
 
 
 /// A record of success finding employment
 [<CLIMutable; NoComparison; NoEquality>]
 type Success =
     {   /// The ID of the success report
-        id         : SuccessId
+        Id : SuccessId
         
         /// The ID of the citizen who wrote this success report
-        citizenId  : CitizenId
+        CitizenId : CitizenId
         
         /// When this success report was recorded
-        recordedOn : Instant
+        RecordedOn : Instant
         
         /// Whether the success was due, at least in part, to Jobs, Jobs, Jobs
-        fromHere   : bool
+        IsFromHere : bool
         
         /// The source of this success (listing or profile)
-        source     : string
+        Source : string
         
         /// The success story
-        story      : MarkdownString option
+        Story : MarkdownString option
     }
 
 /// Support functions for success stories
 module Success =
     
     /// An empty success story
-    let empty =
-        {   id         = SuccessId Guid.Empty
-            citizenId  = CitizenId Guid.Empty
-            recordedOn = Instant.MinValue
-            fromHere   = false
-            source     = ""
-            story      = None
-        }
+    let empty = {
+        Id         = SuccessId Guid.Empty
+        CitizenId  = CitizenId Guid.Empty
+        RecordedOn = Instant.MinValue
+        IsFromHere   = false
+        Source     = ""
+        Story      = None
+    }
