@@ -19,6 +19,22 @@ export interface Citizen {
   lastSeenOn : string
 }
 
+/** The data required to register as a user */
+export class CitizenRegistrationForm {
+  /** The citizen's first name */
+  firstName = ""
+  /** The citizen's last name */
+  lastName = ""
+  /** The citizen's e-mail address */
+  email = ""
+  /** The name by which the citizen wishes to be known within the site */
+  displayName = ""
+  /** The password for the citizen */
+  password = ""
+  /** The confirmed password for the citizen */
+  confirmPassword = ""
+}
+
 /** A continent */
 export interface Continent {
   /** The ID of the continent */

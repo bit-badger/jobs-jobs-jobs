@@ -9,6 +9,7 @@ article
         button.btn.btn-primary(@click.prevent="select(it.abbr)") {{it.name}}
       template(v-else).
         #[button.btn.btn-secondary(disabled="disabled") {{it.name}}]#[br]#[em {{it.reason}}]
+  p: router-link(to="/citizen/register") Register
 </template>
 
 <script setup lang="ts">
