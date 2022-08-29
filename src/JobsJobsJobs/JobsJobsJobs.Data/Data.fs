@@ -138,8 +138,6 @@ open JobsJobsJobs.Domain
 [<RequireQualifiedAccess>]
 module Citizens =
 
-    open Npgsql
-    
     /// Delete a citizen by their ID
     let deleteById citizenId = backgroundTask {
         let! _ =
@@ -184,6 +182,37 @@ module Citizens =
         do! txn.CommitAsync ()
     }
     
+    /// Purge expired tokens
+    let private purgeExpiredTokens now = backgroundTask {
+        let connProps = connection ()
+        let! info =
+            Sql.query $"SELECT * FROM {Table.SecurityInfo} WHERE data ->> 'tokenExpires' IS NOT NULL" connProps
+            |> Sql.executeAsync toDocument<SecurityInfo>
+        for expired in info |> List.filter (fun it -> it.TokenExpires.Value < now) do
+            do! saveSecurity { expired with Token = None; TokenUsage = None; TokenExpires = None } connProps
+    }
+    
+    /// Confirm a citizen's account
+    let confirmAccount token now = backgroundTask {
+        do! purgeExpiredTokens now
+        let connProps = connection ()
+        let! tryInfo =
+            connProps
+            |> Sql.query $"
+                SELECT *
+                  FROM {Table.SecurityInfo}
+                 WHERE data ->> 'token'      = @token
+                   AND data ->> 'tokenUsage' = 'confirm'"
+            |> Sql.parameters [ "@token", Sql.string token ]
+            |> Sql.executeAsync toDocument<SecurityInfo>
+        match List.tryHead tryInfo with
+        | Some info ->
+            do! saveSecurity { info with AccountLocked = false; Token = None; TokenUsage = None; TokenExpires = None }
+                    connProps
+            return true
+        | None -> return false
+    }
+        
     /// Attempt a user log on
     let tryLogOn email (pwCheck : string -> bool) now = backgroundTask {
         let  connProps  = connection ()
@@ -229,7 +258,7 @@ module Continents =
     /// Retrieve all continents
     let all () =
         connection ()
-        |> Sql.query $"SELECT * FROM {Table.Continent}"
+        |> Sql.query $"SELECT * FROM {Table.Continent} ORDER BY data ->> 'name'"
         |> Sql.executeAsync toDocument<Continent>
     
     /// Retrieve a continent by its ID

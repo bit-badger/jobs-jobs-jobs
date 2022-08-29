@@ -1,25 +1,34 @@
-<template lang="pug">
-article
-  h3.pb-3 Success Stories
-  load-data(:load="retrieveStories")
-    table.table.table-sm.table-hover(v-if="stories?.length > 0")
-      thead: tr
-        th(scope="col") Story
-        th(scope="col") From
-        th(scope="col") Found Here?
-        th(scope="col") Recorded On
-      tbody: tr(v-for="story in stories" :key="story.id")
-        td
-          router-link(v-if="story.hasStory" :to="`/success-story/${story.id}/view`") View
-          em(v-else) None
-          template(v-if="story.citizenId === user.citizenId")
-            |  ~ #[router-link(:to="`/success-story/${story.id}/edit`") Edit]
-        td {{story.citizenName}}
-        td
-          strong(v-if="story.fromHere") Yes
-          template(v-else) No
-        td: full-date(:date="story.recordedOn")
-    p(v-else) There are no success stories recorded #[em (yet)]
+<template>
+  <article>
+    <h3 class="pb-3">Success Stories</h3>
+    <load-data :load="retrieveStories">
+      <table class="table table-sm table-hover" v-if="stories?.length > 0">
+        <thead>
+          <tr>
+            <th scope="col">Story</th>
+            <th scope="col">From</th>
+            <th scope="col">Found Here?</th>
+            <th scope="col">Recorded On</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="story in stories" :key="story.id">
+            <td>
+              <router-link v-if="story.hasStory" :to="`/success-story/${story.id}/view`">View</router-link>
+              <em v-else>None</em>
+              <template v-if="story.citizenId === user.citizenId">
+                ~ <router-link :to="`/success-story/${story.id}/edit`">Edit</router-link>
+              </template>
+            </td>
+            <td>{{story.citizenName}}</td>
+            <td><strong v-if="story.fromHere">Yes</strong><template v-else>No</template></td>
+            <td><full-date :date="story.recordedOn" /></td>
+          </tr>
+        </tbody>
+      </table>
+      <p v-else>There are no success stories recorded <em>(yet)</em></p>
+    </load-data>
+  </article>
 </template>
 
 <script setup lang="ts">

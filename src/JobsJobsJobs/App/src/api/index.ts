@@ -19,7 +19,8 @@ import {
   PublicSearchResult,
   StoryEntry,
   StoryForm,
-  Success
+  Success,
+  Valid
 } from "./types"
 
 /**
@@ -109,6 +110,20 @@ export default {
      */
     register: async (form : CitizenRegistrationForm) : Promise<boolean | string> =>
       apiSend(await fetch(apiUrl("citizen/register"), reqInit("POST", undefined, form)), "registering citizen"),
+
+    /**
+     * Confirm an account by verifying a token they received via e-mail
+     *
+     * @param token The token to be verified
+     * @return True if the token is value, false if it is not, or an error message if one is encountered
+     */
+    confirmToken: async (token : string) : Promise<boolean | string> => {
+      const resp = await apiResult<Valid>(
+        await fetch(apiUrl("citizen/confirm"), reqInit("PATCH", undefined, { token })), "confirming account")
+      if (typeof resp === "string") return resp
+      if (typeof resp === "undefined") return false
+      return resp.valid
+    },
 
     /**
      * Log a citizen on

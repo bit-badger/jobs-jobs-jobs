@@ -136,6 +136,13 @@ module Citizen =
             return! ok next ctx
     }
     
+    // PATCH: /api/citizen/confirm
+    let confirmToken : HttpHandler = fun next ctx -> task {
+        let! form = ctx.BindJsonAsync<{| token : string |}> ()
+        let! valid = Citizens.confirmAccount form.token (now ctx)
+        return! json {| valid = valid |} next ctx
+    }
+    
     // GET: /api/citizen/log-on/[code]
     let logOn (abbr, authCode) : HttpHandler = fun next ctx -> task {
         match! Citizens.tryLogOn "to@do.com" (fun _ -> false) (now ctx) with
@@ -497,6 +504,7 @@ let allEndpoints = [
                 routef "/log-on/%s/%s" Citizen.logOn
                 routef "/%O"           Citizen.get
             ]
+            PATCH [ route "/confirm" Citizen.confirmToken ]
             POST [ route "/register" Citizen.register ]
             DELETE [ route "" Citizen.delete ]
         ]

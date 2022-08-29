@@ -1,12 +1,16 @@
-<template lang="pug">
-article
-  load-data(:load="retrieveStory")
-    h3
-      | {{citizenName}}&rsquo;s Success Story
-      .jjj-heading-label(v-if="story.fromHere")
-        | &nbsp; &nbsp;#[span.badge.bg-success Via {{profileOrListing}} on Jobs, Jobs, Jobs]
-    h4.pb-3.text-muted: full-date-time(:date="story.recordedOn")
-    div(v-if="story.story" v-html="successStory")
+<template>
+  <article>
+    <load-data :load="retrieveStory">
+      <h3>
+        {{citizenName}}&rsquo;s Success Story
+        <span class="jjj-heading-label" v-if="story.fromHere">
+          &nbsp; &nbsp;<span class="badge bg-success">Via {{profileOrListing}} on Jobs, Jobs, Jobs</span>
+        </span>
+      </h3>
+      <h4 class="pb-3 text-muted"><full-date-time :date="story.recordedOn" /></h4>
+      <div v-if="story.story" v-html="successStory" />
+    </load-data>
+  </article>
 </template>
 
 <script setup lang="ts">

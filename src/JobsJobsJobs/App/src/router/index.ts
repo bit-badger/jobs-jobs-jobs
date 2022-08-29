@@ -7,7 +7,6 @@ import {
 } from "vue-router"
 import store, { Mutations } from "@/store"
 import Home from "@/views/Home.vue"
-import LogOn from "@/views/citizen/LogOn.vue"
 
 /** The URL to which the user should be pointed once they have authorized with Mastodon */
 export const AFTER_LOG_ON_URL = "jjj-after-log-on-url"
@@ -35,38 +34,44 @@ const routes: Array<RouteRecordRaw> = [
     path: "/how-it-works",
     name: "HowItWorks",
     component: () => import(/* webpackChunkName: "help" */ "../views/HowItWorks.vue"),
-    meta: { title: "How It Works" }
+    meta: { auth: false, title: "How It Works" }
   },
   {
     path: "/privacy-policy",
     name: "PrivacyPolicy",
     component: () => import(/* webpackChunkName: "legal" */ "../views/PrivacyPolicy.vue"),
-    meta: { title: "Privacy Policy" }
+    meta: { auth: false, title: "Privacy Policy" }
   },
   {
     path: "/terms-of-service",
     name: "TermsOfService",
     component: () => import(/* webpackChunkName: "legal" */ "../views/TermsOfService.vue"),
-    meta: { title: "Terms of Service" }
+    meta: { auth: false, title: "Terms of Service" }
   },
   // Citizen URLs
   {
     path: "/citizen/register",
     name: "CitizenRegistration",
     component: () => import(/* webpackChunkName: "register" */ "../views/citizen/Register.vue"),
-    meta: { title: "Register" }
+    meta: { auth: false, title: "Register" }
   },
   {
     path: "/citizen/registered",
     name: "CitizenRegistered",
     component: () => import(/* webpackChunkName: "register" */ "../views/citizen/Registered.vue"),
-    meta: { title: "Registration Successful" }
+    meta: { auth: false, title: "Registration Successful" }
+  },
+  {
+    path: "/citizen/confirm/:token",
+    name: "ConfirmRegistration",
+    component: () => import(/* webpackChunkName: "logon" */ "../views/citizen/ConfirmRegistration.vue"),
+    meta: { auth: false, title: "Account Confirmation" }
   },
   {
     path: "/citizen/log-on",
     name: "LogOn",
-    component: LogOn,
-    meta: { title: "Log On" }
+    component: () => import(/* webpackChunkName: "logon" */ "../views/citizen/LogOn.vue"),
+    meta: { auth: false, title: "Log On" }
   },
   {
     path: "/citizen/:abbr/authorized",
@@ -150,7 +155,7 @@ const routes: Array<RouteRecordRaw> = [
     meta: { auth: true, title: "Account Deletion Options" }
   },
   {
-    path: "/so-long/success/:abbr",
+    path: "/so-long/success",
     name: "DeletionSuccess",
     component: () => import(/* webpackChunkName: "so-long" */ "../views/so-long/DeletionSuccess.vue"),
     meta: { auth: false, title: "Account Deletion Success" }
@@ -187,7 +192,7 @@ const router = createRouter({
 
 // eslint-disable-next-line
 router.beforeEach((to : RouteLocationNormalized, from : RouteLocationNormalized) => {
-  if (store.state.user === undefined && (to.meta.auth || false)) {
+  if (store.state.user === undefined && to.meta.auth) {
     window.localStorage.setItem(AFTER_LOG_ON_URL, to.fullPath)
     return "/citizen/log-on"
   }

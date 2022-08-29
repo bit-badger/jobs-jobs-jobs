@@ -1,20 +1,31 @@
-<template lang="pug">
-article
-  h3.pb-3 {{title}}
-  load-data(:load="retrieveStory")
-    p(v-if="isNew").
-      Congratulations on your employment! Your fellow citizens would enjoy hearing how it all came about; tell us
-      about it below! #[em (These will be visible to other users, but not to the general public.)]
-    form.row.g-3
-      .col-12: .form-check
-        input.form-check-input(type="checkbox" id="fromHere" v-model="v$.fromHere.$model")
-        label.form-check-label(for="fromHere") I found my employment here
-      markdown-editor(id="story" label="The Success Story" v-model:text="v$.story.$model")
-      .col-12
-        button.btn.btn-primary(type="submit" @click.prevent="saveStory(true)").
-          #[icon(:icon="mdiContentSaveOutline")]&nbsp; Save
-        p(v-if="isNew"): em (Saving this will set &ldquo;Seeking Employment&rdquo; to &ldquo;No&rdquo; on your profile.)
-  maybe-save(:saveAction="doSave" :validator="v$")
+<template>
+  <article>
+    <h3 class="pb-3">{{title}}</h3>
+    <load-data :load="retrieveStory">
+      <p v-if="isNew">
+        Congratulations on your employment! Your fellow citizens would enjoy hearing how it all came about; tell us
+        about it below! <em>(These will be visible to other users, but not to the general public.)</em>
+      </p>
+      <form class="row g-3">
+        <div class="col-12">
+          <div class="form-check">
+            <input type="checkbox" id="fromHere" class="form-check-input" v-model="v$.fromHere.$model">
+            <label class="form-check-label" for="fromHere">I found my employment here</label>
+          </div>
+        </div>
+        <markdown-editor id="story" label="The Success Story" v-model:text="v$.story.$model" />
+        <div class="col-12">
+          <button class="btn btn-primary" type="submit" @click.prevent="saveStory(true)">
+            <icon :icon="mdiContentSaveOutline" />&nbsp; Save
+          </button>
+          <p v-if="isNew">
+            <em>(Saving this will set &ldquo;Seeking Employment&rdquo; to &ldquo;No&rdquo; on your profile.)</em>
+          </p>
+        </div>
+      </form>
+    </load-data>
+    <maybe-save :saveAction="doSave" :validator="v$" />
+  </article>
 </template>
 
 <script setup lang="ts">
@@ -91,14 +102,14 @@ const saveStory = async (navigate : boolean) => {
         toastSuccess("Success Story saved and Seeking Employment flag cleared successfully")
         v$.value.$reset()
         if (navigate) {
-          router.push("/success-story/list")
+          await router.push("/success-story/list")
         }
       }
     } else {
       toastSuccess("Success Story saved successfully")
       v$.value.$reset()
       if (navigate) {
-        router.push("/success-story/list")
+        await router.push("/success-story/list")
       }
     }
   }

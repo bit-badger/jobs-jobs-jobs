@@ -1,29 +1,39 @@
-<template lang="pug">
-article
-  page-title(:title="title")
-  load-data(:load="retrieveProfile")
-    h2
-      a(:href="it.citizen.profileUrl" target="_blank") {{citizenName(it.citizen)}}
-      .jjj-heading-label(v-if="it.profile.seekingEmployment")
-        | &nbsp; &nbsp;#[span.badge.bg-dark Currently Seeking Employment]
-    h4.pb-3 {{it.continent.name}}, {{it.profile.region}}
-    p(v-html="workTypes")
-    hr
-    div(v-html="bioHtml")
-    template(v-if="it.profile.skills.length > 0")
-      hr
-      h4.pb-3 Skills
-      ul
-        li(v-for="(skill, idx) in it.profile.skills" :key="idx").
-          {{skill.description}}#[template(v-if="skill.notes") &nbsp;({{skill.notes}})]
-    template(v-if="it.profile.experience")
-      hr
-      h4.pb-3 Experience / Employment History
-      div(v-html="expHtml")
-    template(v-if="user.citizenId === it.citizen.id")
-      br
-      br
-      router-link.btn.btn-primary(to="/citizen/profile") #[icon(:icon="mdiPencil")]&nbsp; Edit Your Profile
+<template>
+  <article>
+    <h3 class="pb-3">{{title}}</h3>
+    <load-data :load="retrieveProfile">
+      <h2>
+        <a :href="it.citizen.profileUrl" target="_blank" rel="noopener">{{citizenName(it.citizen)}}</a>
+        <span class="jjj-heading-label" v-if="it.profile.seekingEmployment">
+          &nbsp; &nbsp;<span class="badge bg-dark">Currently Seeking Employment</span>
+        </span>
+      </h2>
+      <h4 class="pb-3">{{it.continent.name}}, {{it.profile.region}}</h4>
+      <p v-html="workTypes" />
+      <hr>
+      <div v-html="bioHtml" />
+      <template v-if="it.profile.skills.length > 0">
+        <hr>
+        <h4 class="pb-3">Skills</h4>
+        <ul>
+          <li v-for="(skill, idx) in it.profile.skills" :key="idx">
+            {{skill.description}}<template v-if="skill.notes"> &nbsp;({{skill.notes}})</template>
+          </li>
+        </ul>
+      </template>
+      <template v-if="it.profile.experience">
+        <hr>
+        <h4 class="pb-3">Experience / Employment History</h4>
+        <div v-html="expHtml" />
+      </template>
+      <template v-if="user.citizenId === it.citizen.id">
+        <br><br>
+        <router-link class="btn btn-primary" to="/citizen/profile">
+          <icon :icon="mdiPencil" />&nbsp; Edit Your Profile
+        </router-link>
+      </template>
+    </load-data>
+  </article>
 </template>
 
 <script setup lang="ts">

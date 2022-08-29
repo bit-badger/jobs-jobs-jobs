@@ -312,3 +312,9 @@ export interface Success {
   /** The success story */
   story : string | undefined
 }
+
+/** Whether a check is valid */
+export interface Valid {
+  /** The validity */
+  valid : boolean
+}
