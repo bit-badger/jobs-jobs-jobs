@@ -3,7 +3,7 @@
     <app-nav />
     <div class="jjj-main">
       <title-bar />
-      <main class="container-fluid">
+      <main class="jjj-content container-fluid">
         <router-view v-slot="{ Component }">
           <transition name="fade" mode="out-in">
             <component :is="Component" />
@@ -84,6 +84,11 @@ label.jjj-required::after
   flex-direction: row
 .jjj-main
   flex-grow: 1
+  display: flex
+  flex-flow: column
+  min-height: 100vh
+.jjj-content
+  flex-grow: 2
 // Route transitions
 .fade-enter-active,
 .fade-leave-active

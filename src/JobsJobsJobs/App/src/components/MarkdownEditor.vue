@@ -1,15 +1,18 @@
-<template lang="pug">
-.col-12
-  nav.nav.nav-pills.pb-1
-    button(:class="sourceClass" @click.prevent="showMarkdown") Markdown
-    | &nbsp;
-    button(:class="previewClass" @click.prevent="showPreview") Preview
-  section.preview(v-if="preview" v-html="previewHtml")
-  .form-floating(v-else)
-    textarea.form-control.md-edit(:id="id" :class="{ 'is-invalid': isInvalid }" rows="10" v-text="text"
-                                  @input="$emit('update:text', $event.target.value)")
-    .invalid-feedback Please enter some text for {{label}}
-    label(:for="id") {{label}}
+<template>
+  <div class="col-12">
+    <nav class="nav nav-pills pb-1">
+      <button :class="sourceClass" @click.prevent="showMarkdown">Markdown</button>
+      &nbsp;
+      <button :class="previewClass" @click.prevent="showPreview">Preview</button>
+    </nav>
+    <section class="preview" v-if="preview" v-html="previewHtml" aria-label="Rendered Markdown preview" />
+    <div class="form-floating" v-else>
+      <textarea :id="id" class="form-control md-edit" :class="{ 'is-invalid': isInvalid }" rows="10" v-text="text"
+                @input="$emit('update:text', $event.target.value)"></textarea>
+      <div class="invalid-feedback">Please enter some text for {{label}}</div>
+      <label :for="id">{{label}}</label>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">

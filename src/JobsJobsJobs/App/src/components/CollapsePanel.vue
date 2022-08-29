@@ -1,8 +1,12 @@
-<template lang="pug">
-.card: .card-body
-  h6.card-title
-    a(href="#" :class="{ 'cp-c': collapsed, 'cp-o': !collapsed }" @click.prevent="toggle") {{headerText}}
-  slot(v-if="!collapsed")
+<template>
+  <div class="card">
+    <div class="card-body">
+      <h6 class="card-title">
+        <a href="#" :class="{ 'cp-c': collapsed, 'cp-o': !collapsed }" @click.prevent="toggle">{{headerText}}</a>
+      </h6>
+      <slot v-if="!collapsed" />
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">

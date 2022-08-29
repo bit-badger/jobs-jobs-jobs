@@ -1,49 +1,53 @@
 <template>
   <article>
     <h3 class="pb-3">Register</h3>
-    <form class="row g-3">
+    <form class="row g-3" novalidate>
       <div class="col-6 col-xl-4">
-        <div class="form-floating">
-          <input class="form-control" type="text" id="firstName" v-model="v$.firstName.$model" placeholder="First Name">
-          <div v-if="v$.firstName.$error" class="text-danger">Please enter your first name</div>
+        <div class="form-floating has-validation">
+          <input type="text" id="firstName" :class="{'form-control': true, 'is-invalid': v$.firstName.$error}"
+                 v-model="v$.firstName.$model" placeholder="First Name">
+          <div class="invalid-feedback">Please enter your first name</div>
           <label class="jjj-required" for="firstName">First Name</label>
         </div>
       </div>
       <div class="col-6 col-xl-4">
         <div class="form-floating">
-          <input class="form-control" type="text" id="lastName" v-model="v$.lastName.$model" placeholder="Last Name">
-          <div v-if="v$.lastName.$error" class="text-danger">Please enter your last name</div>
+          <input type="text" id="lastName" :class="{'form-control': true, 'is-invalid': v$.lastName.$error}"
+                 v-model="v$.lastName.$model" placeholder="Last Name">
+          <div class="invalid-feedback">Please enter your last name</div>
           <label class="jjj-required" for="firstName">Last Name</label>
         </div>
       </div>
       <div class="col-6 col-xl-4">
         <div class="form-floating">
-          <input class="form-control" type="text" id="displayName" v-model="v$.displayName.$model"
+          <input type="text" id="displayName" class="form-control" v-model="v$.displayName.$model"
                  placeholder="Display Name">
           <label for="displayName">Display Name</label>
-          <div class="form-text"><em>Optional; overrides "FirstName LastName"</em></div>
+          <div class="form-text"><em>Optional; overrides first/last for display</em></div>
         </div>
       </div>
       <div class="col-6 col-xl-4">
         <div class="form-floating">
-          <input class="form-control" type="email" id="email" v-model="v$.email.$model" placeholder="E-mail Address">
-          <div v-if="v$.email.$error" class="text-danger">Please enter a valid e-mail address</div>
+          <input type="email" id="email" :class="{'form-control': true, 'is-invalid': v$.email.$error}"
+                 v-model="v$.email.$model" placeholder="E-mail Address">
+          <div class="invalid-feedback">Please enter a valid e-mail address</div>
           <label class="jjj-required" for="email">E-mail Address</label>
         </div>
       </div>
       <div class="col-6 col-xl-4">
         <div class="form-floating">
-          <input class="form-control" type="password" id="password" v-model="v$.password.$model" placeholder="Password"
-                 minlength="8">
-          <div v-if="v$.password.$error" class="text-danger">Please enter a password at least 8 characters long</div>
+          <input type="password" id="password" :class="{'form-control': true, 'is-invalid': v$.password.$error}"
+                 v-model="v$.password.$model" placeholder="Password">
+          <div class="invalid-feedback">Please enter a password at least 8 characters long</div>
           <label class="jjj-required" for="password">Password</label>
         </div>
       </div>
       <div class="col-6 col-xl-4">
         <div class="form-floating">
-          <input class="form-control" type="password" id="confirmPassword" v-model="v$.confirmPassword.$model"
-                 placeholder="Confirm Password">
-          <div v-if="v$.confirmPassword.$error" class="text-danger">The passwords do not match</div>
+          <input type="password" id="confirmPassword"
+                 :class="{'form-control': true, 'is-invalid': v$.confirmPassword.$error}"
+                 v-model="v$.confirmPassword.$model" placeholder="Confirm Password">
+          <div class="invalid-feedback">The passwords do not match</div>
           <label class="jjj-required" for="confirmPassword">Confirm Password</label>
         </div>
       </div>

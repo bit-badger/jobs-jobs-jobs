@@ -1,11 +1,19 @@
-<template lang="pug">
-.modal.fade(id="maybeSaveModal" tabindex="-1" aria-labelledby="maybeSaveLabel" aria-hidden="true"): .modal-dialog: .modal-content
-  .modal-header: h5.modal-title(id="maybeSaveLabel") Unsaved Changes
-  .modal-body You have modified the data on this page since it was last saved. What would you like to do?
-  .modal-footer
-    button.btn.btn-secondary(type="button" @click.prevent="close") Stay on This Page
-    button.btn.btn-primary(type="button" @click.prevent="save") Save Changes
-    button.btn.btn-danger(type="button" @click.prevent="discard") Discard Changes
+<template>
+  <div id="maybeSaveModal" class="modal fade" tabindex="-1" aria-labelledby="maybeSaveLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header"><h5 id="maybeSaveLabel" class="modal-title">Unsaved Changes</h5></div>
+        <div class="modal-body">
+          You have modified the data on this page since it was last saved. What would you like to do?
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" type="button" @click.prevent="close">Stay on This Page</button>
+          <button class="btn btn-primary" type="button" @click.prevent="save">Save Changes</button>
+          <button class="btn btn-danger" type="button" @click.prevent="discard">Discard Changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">

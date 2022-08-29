@@ -1,5 +1,8 @@
-<template lang="pug">
-span(@click="playFile") #[slot] #[audio(:id="clip"): source(:src="clipSource")]
+<template>
+  <span @click="playFile">
+    <slot />
+    <audio :id="clip"><source :src="clipSource" /></audio>
+  </span>
 </template>
 
 <script setup lang="ts">

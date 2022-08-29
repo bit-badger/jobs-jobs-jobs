@@ -1,12 +1,16 @@
-<template lang="pug">
-nav.navbar.navbar-dark(v-if="showMobileHeader")
-  span.navbar-text: router-link(to="/") Jobs, Jobs, Jobs
-  button.btn(data-bs-toggle="offcanvas" data-bs-target="#mobileMenu" aria-controls="mobileMenu")
-    icon(:icon="mdiMenu")
-nav.navbar.navbar-light.bg-light(v-else)
-  span &nbsp;
-  span.navbar-text.
-    (&hellip;and Jobs &ndash; #[audio-clip(clip="pelosi-jobs") Let&rsquo;s Vote for Jobs!])
+<template>
+  <nav class="navbar navbar-dark" v-if="showMobileHeader">
+    <span class="navbar-text"><router-link to="/">Jobs, Jobs, Jobs</router-link></span>
+    <button class="btn" data-bs-toggle="offcanvas" data-bs-target="#mobileMenu" aria-controls="mobileMenu">
+      <icon :icon="mdiMenu" />
+    </button>
+  </nav>
+  <nav class="navbar navbar-light bg-light" v-else>
+    <span>&nbsp;</span>
+    <span class="navbar-text">
+      (&hellip;and Jobs &ndash; <audio-clip clip="pelosi-jobs">Let&rsquo;s Vote for Jobs!</audio-clip>)
+    </span>
+  </nav>
 </template>
 
 <script setup lang="ts">

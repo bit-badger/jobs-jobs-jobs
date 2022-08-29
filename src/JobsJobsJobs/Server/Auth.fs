@@ -76,12 +76,17 @@ let verifyWithMastodon (authCode : string) (inst : MastodonInstance) rtnHost (lo
         return Error $"Could not get token ({codeResult.StatusCode:D}: {codeResult.ReasonPhrase})"
   }
 
-
+open System.Text
 open JobsJobsJobs.Domain
+
+/// Create a confirmation or password reset token for a user
+let createToken (citizen : Citizen) =
+    Convert.ToBase64String (Guid.NewGuid().ToByteArray () |> Array.append (Encoding.UTF8.GetBytes citizen.Email))
+
+
 open Microsoft.IdentityModel.Tokens
 open System.IdentityModel.Tokens.Jwt
 open System.Security.Claims
-open System.Text
 
 /// Create a JSON Web Token for this citizen to use for further requests to this API
 let createJwt (citizen : Citizen) (cfg : AuthOptions) =

@@ -6,6 +6,7 @@ open JobsJobsJobs.Domain
 open JobsJobsJobs.Domain.SharedTypes
 open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.Logging
+open NodaTime
 
 /// Handler to return the files required for the Vue client app
 module Vue =
@@ -122,7 +123,15 @@ module Citizen =
                     LastSeenOn  = now
                 }
             let citizen = { noPass with PasswordHash = PasswordHasher().HashPassword (noPass, form.Password) }
-            do! Citizens.save citizen
+            let security =
+                { SecurityInfo.empty with
+                    Id            = citizen.Id
+                    AccountLocked = true
+                    Token         = Some (Auth.createToken citizen)
+                    TokenUsage    = Some "confirm"
+                    TokenExpires  = Some (now + (Duration.FromDays 3))
+                }
+            do! Citizens.register citizen security
             // TODO: generate auth code and e-mail confirmation
             return! ok next ctx
     }

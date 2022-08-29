@@ -1,5 +1,5 @@
-<template lang="pug">
-template(v-if="true") {{formatted}}
+<template>
+  <template v-if="true">{{formatted}}</template>
 </template>
 
 <script setup lang="ts">

@@ -1,11 +1,13 @@
-<template lang="pug">
-.form-floating
-  select.form-select(id="continentId" :class="{ 'is-invalid': isInvalid}" :value="continentId"
-                     @change="continentChanged")
-    option(value="") &ndash; {{emptyLabel}} &ndash;
-    option(v-for="c in continents" :key="c.id" :value="c.id") {{c.name}}
-  label.jjj-required(for="continentId") Continent
-.invalid-feedback Please select a continent
+<template>
+  <div class="form-floating">
+    <select id="continentId" :class="{ 'form-select': true, 'is-invalid': isInvalid}" :value="continentId"
+            @change="continentChanged">
+      <option value="">&ndash; {{emptyLabel}} &ndash;</option>
+      <option v-for="c in continents" :key="c.id" :value="c.id">{{c.name}}</option>
+    </select>
+    <label class="jjj-required" for="continentId">Continent</label>
+  </div>
+  <div class="invalid-feedback">Please select a continent</div>
 </template>
 
 <script setup lang="ts">

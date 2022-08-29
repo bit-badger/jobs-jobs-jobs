@@ -1,38 +1,53 @@
-<template lang="pug">
-form.container
-  .row
-    .col-xs-12.col-sm-6.col-md-4.col-lg-3
-      continent-list(v-model="criteria.continentId" topLabel="Any" @update:modelValue="updateContinent")
-    .col-xs-12.col-sm-6.col-md-4.col-lg-3
-      .form-floating
-        input.form-control.form-control-sm(type="text" id="region" placeholder="(free-form text)"
-                                           :value="criteria.region" @input="updateValue('region', $event.target.value)")
-        label(for="region") Region
-      .form-text (free-form text)
-    .col-xs-12.col-sm-6.col-offset-md-2.col-lg-3.col-offset-lg-0
-      label.jjj-label Seeking Remote Work?
-      br
-      .form-check.form-check-inline
-        input.form-check-input(type="radio" id="remoteNull" name="remoteWork" :checked="criteria.remoteWork === ''"
-                               @click="updateValue('remoteWork', '')")
-        label.form-check-label(for="remoteNull") No Selection
-      .form-check.form-check-inline
-        input.form-check-input(type="radio" id="remoteYes" name="remoteWork" :checked="criteria.remoteWork === 'yes'"
-                               @click="updateValue('remoteWork', 'yes')")
-        label.form-check-label(for="remoteYes") Yes
-      .form-check.form-check-inline
-        input.form-check-input(type="radio" id="remoteNo" name="remoteWork" :checked="criteria.remoteWork === 'no'"
-                               @click="updateValue('remoteWork', 'no')")
-        label.form-check-label(for="remoteNo") No
-    .col-xs-12.col-sm-6.col-lg-3
-      .form-floating
-        input.form-control.form-control-sm(type="text" id="skillSearch" placeholder="(free-form text)"
-                                           :value="criteria.skill" @input="updateValue('skill', $event.target.value)")
-        label(for="skillSearch") Skill
-      .form-text (free-form text)
-  .row: .col
-    br
-    button.btn.btn-outline-primary(type="submit" @click.prevent="$emit('search')") Search
+<template>
+  <form class="container">
+    <div class="row">
+      <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+        <continent-list v-model="criteria.continentId" topLabel="Any" @update:modelValue="updateContinent" />
+      </div>
+      <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+        <div class="form-floating">
+          <input type="text" id="region" class="form-control form-control-sm" maxlength="1000"
+                 placeholder="(free-form text)" :value="criteria.region"
+                 @input="updateValue('region', $event.target.value)">
+          <label for="region">Region</label>
+        </div>
+        <div class="form-text">(free-form text)</div>
+      </div>
+      <div class="col-12 col-sm-6 col-offset-md-2 col-lg-3 col-offset-lg-0">
+        <label class="jjj-label">Seeking Remote Work?</label><br>
+        <div class="form-check form-check-inline">
+          <input type="radio" id="remoteNull" class="form-check-input" name="remoteWork"
+                 :checked="criteria.remoteWork === ''" @click="updateValue('remoteWork', '')">
+          <label class="form-check-label" for="remoteNull">No Selection</label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input type="radio" id="remoteYes" class="form-check-input" name="remoteWork"
+                 :checked="criteria.remoteWork === 'yes'" @click="updateValue('remoteWork', 'yes')">
+          <label class="form-check-label" for="remoteYes">Yes</label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input type="radio" id="remoteNo" class="form-check-input" name="remoteWork"
+                 :checked="criteria.remoteWork === 'no'" @click="updateValue('remoteWork', 'no')">
+          <label class="form-check-label" for="remoteNo">No</label>
+        </div>
+      </div>
+      <div class="col-12 col-sm-6 col-lg-3">
+        <div class="form-floating">
+          <input type="text" id="skillSearch" class="form-control form-control-sm" maxlength="1000"
+                 placeholder="(free-form text)" :value="criteria.skill"
+                 @input="updateValue('skill', $event.target.value)">
+          <label for="skillSearch">Skill</label>
+        </div>
+        <div class="form-text">(free-form text)</div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col">
+        <br>
+        <button class="btn btn-outline-primary" type="submit" @click.prevent="$emit('search')">Search</button>
+      </div>
+    </div>
+  </form>
 </template>
 
 <script setup lang="ts">

@@ -138,6 +138,8 @@ open JobsJobsJobs.Domain
 [<RequireQualifiedAccess>]
 module Citizens =
 
+    open Npgsql
+    
     /// Delete a citizen by their ID
     let deleteById citizenId = backgroundTask {
         let! _ =
@@ -160,8 +162,27 @@ module Citizens =
     }
     
     /// Save a citizen
-    let save (citizen : Citizen) =
-        connection () |> saveDocument Table.Citizen (CitizenId.toString citizen.Id) <| mkDoc citizen 
+    let private saveCitizen (citizen : Citizen) connProps =
+        saveDocument Table.Citizen (CitizenId.toString citizen.Id) connProps (mkDoc citizen) 
+    
+    /// Save security information for a citizen
+    let private saveSecurity (security : SecurityInfo) connProps =
+        saveDocument Table.SecurityInfo (CitizenId.toString security.Id) connProps (mkDoc security)
+    
+    /// Save a citizen
+    let save citizen =
+        saveCitizen citizen (connection ())
+        
+    /// Register a citizen (saves citizen and security settings)
+    let register citizen (security : SecurityInfo) = backgroundTask {
+        let connProps = connection ()
+        use conn      = Sql.createConnection connProps
+        do! conn.OpenAsync ()
+        use! txn = conn.BeginTransactionAsync ()
+        do! saveCitizen  citizen  connProps
+        do! saveSecurity security connProps
+        do! txn.CommitAsync ()
+    }
     
     /// Attempt a user log on
     let tryLogOn email (pwCheck : string -> bool) now = backgroundTask {
@@ -184,18 +205,18 @@ module Citizens =
                 | Some it -> return it
                 | None ->
                     let it = { SecurityInfo.empty with Id = citizen.Id }
-                    do! saveDocument Table.SecurityInfo citizenId connProps (mkDoc it)
+                    do! saveSecurity it connProps
                     return it
             }
             if info.AccountLocked then return Error "Log on unsuccessful (Account Locked)"
             elif pwCheck citizen.PasswordHash then
-                do! saveDocument Table.SecurityInfo citizenId connProps (mkDoc { info with FailedLogOnAttempts = 0 })
-                do! saveDocument Table.Citizen      citizenId connProps (mkDoc { citizen with LastSeenOn = now })
+                do! saveSecurity { info    with FailedLogOnAttempts = 0   } connProps
+                do! saveCitizen  { citizen with LastSeenOn          = now } connProps
                 return Ok { citizen with LastSeenOn = now }
             else
                 let locked = info.FailedLogOnAttempts >= 4
-                do! mkDoc { info with FailedLogOnAttempts = info.FailedLogOnAttempts + 1; AccountLocked = locked }
-                    |> saveDocument Table.SecurityInfo citizenId connProps
+                do! { info with FailedLogOnAttempts = info.FailedLogOnAttempts + 1; AccountLocked = locked }
+                    |> saveSecurity <| connProps
                 return Error $"""Log on unsuccessful{if locked then " - Account is now locked" else ""}"""
         | None -> return Error "Log on unsuccessful"
     }

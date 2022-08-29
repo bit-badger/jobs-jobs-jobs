@@ -1,7 +1,10 @@
-<template lang="pug">
-footer: p.text-muted.
-  Jobs, Jobs, Jobs v{{appVersion}} &bull; #[router-link(to="/privacy-policy") Privacy Policy]
-  &bull; #[router-link(to="/terms-of-service") Terms of Service]
+<template>
+  <footer>
+    <p class="text-muted">
+      Jobs, Jobs, Jobs v{{appVersion}} &bull; <router-link to="/privacy-policy">Privacy Policy</router-link>
+      &bull; <router-link to="/terms-of-service">Terms of Service</router-link>
+    </p>
+  </footer>
 </template>
 
 <script setup lang="ts">

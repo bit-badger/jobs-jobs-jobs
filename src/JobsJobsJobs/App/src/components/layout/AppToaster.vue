@@ -1,6 +1,7 @@
-<template lang="pug">
-div(aria-live="polite" aria-atomic="true" id="toastHost")
-  .toast-container.position-absolute.p-3.bottom-0.start-50.translate-middle-x(id="toasts")
+<template>
+  <div id="toastHost" aria-live="polite" aria-atomic="true">
+    <div id="toasts" class="toast-container position-absolute p-3 bottom-0 start-50 translate-middle-x"></div>
+  </div>
 </template>
 
 <script lang="ts">

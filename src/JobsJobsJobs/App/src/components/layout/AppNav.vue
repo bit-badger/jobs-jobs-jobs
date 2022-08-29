@@ -1,13 +1,17 @@
-<template lang="pug">
-#mobileMenu.offcanvas.offcanvas-end(v-if="showMobileMenu" tabindex="-1" aria-labelledby="mobileMenuLabel")
-  .offcanvas-header
-    h5#mobileMenuLabel Menu
-    button.btn-close.text-reset(type="button" data-bs-dismiss="offcanvas" aria-label="Close")
-  .offcanvas-body: app-links
-aside.collapse.show.p-3(v-else)
-  p.home-link.pb-3: router-link(to="/") Jobs, Jobs, Jobs
-  p &nbsp;
-  app-links
+<template>
+  <div id="mobileMenu" class="offcanvas offcanvas-end" v-if="showMobileMenu" tabindex="-1"
+       aria-labelledby="mobileMenuLabel">
+    <div class="offcanvas-header">
+      <h5 id="mobileMenuLabel">Menu</h5>
+      <button class="btn-close text-reset" type="button" data-bs-dismiss="offcanvas" aria-label="Close" />
+    </div>
+    <div class="offcanvas-body"><app-links /></div>
+  </div>
+  <aside class="collapse show p-3" v-else>
+    <p class="home-link pb-3"><router-link to="/">Jobs, Jobs, Jobs</router-link></p>
+    <p>&nbsp;</p>
+    <app-links />
+  </aside>
 </template>
 
 <script setup lang="ts">

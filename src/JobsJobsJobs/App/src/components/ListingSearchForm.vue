@@ -1,38 +1,52 @@
-<template lang="pug">
-form.container
-  .row
-    .col-xs-12.col-sm-6.col-md-4.col-lg-3
-      continent-list(v-model="criteria.continentId" topLabel="Any" @update:modelValue="updateContinent")
-    .col-xs-12.col-sm-6.col-lg-3
-      .form-floating
-        input.form-control(type="text" id="regionSearch" placeholder="(free-form text)" :value="criteria.region"
-                           @input="updateValue('region', $event.target.value)")
-        label(for="regionSearch") Region
-      .form-text (free-form text)
-    .col-xs-12.col-sm-6.col-offset-md-2.col-lg-3.col-offset-lg-0
-      label.jjj-label Remote Work Opportunity?
-      br
-      .form-check.form-check-inline
-        input.form-check-input(type="radio" id="remoteNull" name="remoteWork" :checked="criteria.remoteWork === ''"
-                               @click="updateValue('remoteWork', '')")
-        label.form-check-label(for="remoteNull") No Selection
-      .form-check.form-check-inline
-        input.form-check-input(type="radio" id="remoteYes" name="remoteWork" :checked="criteria.remoteWork === 'yes'"
-                               @click="updateValue('remoteWork', 'yes')")
-        label.form-check-label(for="remoteYes") Yes
-      .form-check.form-check-inline
-        input.form-check-input(type="radio" id="remoteNo" name="remoteWork" :checked="criteria.remoteWork === 'no'"
-                               @click="updateValue('remoteWork', 'no')")
-        label.form-check-label(for="remoteNo") No
-    .col-xs-12.col-sm-6.col-lg-3
-      .form-floating
-        input.form-control(type="text" id="textSearch" placeholder="(free-form text)" :value="criteria.text"
-                           @input="updateValue('text', $event.target.value)")
-        label(for="textSearch") Job Listing Text
-      .form-text (free-form text)
-  .row: .col
-    br
-    button.btn.btn-outline-primary(type="submit" @click.prevent="$emit('search')") Search
+<template>
+  <form class="container">
+    <div class="row">
+      <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+        <continent-list v-model="criteria.continentId" topLabel="Any" @update:modelValue="updateContinent" />
+      </div>
+      <div class="col-12 col-sm-6 col-lg-3">
+        <div class="form-floating">
+          <input type="text" id="regionSearch" class="form-control" placeholder="(free-form text)"
+                 :value="criteria.region" @input="updateValue('region', $event.target.value)">
+          <label for="regionSearch">Region</label>
+        </div>
+        <div class="form-text">(free-form text)</div>
+      </div>
+      <div class="col-12 col-sm-6 col-offset-md-2 col-lg-3 col-offset-lg-0">
+        <label class="jjj-label">Remote Work Opportunity?</label>
+        <br>
+        <div class="form-check form-check-inline">
+          <input type="radio" id="remoteNull" class="form-check-input" name="remoteWork"
+                 :checked="criteria.remoteWork === ''" @click="updateValue('remoteWork', '')">
+          <label class="form-check-label" for="remoteNull">No Selection</label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input type="radio" id="remoteYes" class="form-check-input" name="remoteWork"
+                 :checked="criteria.remoteWork === 'yes'" @click="updateValue('remoteWork', 'yes')">
+          <label class="form-check-label" for="remoteYes">Yes</label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input type="radio" id="remoteNo" class="form-check-input" name="remoteWork"
+                 :checked="criteria.remoteWork === 'no'" @click="updateValue('remoteWork', 'no')">
+          <label class="form-check-label" for="remoteNo">No</label>
+        </div>
+      </div>
+      <div class="col-12 col-sm-6 col-lg-3">
+        <div class="form-floating">
+          <input type="text" id="textSearch" class="form-control" placeholder="(free-form text)" :value="criteria.text"
+                 @input="updateValue('text', $event.target.value)">
+          <label for="textSearch">Job Listing Text</label>
+        </div>
+        <div class="form-text">(free-form text)</div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col">
+        <br>
+        <button class="btn btn-outline-primary" type="submit" @click.prevent="$emit('search')">Search</button>
+      </div>
+    </div>
+  </form>
 </template>
 
 <script setup lang="ts">

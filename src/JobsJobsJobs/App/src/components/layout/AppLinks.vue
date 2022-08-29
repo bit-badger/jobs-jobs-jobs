@@ -1,20 +1,45 @@
-<template lang="pug">
-nav
-  template(v-if="isLoggedOn")
-    router-link(to="/citizen/dashboard" @click="hide") #[icon(:icon="mdiViewDashboardVariant")]&nbsp; Dashboard
-    router-link(to="/help-wanted" @click="hide") #[icon(:icon="mdiNewspaperVariantMultipleOutline")]&nbsp; Help Wanted!
-    router-link(to="/profile/search" @click="hide") #[icon(:icon="mdiViewListOutline")]&nbsp; Employment Profiles
-    router-link(to="/success-story/list" @click="hide") #[icon(:icon="mdiThumbUp")]&nbsp; Success Stories
-    .separator
-    router-link(to="/listings/mine" @click="hide") #[icon(:icon="mdiSignText")]&nbsp; My Job Listings
-    router-link(to="/citizen/profile" @click="hide") #[icon(:icon="mdiPencil")]&nbsp; My Employment Profile
-    .separator
-    router-link(to="/citizen/log-off" @click="hide") #[icon(:icon="mdiLogoutVariant")]&nbsp; Log Off
-  template(v-else)
-    router-link(to="/" @click="hide") #[icon(:icon="mdiHome")]&nbsp; Home
-    router-link(to="/profile/seeking" @click="hide") #[icon(:icon="mdiViewListOutline")]&nbsp; Job Seekers
-    router-link(to="/citizen/log-on" @click="hide") #[icon(:icon="mdiLoginVariant")]&nbsp; Log On
-  router-link(to="/how-it-works" @click="hide") #[icon(:icon="mdiHelpCircleOutline")]&nbsp; How It Works
+<template>
+  <nav>
+    <template v-if="isLoggedOn">
+      <router-link to="/citizen/dashboard" @click="hide">
+        <icon :icon="mdiViewDashboardVariant" />&nbsp; Dashboard
+      </router-link>
+      <router-link to="/help-wanted" @click="hide">
+        <icon :icon="mdiNewspaperVariantMultipleOutline" />&nbsp; Help Wanted!
+      </router-link>
+      <router-link to="/profile/search" @click="hide">
+        <icon :icon="mdiViewListOutline" />&nbsp; Employment Profiles
+      </router-link>
+      <router-link to="/success-story/list" @click="hide">
+        <icon :icon="mdiThumbUp" />&nbsp; Success Stories
+      </router-link>
+      <div class="separator"></div>
+      <router-link to="/listings/mine" @click="hide">
+        <icon :icon="mdiSignText" />&nbsp; My Job Listings
+      </router-link>
+      <router-link to="/citizen/profile" @click="hide">
+        <icon :icon="mdiPencil" />&nbsp; My Employment Profile
+      </router-link>
+      <div class="separator"></div>
+      <router-link to="/citizen/log-off" @click="hide">
+        <icon :icon="mdiLogoutVariant" />&nbsp; Log Off
+      </router-link>
+    </template>
+    <template v-else>
+      <router-link to="/" @click="hide">
+        <icon :icon="mdiHome" />&nbsp; Home
+      </router-link>
+      <router-link to="/profile/seeking" @click="hide">
+        <icon :icon="mdiViewListOutline" />&nbsp; Job Seekers
+      </router-link>
+      <router-link to="/citizen/log-on" @click="hide">
+        <icon :icon="mdiLoginVariant" />&nbsp; Log On
+      </router-link>
+    </template>
+    <router-link to="/how-it-works" @click="hide">
+      <icon :icon="mdiHelpCircleOutline" />&nbsp; How It Works
+    </router-link>
+  </nav>
 </template>
 
 <script setup lang="ts">
