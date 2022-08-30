@@ -8,7 +8,7 @@
       <p v-else>
         The confirmation token did not match any pending accounts. Confirmation tokens are only valid for 3 days; if
         the token expired, you will need to re-register,
-        which <router-link to="/citzen/register">you can do here</router-link>.
+        which <router-link to="/citizen/register">you can do here</router-link>.
       </p>
     </load-data>
   </article>

@@ -132,14 +132,24 @@ module Citizen =
                     TokenExpires  = Some (now + (Duration.FromDays 3))
                 }
             do! Citizens.register citizen security
-            // TODO: generate auth code and e-mail confirmation
+            let! emailResponse = Email.sendAccountConfirmation citizen security
+            let logFac = logger ctx
+            let log    = logFac.CreateLogger "JobsJobsJobs.Api.Handlers.Citizen"
+            log.LogInformation $"Confirmation e-mail for {citizen.Email} received {emailResponse}"
             return! ok next ctx
     }
     
     // PATCH: /api/citizen/confirm
     let confirmToken : HttpHandler = fun next ctx -> task {
         let! form = ctx.BindJsonAsync<{| token : string |}> ()
-        let! valid = Citizens.confirmAccount form.token (now ctx)
+        let! valid = Citizens.confirmAccount form.token
+        return! json {| valid = valid |} next ctx
+    }
+    
+    // DELETE: /api/citizen/deny
+    let denyToken : HttpHandler = fun next ctx -> task {
+        let! form = ctx.BindJsonAsync<{| token : string |}> ()
+        let! valid = Citizens.denyAccount form.token
         return! json {| valid = valid |} next ctx
     }
     
@@ -506,7 +516,10 @@ let allEndpoints = [
             ]
             PATCH [ route "/confirm" Citizen.confirmToken ]
             POST [ route "/register" Citizen.register ]
-            DELETE [ route "" Citizen.delete ]
+            DELETE [
+                route ""      Citizen.delete
+                route "/deny" Citizen.denyToken
+            ]
         ]
         GET_HEAD [ route "/continents" Continent.all ]
         GET_HEAD [ route "/instances"  Instances.all ]

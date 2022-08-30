@@ -68,6 +68,12 @@ const routes: Array<RouteRecordRaw> = [
     meta: { auth: false, title: "Account Confirmation" }
   },
   {
+    path: "/citizen/deny/:token",
+    name: "DenyRegistration",
+    component: () => import(/* webpackChunkName: "deny" */ "../views/citizen/DenyRegistration.vue"),
+    meta: { auth: false, title: "Account Deletion" }
+  },
+  {
     path: "/citizen/log-on",
     name: "LogOn",
     component: () => import(/* webpackChunkName: "logon" */ "../views/citizen/LogOn.vue"),

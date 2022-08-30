@@ -9,13 +9,14 @@
 
   <ItemGroup>
     <Compile Include="Auth.fs" />
+    <Compile Include="Email.fs" />
     <Compile Include="Handlers.fs" />
     <Compile Include="App.fs" />
   </ItemGroup>
   
   <ItemGroup>
+    <ProjectReference Include="..\Data\JobsJobsJobs.Data.fsproj" />
     <ProjectReference Include="..\Domain\JobsJobsJobs.Domain.fsproj" />
-    <ProjectReference Include="..\JobsJobsJobs.Data\JobsJobsJobs.Data.fsproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -24,6 +25,7 @@
   
   <ItemGroup>
     <PackageReference Include="Giraffe" Version="6.0.0" />
+    <PackageReference Include="MailKit" Version="3.3.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.8" />
     <PackageReference Include="Microsoft.FSharpLu.Json" Version="0.11.7" />
     <PackageReference Include="NodaTime.Serialization.JsonNet" Version="3.0.0" />

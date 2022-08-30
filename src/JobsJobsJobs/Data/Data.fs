@@ -1,4 +1,4 @@
-﻿namespace JobsJobsJobs.Data
+namespace JobsJobsJobs.Data
 
 /// Constants for tables used by Jobs, Jobs, Jobs
 module Table =
@@ -137,11 +137,19 @@ open JobsJobsJobs.Domain
 /// Citizen data access functions
 [<RequireQualifiedAccess>]
 module Citizens =
-
-    /// Delete a citizen by their ID
-    let deleteById citizenId = backgroundTask {
+    
+    open NodaTime
+    
+    /// The last time a token purge check was run
+    let mutable private lastPurge = Instant.MinValue
+    
+    /// Lock access to the above
+    let private locker = obj ()
+    
+    /// Delete a citizen by their ID using the given connection properties
+    let private doDeleteById citizenId connProps = backgroundTask {
         let! _ =
-            connection ()
+            connProps
             |> Sql.query $"
                 DELETE FROM {Table.Success} WHERE data ->> 'citizenId' = @id;
                 DELETE FROM {Table.Listing} WHERE data ->> 'citizenId' = @id;
@@ -151,13 +159,9 @@ module Citizens =
         ()
     }
     
-    /// Find a citizen by their ID
-    let findById citizenId = backgroundTask {
-        match! connection () |> getDocument<Citizen> Table.Citizen (CitizenId.toString citizenId) with
-        | Some c when not c.IsLegacy -> return Some c
-        | Some _
-        | None -> return None
-    }
+    /// Delete a citizen by their ID
+    let deleteById citizenId =
+        doDeleteById citizenId (connection ())
     
     /// Save a citizen
     let private saveCitizen (citizen : Citizen) connProps =
@@ -166,6 +170,38 @@ module Citizens =
     /// Save security information for a citizen
     let private saveSecurity (security : SecurityInfo) connProps =
         saveDocument Table.SecurityInfo (CitizenId.toString security.Id) connProps (mkDoc security)
+    
+    /// Purge expired tokens
+    let private purgeExpiredTokens now = backgroundTask {
+        let connProps = connection ()
+        let! info =
+            Sql.query $"SELECT * FROM {Table.SecurityInfo} WHERE data ->> 'tokenExpires' IS NOT NULL" connProps
+            |> Sql.executeAsync toDocument<SecurityInfo>
+        for expired in info |> List.filter (fun it -> it.TokenExpires.Value < now) do
+            if expired.TokenUsage.Value = "confirm" then
+                // Unconfirmed account; delete the entire thing
+                do! doDeleteById expired.Id connProps
+            else
+                // Some other use; just clear the token
+                do! saveSecurity { expired with Token = None; TokenUsage = None; TokenExpires = None } connProps
+    }
+    
+    /// Check for tokens to purge if it's been more than 10 minutes since we last checked
+    let private checkForPurge skipCheck =
+        lock locker (fun () -> backgroundTask {
+            let now  = SystemClock.Instance.GetCurrentInstant ()
+            if skipCheck || (now - lastPurge).TotalMinutes >= 10 then
+                do! purgeExpiredTokens now
+                lastPurge <- now
+        })
+    
+    /// Find a citizen by their ID
+    let findById citizenId = backgroundTask {
+        match! connection () |> getDocument<Citizen> Table.Citizen (CitizenId.toString citizenId) with
+        | Some c when not c.IsLegacy -> return Some c
+        | Some _
+        | None -> return None
+    }
     
     /// Save a citizen
     let save citizen =
@@ -182,20 +218,8 @@ module Citizens =
         do! txn.CommitAsync ()
     }
     
-    /// Purge expired tokens
-    let private purgeExpiredTokens now = backgroundTask {
-        let connProps = connection ()
-        let! info =
-            Sql.query $"SELECT * FROM {Table.SecurityInfo} WHERE data ->> 'tokenExpires' IS NOT NULL" connProps
-            |> Sql.executeAsync toDocument<SecurityInfo>
-        for expired in info |> List.filter (fun it -> it.TokenExpires.Value < now) do
-            do! saveSecurity { expired with Token = None; TokenUsage = None; TokenExpires = None } connProps
-    }
-    
-    /// Confirm a citizen's account
-    let confirmAccount token now = backgroundTask {
-        do! purgeExpiredTokens now
-        let connProps = connection ()
+    /// Try to find the security information matching a confirmation token
+    let private tryConfirmToken token connProps = backgroundTask {
         let! tryInfo =
             connProps
             |> Sql.query $"
@@ -205,7 +229,14 @@ module Citizens =
                    AND data ->> 'tokenUsage' = 'confirm'"
             |> Sql.parameters [ "@token", Sql.string token ]
             |> Sql.executeAsync toDocument<SecurityInfo>
-        match List.tryHead tryInfo with
+        return List.tryHead tryInfo
+    }
+    
+    /// Confirm a citizen's account
+    let confirmAccount token = backgroundTask {
+        do! checkForPurge true
+        let connProps = connection ()
+        match! tryConfirmToken token connProps with
         | Some info ->
             do! saveSecurity { info with AccountLocked = false; Token = None; TokenUsage = None; TokenExpires = None }
                     connProps
@@ -213,8 +244,20 @@ module Citizens =
         | None -> return false
     }
         
+    /// Deny a citizen's account (user-initiated; used if someone used their e-mail address without their consent)
+    let denyAccount token = backgroundTask {
+        do! checkForPurge true
+        let connProps = connection ()
+        match! tryConfirmToken token connProps with
+        | Some info ->
+            do! doDeleteById info.Id connProps
+            return true
+        | None -> return false
+    }
+        
     /// Attempt a user log on
     let tryLogOn email (pwCheck : string -> bool) now = backgroundTask {
+        do! checkForPurge false
         let  connProps  = connection ()
         let! tryCitizen =
             connProps

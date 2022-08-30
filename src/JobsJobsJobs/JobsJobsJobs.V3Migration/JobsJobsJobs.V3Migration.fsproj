@@ -17,7 +17,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\JobsJobsJobs.Data\JobsJobsJobs.Data.fsproj" />
+      <ProjectReference Include="..\Data\JobsJobsJobs.Data.fsproj" />
     </ItemGroup>
 
 </Project>
