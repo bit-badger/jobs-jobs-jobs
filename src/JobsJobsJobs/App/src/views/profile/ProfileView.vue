@@ -4,7 +4,7 @@
     <load-data :load="retrieveProfile">
       <h2>
         <a :href="it.citizen.profileUrl" target="_blank" rel="noopener">{{citizenName(it.citizen)}}</a>
-        <span class="jjj-heading-label" v-if="it.profile.seekingEmployment">
+        <span v-if="it.profile.seekingEmployment" class="jjj-heading-label">
           &nbsp; &nbsp;<span class="badge bg-dark">Currently Seeking Employment</span>
         </span>
       </h2>
@@ -28,7 +28,7 @@
       </template>
       <template v-if="user.citizenId === it.citizen.id">
         <br><br>
-        <router-link class="btn btn-primary" to="/citizen/profile">
+        <router-link class="btn btn-primary" to="/profile/edit">
           <icon :icon="mdiPencil" />&nbsp; Edit Your Profile
         </router-link>
       </template>

@@ -80,22 +80,10 @@ const routes: Array<RouteRecordRaw> = [
     meta: { auth: false, title: "Log On" }
   },
   {
-    path: "/citizen/:abbr/authorized",
-    name: "CitizenAuthorized",
-    component: () => import(/* webpackChunkName: "dashboard" */ "../views/citizen/Authorized.vue"),
-    meta: { title: "Logging On" }
-  },
-  {
     path: "/citizen/dashboard",
     name: "Dashboard",
     component: () => import(/* webpackChunkName: "dashboard" */ "../views/citizen/Dashboard.vue"),
     meta: { auth: true, title: "Dashboard" }
-  },
-  {
-    path: "/citizen/profile",
-    name: "EditProfile",
-    component: () => import(/* webpackChunkName: "profedit" */ "../views/citizen/EditProfile.vue"),
-    meta: { auth: true, title: "Edit Profile" }
   },
   {
     path: "/citizen/log-off",
@@ -140,6 +128,12 @@ const routes: Array<RouteRecordRaw> = [
     name: "ViewProfile",
     component: () => import(/* webpackChunkName: "profview" */ "../views/profile/ProfileView.vue"),
     meta: { auth: true, title: "Loading Profile..." }
+  },
+  {
+    path: "/profile/edit",
+    name: "EditProfile",
+    component: () => import(/* webpackChunkName: "profedit" */ "../views/profile/EditProfile.vue"),
+    meta: { auth: true, title: "Edit Profile" }
   },
   {
     path: "/profile/search",

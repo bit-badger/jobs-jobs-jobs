@@ -1,81 +1,7 @@
 /// Authorization / authentication functions
 module JobsJobsJobs.Api.Auth
 
-open System.Text.Json.Serialization
-
-/// The variables we need from the account information we get from Mastodon
-[<NoComparison; NoEquality; AllowNullLiteral>]
-type MastodonAccount () =
-    /// The user name (what we store as mastodonUser)
-    [<JsonPropertyName "username">]
-    member val Username = "" with get, set
-    /// The account name; will generally be the same as username for local accounts, which is all we can verify
-    [<JsonPropertyName "acct">]
-    member val AccountName = "" with get, set
-    /// The user's display name as it currently shows on Mastodon
-    [<JsonPropertyName "display_name">]
-    member val DisplayName = "" with get, set
-    /// The user's profile URL
-    [<JsonPropertyName "url">]
-    member val Url = "" with get, set
-
-
-open Microsoft.Extensions.Logging
 open System
-open System.Net.Http
-open System.Net.Http.Headers
-open System.Net.Http.Json
-open System.Text.Json
-open JobsJobsJobs.Domain.SharedTypes
-
-/// HTTP client to use to communication with Mastodon
-let private http =
-    let h = new HttpClient ()
-    h.Timeout <- TimeSpan.FromSeconds 30.
-    h
-
-/// Verify the authorization code with Mastodon and get the user's profile
-let verifyWithMastodon (authCode : string) (inst : MastodonInstance) rtnHost (log : ILogger) = task {
-
-    // Function to create a URL for the given instance
-    let apiUrl = sprintf "%s/api/v1/%s" inst.Url
-
-    // Use authorization code to get an access token from Mastodon
-    use! codeResult =
-        http.PostAsJsonAsync ($"{inst.Url}/oauth/token",
-            {|  client_id     = inst.ClientId
-                client_secret = inst.Secret
-                redirect_uri  = $"{rtnHost}/citizen/{inst.Abbr}/authorized"
-                grant_type    = "authorization_code"
-                code          = authCode
-                scope         = "read"
-            |})
-    match codeResult.IsSuccessStatusCode with
-    | true ->
-        let! responseBytes = codeResult.Content.ReadAsByteArrayAsync ()
-        use  tokenResponse = JsonSerializer.Deserialize<JsonDocument> (ReadOnlySpan<byte> responseBytes)
-        match tokenResponse with
-        | null -> return Error "Could not parse authorization code result"
-        | _ ->
-            // Use access token to get profile from NAS
-            use req = new HttpRequestMessage (HttpMethod.Get, apiUrl "accounts/verify_credentials")
-            req.Headers.Authorization <- AuthenticationHeaderValue
-                ("Bearer", tokenResponse.RootElement.GetProperty("access_token").GetString ())
-            use! profileResult = http.SendAsync req
-          
-            match profileResult.IsSuccessStatusCode with
-            | true ->
-                let! profileBytes = profileResult.Content.ReadAsByteArrayAsync ()
-                match JsonSerializer.Deserialize<MastodonAccount>(ReadOnlySpan<byte> profileBytes) with
-                | null -> return Error "Could not parse profile result"
-                | profile -> return Ok profile
-            | false -> return Error $"Could not get profile ({profileResult.StatusCode:D}: {profileResult.ReasonPhrase})"
-    | false ->
-        let! err = codeResult.Content.ReadAsStringAsync ()
-        log.LogError $"Could not get token result from Mastodon:\n  {err}"
-        return Error $"Could not get token ({codeResult.StatusCode:D}: {codeResult.ReasonPhrase})"
-  }
-
 open System.Text
 open JobsJobsJobs.Domain
 
@@ -84,9 +10,30 @@ let createToken (citizen : Citizen) =
     Convert.ToBase64String (Guid.NewGuid().ToByteArray () |> Array.append (Encoding.UTF8.GetBytes citizen.Email))
 
 
-open Microsoft.IdentityModel.Tokens
+/// Password hashing and verification
+module Passwords =
+    
+    open Microsoft.AspNetCore.Identity
+
+    /// The password hasher to use for the application
+    let private hasher = PasswordHasher<Citizen> ()
+
+    /// Hash a password for a user
+    let hash citizen password =
+        hasher.HashPassword (citizen, password)
+
+    /// Verify a password (returns true if the password needs to be rehashed)
+    let verify citizen password =
+        match hasher.VerifyHashedPassword (citizen, citizen.PasswordHash, password) with
+        | PasswordVerificationResult.Success -> Some false
+        | PasswordVerificationResult.SuccessRehashNeeded -> Some true
+        | _ -> None
+
+
 open System.IdentityModel.Tokens.Jwt
 open System.Security.Claims
+open Microsoft.IdentityModel.Tokens
+open JobsJobsJobs.Domain.SharedTypes
 
 /// Create a JSON Web Token for this citizen to use for further requests to this API
 let createJwt (citizen : Citizen) (cfg : AuthOptions) =

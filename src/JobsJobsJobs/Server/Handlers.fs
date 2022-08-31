@@ -6,7 +6,6 @@ open JobsJobsJobs.Domain
 open JobsJobsJobs.Domain.SharedTypes
 open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.Logging
-open NodaTime
 
 /// Handler to return the files required for the Vue client app
 module Vue =
@@ -50,12 +49,13 @@ module Error =
         clearResponse >=> ServerErrors.INTERNAL_ERROR ex.Message
   
 
+open NodaTime
+
 /// Helper functions
 [<AutoOpen>]
 module Helpers =
 
     open System.Security.Claims
-    open NodaTime
     open Microsoft.Extensions.Configuration
     open Microsoft.Extensions.Options
 
@@ -103,8 +103,6 @@ open JobsJobsJobs.Data
 [<RequireQualifiedAccess>]
 module Citizen =
     
-    open Microsoft.AspNetCore.Identity
-
     // POST: /api/citizen/register
     let register : HttpHandler = fun next ctx -> task {
         let! form = ctx.BindJsonAsync<CitizenRegistrationForm> ()
@@ -122,7 +120,7 @@ module Citizen =
                     JoinedOn    = now
                     LastSeenOn  = now
                 }
-            let citizen = { noPass with PasswordHash = PasswordHasher().HashPassword (noPass, form.Password) }
+            let citizen = { noPass with PasswordHash = Auth.Passwords.hash noPass form.Password }
             let security =
                 { SecurityInfo.empty with
                     Id            = citizen.Id
@@ -131,12 +129,15 @@ module Citizen =
                     TokenUsage    = Some "confirm"
                     TokenExpires  = Some (now + (Duration.FromDays 3))
                 }
-            do! Citizens.register citizen security
-            let! emailResponse = Email.sendAccountConfirmation citizen security
-            let logFac = logger ctx
-            let log    = logFac.CreateLogger "JobsJobsJobs.Api.Handlers.Citizen"
-            log.LogInformation $"Confirmation e-mail for {citizen.Email} received {emailResponse}"
-            return! ok next ctx
+            let! success = Citizens.register citizen security
+            if success then
+                let! emailResponse = Email.sendAccountConfirmation citizen security
+                let logFac = logger ctx
+                let log    = logFac.CreateLogger "JobsJobsJobs.Api.Handlers.Citizen"
+                log.LogInformation $"Confirmation e-mail for {citizen.Email} received {emailResponse}"
+                return! ok next ctx
+            else
+                return! RequestErrors.CONFLICT "" next ctx
     }
     
     // PATCH: /api/citizen/confirm
@@ -153,9 +154,10 @@ module Citizen =
         return! json {| valid = valid |} next ctx
     }
     
-    // GET: /api/citizen/log-on/[code]
-    let logOn (abbr, authCode) : HttpHandler = fun next ctx -> task {
-        match! Citizens.tryLogOn "to@do.com" (fun _ -> false) (now ctx) with
+    // POST: /api/citizen/log-on
+    let logOn : HttpHandler = fun next ctx -> task {
+        let! form = ctx.BindJsonAsync<LogOnForm> ()
+        match! Citizens.tryLogOn form.email form.password Auth.Passwords.verify Auth.Passwords.hash (now ctx) with
         | Ok citizen ->
             return!
                 json
@@ -163,51 +165,7 @@ module Citizen =
                       citizenId = CitizenId.toString citizen.Id
                       name      = Citizen.name citizen
                     } next ctx
-        | Error msg ->
-            // TODO: return error message
-            return! RequestErrors.BAD_REQUEST msg next ctx
-        // Step 1 - Verify with Mastodon
-        // let cfg = authConfig ctx
-        //
-        // match cfg.Instances |> Array.tryFind (fun it -> it.Abbr = abbr) with
-        // | Some instance ->
-        //     let log = (logger ctx).CreateLogger (nameof JobsJobsJobs.Api.Auth)
-        //     
-        //     match! Auth.verifyWithMastodon authCode instance cfg.ReturnHost log with
-        //     | Ok account ->
-        //         // Step 2 - Find / establish Jobs, Jobs, Jobs account
-        //         let  now     = (clock ctx).GetCurrentInstant ()
-        //         let  dbConn  = conn ctx
-        //         let! citizen = task {
-        //             match! Data.Citizen.findByMastodonUser instance.Abbr account.Username dbConn with
-        //             | None ->
-        //                 let it : Citizen =
-        //                     { id           = CitizenId.create ()
-        //                       instance     = instance.Abbr
-        //                       mastodonUser = account.Username
-        //                       displayName  = noneIfEmpty account.DisplayName
-        //                       realName     = None
-        //                       profileUrl   = account.Url
-        //                       joinedOn     = now
-        //                       lastSeenOn   = now
-        //                     }
-        //                 do! Data.Citizen.add it dbConn
-        //                 return it
-        //             | Some citizen ->
-        //                 let it = { citizen with displayName = noneIfEmpty account.DisplayName; lastSeenOn = now }
-        //                 do! Data.Citizen.logOnUpdate it dbConn
-        //                 return it
-        //             }
-        //         
-        //         // Step 3 - Generate JWT
-        //         return!
-        //             json
-        //                 { jwt       = Auth.createJwt citizen cfg
-        //                   citizenId = CitizenId.toString citizen.id
-        //                   name      = Citizen.name citizen
-        //                 } next ctx
-        //     | Error err -> return! RequestErrors.BAD_REQUEST err next ctx
-        // | None -> return! Error.notFound next ctx
+        | Error msg -> return! RequestErrors.BAD_REQUEST msg next ctx
     }
     
     // GET: /api/citizen/[id]
@@ -235,31 +193,9 @@ module Continent =
     }
 
 
-/// Handlers for /api/instances routes
-[<RequireQualifiedAccess>]
-module Instances =
-
-    /// Convert a Mastodon instance to the one we use in the API
-    let private toInstance (inst : MastodonInstance) =
-        { name      = inst.Name
-          url       = inst.Url
-          abbr      = inst.Abbr
-          clientId  = inst.ClientId
-          isEnabled = inst.IsEnabled
-          reason    = inst.Reason
-        }
-
-    // GET: /api/instances
-    let all : HttpHandler = fun next ctx -> task {
-        return! json ((authConfig ctx).Instances |> Array.map toInstance) next ctx
-    }
-
-
 /// Handlers for /api/listing[s] routes
 [<RequireQualifiedAccess>]
 module Listing =
-
-    open NodaTime
 
     /// Parse the string we receive from JSON into a NodaTime local date
     let private parseDate = DateTime.Parse >> LocalDate.FromDateTime
@@ -510,19 +446,18 @@ open Giraffe.EndpointRouting
 let allEndpoints = [
     subRoute "/api" [
         subRoute "/citizen" [
-            GET_HEAD [
-                routef "/log-on/%s/%s" Citizen.logOn
-                routef "/%O"           Citizen.get
-            ]
+            GET_HEAD [ routef "/%O" Citizen.get ]
             PATCH [ route "/confirm" Citizen.confirmToken ]
-            POST [ route "/register" Citizen.register ]
+            POST [
+                route "/log-on"   Citizen.logOn
+                route "/register" Citizen.register
+            ]
             DELETE [
                 route ""      Citizen.delete
                 route "/deny" Citizen.denyToken
             ]
         ]
         GET_HEAD [ route "/continents" Continent.all ]
-        GET_HEAD [ route "/instances"  Instances.all ]
         subRoute "/listing" [
             GET_HEAD [
                 routef "/%O"      Listing.get

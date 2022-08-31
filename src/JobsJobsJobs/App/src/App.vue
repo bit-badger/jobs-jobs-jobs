@@ -52,13 +52,13 @@ export function yesOrNo (cond : boolean) : string {
 }
 
 /**
- * Get the display name for a citizen (the first available among real, display, or Mastodon handle)
+ * Get the display name for a citizen
  *
  * @param cit The citizen
  * @returns The citizen's display name
  */
 export function citizenName (cit : Citizen) : string {
-  return cit.realName ?? cit.displayName ?? cit.mastodonUser
+  return cit.displayName ?? `${cit.firstName} ${cit.lastName}`
 }
 </script>
 

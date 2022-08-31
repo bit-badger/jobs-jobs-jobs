@@ -1,7 +1,5 @@
 <template>
-  <svg viewbox="0 0 24 24">
-    <path :fill="color || 'white'" :d="icon" />
-  </svg>
+  <svg viewbox="0 0 24 24"><path :fill="color || 'white'" :d="icon" /></svg>
 </template>
 
 <script setup lang="ts">

@@ -2,7 +2,7 @@
   <article>
     <h3 class="pb-3">Success Stories</h3>
     <load-data :load="retrieveStories">
-      <table class="table table-sm table-hover" v-if="stories?.length > 0">
+      <table v-if="stories?.length > 0" class="table table-sm table-hover">
         <thead>
           <tr>
             <th scope="col">Story</th>

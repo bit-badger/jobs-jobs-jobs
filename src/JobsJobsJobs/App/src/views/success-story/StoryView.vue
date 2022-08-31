@@ -3,7 +3,7 @@
     <load-data :load="retrieveStory">
       <h3>
         {{citizenName}}&rsquo;s Success Story
-        <span class="jjj-heading-label" v-if="story.fromHere">
+        <span v-if="story.fromHere" class="jjj-heading-label">
           &nbsp; &nbsp;<span class="badge bg-success">Via {{profileOrListing}} on Jobs, Jobs, Jobs</span>
         </span>
       </h3>
@@ -34,7 +34,7 @@ const user = store.state.user as LogOnSuccess
 /** The story to be displayed */
 const story : Ref<Success | undefined> = ref(undefined)
 
-/** The citizen's name (real, display, or Mastodon, whichever is found first) */
+/** The citizen's name */
 const citizenName = ref("")
 
 /** Retrieve the success story */

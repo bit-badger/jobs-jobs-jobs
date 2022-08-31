@@ -1,23 +1,36 @@
-<template lang="pug">
-article
-  load-data(:load="retrieveListing")
-    h3.pb-3 Expire Job Listing ({{listing.title}})
-    p: em.
-      Expiring this listing will remove it from search results. You will be able to see it via your &ldquo;My Job
-      Listings&rdquo; page, but you will not be able to &ldquo;un-expire&rdquo; it.
-    form.row.g-3
-      .col-12: .form-check
-        input.form-check-input(type="checkbox" id="fromHere" v-model="v$.fromHere.$model")
-        label.form-check-label(for="fromHere") This job was filled due to its listing here
-      template(v-if="expiration.fromHere")
-        .col-12: p.
-          Consider telling your fellow citizens about your experience! Comments entered here will be visible to
-          logged-on users here, but not to the general public.
-        markdown-editor(id="successStory" label="Your Success Story" v-model:text="v$.successStory.$model")
-      .col-12
-        button.btn.btn-primary(@click.prevent="expireListing").
-          #[icon(:icon="mdiTextBoxRemoveOutline")]&nbsp; Expire Listing
-  maybe-save(:saveAction="doSave" :validator="v$")
+<template>
+  <article>
+    <load-data :load="retrieveListing">
+      <h3 class="pb-3">Expire Job Listing ({{listing.title}})</h3>
+      <p class="fst-italic">
+        Expiring this listing will remove it from search results. You will be able to see it via your &ldquo;My Job
+        Listings&rdquo; page, but you will not be able to &ldquo;un-expire&rdquo; it.
+      </p>
+      <form class="row g-3">
+        <div class="col-12">
+          <div class="form-check">
+            <input type="checkbox" id="fromHere" class="form-check-input" v-model="v$.fromHere.$model">
+            <label class="form-check-label" for="fromHere">This job was filled due to its listing here</label>
+          </div>
+        </div>
+        <template v-if="expiration.fromHere">
+          <div class="col-12">
+            <p>
+              Consider telling your fellow citizens about your experience! Comments entered here will be visible to
+              logged-on users here, but not to the general public.
+            </p>
+          </div>
+          <markdown-editor id="successStory" label="Your Success Story" v-model:text="v$.successStory.$model" />
+        </template>
+        <div class="col-12">
+          <button class="btn btn-primary" @click.prevent="expireListing">
+            <icon :icon="mdiTextBoxRemoveOutline" />&nbsp; Expire Listing
+          </button>
+        </div>
+      </form>
+    </load-data>
+    <maybe-save :saveAction="doSave" :validator="v$" />
+  </article>
 </template>
 
 <script setup lang="ts">
@@ -84,7 +97,7 @@ const expireListing = async (navigate : boolean) => {
     toastSuccess(`Job Listing Expired${expiration.successStory ? " and Success Story Recorded" : ""} Successfully`)
     v$.value.$reset()
     if (navigate) {
-      router.push("/listings/mine")
+      await router.push("/listings/mine")
     }
   }
 }

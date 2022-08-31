@@ -1,37 +1,58 @@
-<template lang="pug">
-article
-  h3.pb-3(v-if="isNew") Add a Job Listing
-  h3.pb-3(v-else) Edit Job Listing
-  load-data(:load="retrieveData"): form.row.g-3
-    .col-12.col-sm-10.col-md-8.col-lg-6
-      .form-floating
-        input.form-control(type="text" id="title" :class="{ 'is-invalid': v$.title.$error }" maxlength="255"
-                           v-model="v$.title.$model" placeholder="The title for the job listing")
-        #titleFeedback.invalid-feedback Please enter a title for the job listing
-        label.jjj-required(for="title") Title
-      .form-text No need to put location here; it will always be show to seekers with continent and region
-    .col-12.col-sm-6.col-md-4
-      continent-list(v-model="v$.continentId.$model" :isInvalid="v$.continentId.$error"
-                     @touch="v$.continentId.$touch() || true")
-    .col-12.col-sm-6.col-md-8
-      .form-floating
-        input.form-control(type="text" id="region" :class="{ 'is-invalid': v$.region.$error }" maxlength="255"
-                           v-model="v$.region.$model" placeholder="Country, state, geographic area, etc.")
-        #regionFeedback.invalid-feedback Please enter a region
-        label.jjj-required(for="region") Region
-      .form-text Country, state, geographic area, etc.
-    .col-12: .form-check
-      input.form-check-input(type="checkbox" id="isRemote" v-model="v$.remoteWork.$model")
-      label.form-check-label(for="isRemote") This opportunity is for remote work
-    markdown-editor(id="description" label="Job Description" v-model:text="v$.text.$model" :isInvalid="v$.text.$error")
-    .col-12.col-md-4: .form-floating
-      input.form-control(type="date" id="neededBy" v-model="v$.neededBy.$model"
-                         placeholder="Date by which this position needs to be filled")
-      label(for="neededBy") Needed By
-    .col-12
-      p.text-danger(v-if="v$.$error") Please correct the errors above
-      button.btn.btn-primary(@click.prevent="saveListing(true)") #[icon(:icon="mdiContentSaveOutline")]&nbsp; Save
-  maybe-save(:saveAction="doSave" :validator="v$")
+<template>
+  <article>
+    <h3 class="pb-3" v-if="isNew">Add a Job Listing</h3>
+    <h3 class="pb-3" v-else>Edit Job Listing</h3>
+    <load-data :load="retrieveData">
+      <form class="row g-3">
+        <div class="col-12 col-sm-10 col-md-8 col-lg-6">
+          <div class="form-floating">
+            <input type="text" id="title" :class="{ 'form-control': true, 'is-invalid': v$.title.$error }"
+                   maxlength="255" v-model="v$.title.$model" placeholder="The title for the job listing">
+            <div class="invalid-feedback">Please enter a title for the job listing</div>
+            <label class="jjj-required" for="title">Title</label>
+          </div>
+          <div class="form-text">
+            No need to put location here; it will always be show to seekers with continent and region
+          </div>
+        </div>
+        <div class="col-12 col-sm-6 col-md-4">
+          <continent-list v-model="v$.continentId.$model" :isInvalid="v$.continentId.$error"
+                          @touch="v$.continentId.$touch() || true" />
+        </div>
+        <div class="col-12 col-sm-6 col-md-8">
+          <div class="form-floating">
+            <input type="text" id="region" :class="{ 'form-control': true, 'is-invalid': v$.region.$error }"
+                   maxlength="255" v-model="v$.region.$model" placeholder="Country, state, geographic area, etc.">
+            <div class="invalid-feedback">Please enter a region</div>
+            <label class="jjj-required" for="region">Region</label>
+          </div>
+          <div class="form-text">Country, state, geographic area, etc.</div>
+        </div>
+        <div class="col-12">
+          <div class="form-check">
+            <input type="checkbox" id="isRemote" class="form-check-input" v-model="v$.remoteWork.$model">
+            <label class="form-check-label" for="isRemote">This opportunity is for remote work</label>
+          </div>
+        </div>
+        <markdown-editor id="description" label="Job Description" v-model:text="v$.text.$model"
+                         :isInvalid="v$.text.$error" />
+        <div class="col-12 col-md-4">
+          <div class="form-floating">
+            <input type="date" id="neededBy" class="form-control" v-model="v$.neededBy.$model"
+                   placeholder="Date by which this position needs to be filled">
+            <label for="neededBy">Needed By</label>
+          </div>
+        </div>
+        <div class="col-12">
+          <p v-if="v$.$error" class="text-danger">Please correct the errors above</p>
+          <button class="btn btn-primary" @click.prevent="saveListing(true)">
+            <icon :icon="mdiContentSaveOutline" />&nbsp; Save
+          </button>
+        </div>
+      </form>
+    </load-data>
+    <maybe-save :saveAction="doSave" :validator="v$" />
+  </article>
 </template>
 
 <script setup lang="ts">
@@ -127,7 +148,7 @@ const saveListing = async (navigate : boolean) => {
   } else {
     toastSuccess(`Job Listing ${isNew.value ? "Add" : "Updat"}ed Successfully`)
     v$.value.$reset()
-    if (navigate) router.push("/listings/mine")
+    if (navigate) await router.push("/listings/mine")
   }
 }
 

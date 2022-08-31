@@ -1,11 +1,11 @@
 <template>
-  <nav class="navbar navbar-dark" v-if="showMobileHeader">
+  <nav v-if="showMobileHeader" class="navbar navbar-dark">
     <span class="navbar-text"><router-link to="/">Jobs, Jobs, Jobs</router-link></span>
     <button class="btn" data-bs-toggle="offcanvas" data-bs-target="#mobileMenu" aria-controls="mobileMenu">
       <icon :icon="mdiMenu" />
     </button>
   </nav>
-  <nav class="navbar navbar-light bg-light" v-else>
+  <nav v-else class="navbar navbar-light bg-light">
     <span>&nbsp;</span>
     <span class="navbar-text">
       (&hellip;and Jobs &ndash; <audio-clip clip="pelosi-jobs">Let&rsquo;s Vote for Jobs!</audio-clip>)

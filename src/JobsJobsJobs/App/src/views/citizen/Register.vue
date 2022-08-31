@@ -4,7 +4,7 @@
     <form class="row g-3" novalidate>
       <div class="col-6 col-xl-4">
         <div class="form-floating has-validation">
-          <input type="text" id="firstName" :class="{'form-control': true, 'is-invalid': v$.firstName.$error}"
+          <input type="text" id="firstName" :class="{ 'form-control': true, 'is-invalid': v$.firstName.$error }"
                  v-model="v$.firstName.$model" placeholder="First Name">
           <div class="invalid-feedback">Please enter your first name</div>
           <label class="jjj-required" for="firstName">First Name</label>
@@ -12,7 +12,7 @@
       </div>
       <div class="col-6 col-xl-4">
         <div class="form-floating">
-          <input type="text" id="lastName" :class="{'form-control': true, 'is-invalid': v$.lastName.$error}"
+          <input type="text" id="lastName" :class="{ 'form-control': true, 'is-invalid': v$.lastName.$error }"
                  v-model="v$.lastName.$model" placeholder="Last Name">
           <div class="invalid-feedback">Please enter your last name</div>
           <label class="jjj-required" for="firstName">Last Name</label>
@@ -28,7 +28,7 @@
       </div>
       <div class="col-6 col-xl-4">
         <div class="form-floating">
-          <input type="email" id="email" :class="{'form-control': true, 'is-invalid': v$.email.$error}"
+          <input type="email" id="email" :class="{ 'form-control': true, 'is-invalid': v$.email.$error }"
                  v-model="v$.email.$model" placeholder="E-mail Address">
           <div class="invalid-feedback">Please enter a valid e-mail address</div>
           <label class="jjj-required" for="email">E-mail Address</label>
@@ -36,7 +36,7 @@
       </div>
       <div class="col-6 col-xl-4">
         <div class="form-floating">
-          <input type="password" id="password" :class="{'form-control': true, 'is-invalid': v$.password.$error}"
+          <input type="password" id="password" :class="{ 'form-control': true, 'is-invalid': v$.password.$error }"
                  v-model="v$.password.$model" placeholder="Password">
           <div class="invalid-feedback">Please enter a password at least 8 characters long</div>
           <label class="jjj-required" for="password">Password</label>
@@ -45,7 +45,7 @@
       <div class="col-6 col-xl-4">
         <div class="form-floating">
           <input type="password" id="confirmPassword"
-                 :class="{'form-control': true, 'is-invalid': v$.confirmPassword.$error}"
+                 :class="{ 'form-control': true, 'is-invalid': v$.confirmPassword.$error }"
                  v-model="v$.confirmPassword.$model" placeholder="Confirm Password">
           <div class="invalid-feedback">The passwords do not match</div>
           <label class="jjj-required" for="confirmPassword">Confirm Password</label>

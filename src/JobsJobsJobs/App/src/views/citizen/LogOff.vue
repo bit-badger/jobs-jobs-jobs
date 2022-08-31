@@ -1,7 +1,8 @@
-<template lang="pug">
-article
-  p &nbsp;
-  p.fst-italic Logging off&hellip;
+<template>
+  <article>
+    <p>&nbsp;</p>
+    <p class="fst-italic">Logging off&hellip;</p>
+  </article>
 </template>
 
 <script setup lang="ts">
@@ -13,9 +14,9 @@ import { useStore, Mutations } from "@/store"
 const store = useStore()
 const router = useRouter()
 
-onMounted(() => {
+onMounted(async () => {
   store.commit(Mutations.ClearUser)
   toastSuccess("Log Off Successful &nbsp; | &nbsp; <strong>Have a Nice Day!</strong>")
-  router.push("/")
+  await router.push("/")
 })
 </script>

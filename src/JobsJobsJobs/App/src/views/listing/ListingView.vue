@@ -1,18 +1,26 @@
-<template lang="pug">
-article
-  load-data(:load="retrieveListing")
-    h3
-      | {{it.listing.title}}
-      .jjj-heading-label(v-if="it.listing.isExpired")
-        | &nbsp; &nbsp; #[span.badge.bg-warning.text-dark Expired]
-        template(v-if="it.listing.wasFilledHere") &nbsp; &nbsp;#[span.badge.bg-success Filled via Jobs, Jobs, Jobs]
-    h4.pb-3.text-muted {{it.continent.name}} / {{it.listing.region}}
-    p
-      template(v-if="it.listing.neededBy").
-        #[strong #[em NEEDED BY {{neededBy(it.listing.neededBy)}}]] &bull;
-      |  Listed by #[a(:href="profileUrl" target="_blank") {{citizenName(citizen)}}]
-    hr
-    div(v-html="details")
+<template>
+  <article>
+    <load-data :load="retrieveListing">
+      <h3>
+        {{it.listing.title}}
+        <span v-if="it.listing.isExpired" class="jjj-heading-label">
+          &nbsp; &nbsp; <span class="badge bg-warning text-dark">Expired</span>
+          <template v-if="it.listing.wasFilledHere">
+            &nbsp; &nbsp;<span class="badge bg-success">Filled via Jobs, Jobs, Jobs</span>
+          </template>
+        </span>
+      </h3>
+      <h4 class="pb-3 text-muted">{{it.continent.name}} / {{it.listing.region}}</h4>
+      <p>
+        <template v-if="it.listing.neededBy">
+          <strong><em>NEEDED BY {{neededBy(it.listing.neededBy)}}</em></strong> &bull;
+        </template>
+        Listed by <!-- a :href="profileUrl" target="_blank" -->{{citizenName(citizen)}}<!-- /a -->
+      </p>
+      <hr>
+      <div v-html="details" />
+    </load-data>
+  </article>
 </template>
 
 <script setup lang="ts">
@@ -63,7 +71,7 @@ const retrieveListing = async (errors : string[]) => {
 const details = computed(() => toHtml(it.value?.listing.text ?? ""))
 
 /** The Mastodon profile URL for the citizen who posted this job listing */
-const profileUrl = computed(() => citizen.value ? citizen.value.profileUrl : "")
+// const profileUrl = computed(() => citizen.value ? citizen.value.profileUrl : "")
 
 /** The needed by date, formatted in SHOUTING MODE */
 const neededBy = (nb : string) => formatNeededBy(nb).toUpperCase()

@@ -5,8 +5,8 @@
       &nbsp;
       <button :class="previewClass" @click.prevent="showPreview">Preview</button>
     </nav>
-    <section class="preview" v-if="preview" v-html="previewHtml" aria-label="Rendered Markdown preview" />
-    <div class="form-floating" v-else>
+    <section v-if="preview" class="preview" v-html="previewHtml" aria-label="Rendered Markdown preview" />
+    <div v-else class="form-floating">
       <textarea :id="id" class="form-control md-edit" :class="{ 'is-invalid': isInvalid }" rows="10" v-text="text"
                 @input="$emit('update:text', $event.target.value)"></textarea>
       <div class="invalid-feedback">Please enter some text for {{label}}</div>

@@ -1,7 +1,7 @@
 import { useTitle } from "@vueuse/core"
 import { InjectionKey } from "vue"
 import { createStore, Store, useStore as baseUseStore } from "vuex"
-import api, { Continent, Instance, LogOnSuccess } from "../api"
+import api, { Continent, LogOnSuccess } from "../api"
 import * as Actions from "./actions"
 import * as Mutations from "./mutations"
 
@@ -15,8 +15,6 @@ export interface State {
   logOnState : string
   /** All continents (use `ensureContinents` action) */
   continents : Continent[]
-  /** All instances (use `ensureInstances` action) */
-  instances : Instance[]
 }
 
 /** An injection key to identify this state with Vue */
@@ -35,9 +33,8 @@ export default createStore({
     return {
       pageTitle: "",
       user: undefined,
-      logOnState: "<em>Welcome back!</em>",
-      continents: [],
-      instances: []
+      logOnState: "",
+      continents: []
     }
   },
   mutations: {
@@ -48,15 +45,15 @@ export default createStore({
     [Mutations.SetUser]: (state, user : LogOnSuccess) => { state.user = user },
     [Mutations.ClearUser]: (state) => { state.user = undefined },
     [Mutations.SetLogOnState]: (state, message : string) => { state.logOnState = message },
-    [Mutations.SetContinents]: (state, continents : Continent[]) => { state.continents = continents },
-    [Mutations.SetInstances]: (state, instances : Instance[]) => { state.instances = instances }
+    [Mutations.SetContinents]: (state, continents : Continent[]) => { state.continents = continents }
   },
   actions: {
-    [Actions.LogOn]: async ({ commit }, { abbr, code }) => {
-      const logOnResult = await api.citizen.logOn(abbr, code)
+    [Actions.LogOn]: async ({ commit }, { form }) => {
+      const logOnResult = await api.citizen.logOn(form)
       if (typeof logOnResult === "string") {
         commit(Mutations.SetLogOnState, logOnResult)
       } else {
+        commit(Mutations.SetLogOnState, "")
         commit(Mutations.SetUser, logOnResult)
       }
     },
@@ -67,17 +64,6 @@ export default createStore({
         console.error(theSeven)
       } else {
         commit(Mutations.SetContinents, theSeven)
-      }
-    },
-    [Actions.EnsureInstances]: async ({ state, commit }) => {
-      if (state.instances.length > 0) return
-      const instResp = await api.instances.all()
-      if (typeof instResp === "string") {
-        console.error(instResp)
-      } else if (typeof instResp === "undefined") {
-        console.error("No instances were found; this should not happen")
-      } else {
-        commit(Mutations.SetInstances, instResp)
       }
     }
   },

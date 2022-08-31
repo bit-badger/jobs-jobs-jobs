@@ -17,7 +17,7 @@
       <router-link to="/listings/mine" @click="hide">
         <icon :icon="mdiSignText" />&nbsp; My Job Listings
       </router-link>
-      <router-link to="/citizen/profile" @click="hide">
+      <router-link to="/profile/edit" @click="hide">
         <icon :icon="mdiPencil" />&nbsp; My Employment Profile
       </router-link>
       <div class="separator"></div>

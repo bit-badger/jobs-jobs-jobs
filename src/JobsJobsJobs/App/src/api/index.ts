@@ -3,12 +3,12 @@ import {
   CitizenRegistrationForm,
   Continent,
   Count,
-  Instance,
   Listing,
   ListingExpireForm,
   ListingForm,
   ListingForView,
   ListingSearch,
+  LogOnForm,
   LogOnSuccess,
   Profile,
   ProfileForm,
@@ -108,8 +108,12 @@ export default {
      * @param form The registration details for the citizen
      * @returns True if the registration was successful, an error message if it was not
      */
-    register: async (form : CitizenRegistrationForm) : Promise<boolean | string> =>
-      apiSend(await fetch(apiUrl("citizen/register"), reqInit("POST", undefined, form)), "registering citizen"),
+    register: async (form : CitizenRegistrationForm) : Promise<boolean | string> => {
+      const resp = await fetch(apiUrl("citizen/register"), reqInit("POST", undefined, form))
+      if (resp.status === 200) return true
+      if (resp.status === 409) return "There is already an account registered to the e-mail address provided"
+      return `Error registering citizen - ${await resp.text()}`
+    },
 
     /**
      * Confirm an account by verifying a token they received via e-mail
@@ -142,12 +146,11 @@ export default {
     /**
      * Log a citizen on
      *
-     * @param abbr The abbreviation of the Mastodon instance that issued the code
-     * @param code The authorization code from Mastodon
+     * @param form The e-mail address and password provided by the user
      * @returns The user result, or an error
      */
-    logOn: async (abbr : string, code : string) : Promise<LogOnSuccess | string> => {
-      const resp = await fetch(apiUrl(`citizen/log-on/${abbr}/${code}`), { method: "GET", mode: "cors" })
+    logOn: async (form : LogOnForm) : Promise<LogOnSuccess | string> => {
+      const resp = await fetch(apiUrl("citizen/log-on"), reqInit("POST", undefined, form))
       if (resp.status === 200) return await resp.json() as LogOnSuccess
       return `Error logging on - ${await resp.text()}`
     },
@@ -182,18 +185,6 @@ export default {
      */
     all: async () : Promise<Continent[] | string | undefined> =>
       apiResult<Continent[]>(await fetch(apiUrl("continents"), { method: "GET" }), "retrieving continents")
-  },
-
-  /** API functions for instances */
-  instances: {
-
-    /**
-     * Get all Mastodon instances we support
-     *
-     * @returns All instances, or an error
-     */
-    all: async () : Promise<Instance[] | string | undefined> =>
-      apiResult<Instance[]>(await fetch(apiUrl("instances"), { method: "GET" }), "retrieving Mastodon instances")
   },
 
   /** API functions for job listings */

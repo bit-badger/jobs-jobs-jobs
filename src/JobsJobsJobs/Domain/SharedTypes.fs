@@ -90,6 +90,16 @@ type ListingSearch =
     }
 
 
+/// The fields needed to log on to Jobs, Jobs, Jobs
+type LogOnForm =
+    {   /// The e-mail address for the citizen
+        email : string
+        
+        /// The password provided by the user
+        password : string
+    }
+
+
 /// A successful logon
 type LogOnSuccess =
     {   /// The JSON Web Token (JWT) to use for API access
@@ -110,79 +120,26 @@ type Count =
     }
 
 
-/// An instance of a Mastodon server which is configured to work with Jobs, Jobs, Jobs
-type MastodonInstance () =
-
-    /// The name of the instance
-    member val Name      = ""   with get, set
-    
-    /// The URL for this instance
-    member val Url       = ""   with get, set
-    
-    /// The abbreviation used in the URL to distinguish this instance's return codes
-    member val Abbr      = ""   with get, set
-    
-    /// The client ID (assigned by the Mastodon server)
-    member val ClientId  = ""   with get, set
-    
-    /// The cryptographic secret (provided by the Mastodon server)
-    member val Secret    = ""   with get, set
-    
-    /// Whether the instance is currently enabled
-    member val IsEnabled = true with get, set
-    
-    /// If an instance is disabled, the reason for it being disabled
-    member val Reason    = ""   with get, set
-
-
 /// The authorization options for Jobs, Jobs, Jobs
 type AuthOptions () =
     
-    /// The host for the return URL for Mastodon verification
-    member val ReturnHost   = "" with get, set
-    
-    /// The secret with which the server signs the JWTs for auth once we've verified with Mastodon
+    /// The secret with which the server signs the JWTs it issues once a user logs on
     member val ServerSecret = "" with get, set
-    
-    /// The instances configured for use
-    member val Instances    = Array.empty<MastodonInstance> with get, set
     
     interface IOptions<AuthOptions> with
         override this.Value = this
 
 
-/// The Mastodon instance data provided via the Jobs, Jobs, Jobs API
-type Instance =
-    {   /// The name of the instance
-        name      : string
-        
-        /// The URL for this instance
-        url       : string
-        
-        /// The abbreviation used in the URL to distinguish this instance's return codes
-        abbr      : string
-        
-        /// The client ID (assigned by the Mastodon server)
-        clientId  : string
-        
-        /// Whether this instance is currently enabled
-        isEnabled : bool
-        
-        /// If not enabled, the reason the instance is disabled
-        reason    : string
-    }
-
-
 /// The fields required for a skill
 type SkillForm =
     {   /// The ID of this skill
-        id          : string
+        id : string
         
         /// The description of the skill
         description : string
         
         /// Notes regarding the skill
-        notes       : string option
+        notes : string option
     }
 
 /// The data required to update a profile
@@ -192,31 +149,28 @@ type ProfileForm =
         isSeekingEmployment : bool
         
         /// Whether this profile should appear in the public search
-        isPublic            : bool
-        
-        /// The user's real name
-        realName            : string
+        isPublic : bool
         
         /// The ID of the continent on which the citizen is located
-        continentId         : string
+        continentId : string
         
         /// The area within that continent where the citizen is located
-        region              : string
+        region : string
         
         /// If the citizen is available for remote work
-        remoteWork          : bool
+        remoteWork : bool
         
         /// If the citizen is seeking full-time employment
-        fullTime            : bool
+        fullTime : bool
         
         /// The user's professional biography
-        biography           : string
+        biography : string
         
         /// The user's past experience
-        experience          : string option
+        experience : string option
         
         /// The skills for the user
-        skills              : SkillForm list
+        skills : SkillForm list
     }
 
 /// Support functions for the ProfileForm type
@@ -226,7 +180,6 @@ module ProfileForm =
     let fromProfile (profile : Profile) =
         { isSeekingEmployment = profile.IsSeekingEmployment
           isPublic            = profile.IsPubliclySearchable
-          realName            = ""
           continentId         = string profile.ContinentId
           region              = profile.Region
           remoteWork          = profile.IsRemote

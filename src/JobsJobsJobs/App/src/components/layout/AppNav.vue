@@ -1,5 +1,5 @@
 <template>
-  <div id="mobileMenu" class="offcanvas offcanvas-end" v-if="showMobileMenu" tabindex="-1"
+  <div v-if="showMobileMenu" id="mobileMenu" class="offcanvas offcanvas-end" tabindex="-1"
        aria-labelledby="mobileMenuLabel">
     <div class="offcanvas-header">
       <h5 id="mobileMenuLabel">Menu</h5>
@@ -7,7 +7,7 @@
     </div>
     <div class="offcanvas-body"><app-links /></div>
   </div>
-  <aside class="collapse show p-3" v-else>
+  <aside v-else class="collapse show p-3">
     <p class="home-link pb-3"><router-link to="/">Jobs, Jobs, Jobs</router-link></p>
     <p>&nbsp;</p>
     <app-links />

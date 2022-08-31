@@ -47,20 +47,22 @@ module DataConnection =
     /// Create tables
     let private createTables () = backgroundTask {
         let sql = [
-            $"CREATE SCHEMA IF NOT EXISTS jjj"
-            $"CREATE TABLE IF NOT EXISTS {Table.Citizen} (id TEXT NOT NULL PRIMARY KEY, data JSONB NOT NULL)"
-            $"CREATE TABLE IF NOT EXISTS {Table.Continent} (id TEXT NOT NULL PRIMARY KEY, data JSONB NOT NULL)"
-            $"CREATE TABLE IF NOT EXISTS {Table.Listing} (id TEXT NOT NULL PRIMARY KEY, data JSONB NOT NULL)"
-            $"CREATE TABLE IF NOT EXISTS {Table.Profile} (id TEXT NOT NULL PRIMARY KEY, data JSONB NOT NULL,
-                CONSTRAINT fk_profile_citizen FOREIGN KEY (id) REFERENCES {Table.Citizen} (id) ON DELETE CASCADE)"
+            "CREATE SCHEMA IF NOT EXISTS jjj"
+            // Tables
+            $"CREATE TABLE IF NOT EXISTS {Table.Citizen}      (id TEXT NOT NULL PRIMARY KEY, data JSONB NOT NULL)"
+            $"CREATE TABLE IF NOT EXISTS {Table.Continent}    (id TEXT NOT NULL PRIMARY KEY, data JSONB NOT NULL)"
+            $"CREATE TABLE IF NOT EXISTS {Table.Listing}      (id TEXT NOT NULL PRIMARY KEY, data JSONB NOT NULL)"
+            $"CREATE TABLE IF NOT EXISTS {Table.Profile}      (id TEXT NOT NULL PRIMARY KEY, data JSONB NOT NULL,
+                CONSTRAINT fk_profile_citizen       FOREIGN KEY (id) REFERENCES {Table.Citizen} (id) ON DELETE CASCADE)"
             $"CREATE TABLE IF NOT EXISTS {Table.SecurityInfo} (id TEXT NOT NULL PRIMARY KEY, data JSONB NOT NULL,
                 CONSTRAINT fk_security_info_citizen FOREIGN KEY (id) REFERENCES {Table.Citizen} (id) ON DELETE CASCADE)"
-            $"CREATE TABLE IF NOT EXISTS {Table.Success} (id TEXT NOT NULL PRIMARY KEY, data JSONB NOT NULL)"
-            $"CREATE INDEX IF NOT EXISTS idx_citizen_email     ON {Table.Citizen} USING GIN ((data -> 'email'))"
-            $"CREATE INDEX IF NOT EXISTS idx_listing_citizen   ON {Table.Listing} USING GIN ((data -> 'citizenId'))"
-            $"CREATE INDEX IF NOT EXISTS idx_listing_continent ON {Table.Listing} USING GIN ((data -> 'continentId'))"
-            $"CREATE INDEX IF NOT EXISTS idx_profile_continent ON {Table.Profile} USING GIN ((data -> 'continentId'))"
-            $"CREATE INDEX IF NOT EXISTS idx_success_citizen   ON {Table.Success} USING GIN ((data -> 'citizenId'))"
+            $"CREATE TABLE IF NOT EXISTS {Table.Success}      (id TEXT NOT NULL PRIMARY KEY, data JSONB NOT NULL)"
+            // Key indexes
+            $"CREATE UNIQUE INDEX IF NOT EXISTS uk_citizen_email      ON {Table.Citizen} ((data -> 'email'))"
+            $"CREATE        INDEX IF NOT EXISTS idx_listing_citizen   ON {Table.Listing} ((data -> 'citizenId'))"
+            $"CREATE        INDEX IF NOT EXISTS idx_listing_continent ON {Table.Listing} ((data -> 'continentId'))"
+            $"CREATE        INDEX IF NOT EXISTS idx_profile_continent ON {Table.Profile} ((data -> 'continentId'))"
+            $"CREATE        INDEX IF NOT EXISTS idx_success_citizen   ON {Table.Success} ((data -> 'citizenId'))"
         ]
         let! _ =
             connection ()
@@ -139,7 +141,7 @@ open JobsJobsJobs.Domain
 module Citizens =
     
     open NodaTime
-    
+
     /// The last time a token purge check was run
     let mutable private lastPurge = Instant.MinValue
     
@@ -207,15 +209,21 @@ module Citizens =
     let save citizen =
         saveCitizen citizen (connection ())
         
-    /// Register a citizen (saves citizen and security settings)
+    /// Register a citizen (saves citizen and security settings); returns false if the e-mail is already taken
     let register citizen (security : SecurityInfo) = backgroundTask {
         let connProps = connection ()
         use conn      = Sql.createConnection connProps
         do! conn.OpenAsync ()
         use! txn = conn.BeginTransactionAsync ()
-        do! saveCitizen  citizen  connProps
-        do! saveSecurity security connProps
-        do! txn.CommitAsync ()
+        try
+            do! saveCitizen  citizen  connProps
+            do! saveSecurity security connProps
+            do! txn.CommitAsync ()
+            return true
+        with
+        | :? Npgsql.PostgresException as ex when ex.SqlState = "23505" && ex.ConstraintName = "uk_citizen_email" ->
+            do! txn.RollbackAsync ()
+            return false
     }
     
     /// Try to find the security information matching a confirmation token
@@ -256,7 +264,8 @@ module Citizens =
     }
         
     /// Attempt a user log on
-    let tryLogOn email (pwCheck : string -> bool) now = backgroundTask {
+    let tryLogOn email password (pwVerify : Citizen -> string -> bool option) (pwHash : Citizen -> string -> string)
+            now = backgroundTask {
         do! checkForPurge false
         let  connProps  = connection ()
         let! tryCitizen =
@@ -281,15 +290,18 @@ module Citizens =
                     return it
             }
             if info.AccountLocked then return Error "Log on unsuccessful (Account Locked)"
-            elif pwCheck citizen.PasswordHash then
-                do! saveSecurity { info    with FailedLogOnAttempts = 0   } connProps
-                do! saveCitizen  { citizen with LastSeenOn          = now } connProps
-                return Ok { citizen with LastSeenOn = now }
             else
-                let locked = info.FailedLogOnAttempts >= 4
-                do! { info with FailedLogOnAttempts = info.FailedLogOnAttempts + 1; AccountLocked = locked }
-                    |> saveSecurity <| connProps
-                return Error $"""Log on unsuccessful{if locked then " - Account is now locked" else ""}"""
+                match pwVerify citizen password with
+                | Some rehash ->
+                    let hash = if rehash then pwHash citizen password else citizen.PasswordHash
+                    do! saveSecurity { info with FailedLogOnAttempts = 0 } connProps
+                    do! saveCitizen { citizen with LastSeenOn = now; PasswordHash = hash } connProps
+                    return Ok { citizen with LastSeenOn = now }
+                | None ->
+                    let locked = info.FailedLogOnAttempts >= 4
+                    do! { info with FailedLogOnAttempts = info.FailedLogOnAttempts + 1; AccountLocked = locked }
+                        |> saveSecurity <| connProps
+                    return Error $"""Log on unsuccessful{if locked then " - Account is now locked" else ""}"""
         | None -> return Error "Log on unsuccessful"
     }
 

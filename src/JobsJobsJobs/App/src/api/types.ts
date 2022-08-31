@@ -3,20 +3,20 @@
 export interface Citizen {
   /** The ID of the user */
   id : string
-  /** The abbreviation of the instance where this citizen is based */
-  instance : string
-  /** The handle by which the user is known on Mastodon */
-  mastodonUser : string
-  /** The user's display name from Mastodon (updated every login) */
-  displayName : string | undefined
-  /** The user's real name */
-  realName : string | undefined
-  /** The URL for the user's Mastodon profile */
-  profileUrl : string
   /** When the user joined Jobs, Jobs, Jobs (date) */
   joinedOn : string
   /** When the user last logged in (date) */
   lastSeenOn : string
+  /** The citizen's e-mail address */
+  email : string
+  /** The citizen's first name */
+  firstName : string
+  /** The citizen's last name */
+  lastName : string
+  /** The citizen's display name */
+  displayName : string | undefined
+  /** The user's real name */
+  otherContacts : any[]
 }
 
 /** The data required to register as a user */
@@ -47,22 +47,6 @@ export interface Continent {
 export interface Count {
   /** The count being returned */
   count : number
-}
-
-/** The Mastodon instance data provided via the Jobs, Jobs, Jobs API */
-export interface Instance {
-  /** The name of the instance */
-  name : string
-  /** The URL for this instance */
-  url : string
-  /** The abbreviation used in the URL to distinguish this instance's return codes */
-  abbr : string
-  /** The client ID (assigned by the Mastodon server) */
-  clientId : string
-  /** Whether this instance is enabled */
-  isEnabled : boolean
-  /** If disabled, the reason why it is disabled */
-  reason : string
 }
 
 /** A job listing */
@@ -139,6 +123,14 @@ export interface ListingSearch {
   text : string | undefined
 }
 
+/** Data used to log on */
+export class LogOnForm {
+  /** The e-mail address of a citizen's account */
+  email = ""
+  /** The password for that account */
+  password = ""
+}
+
 /** A successful logon */
 export interface LogOnSuccess {
   /** The JSON Web Token (JWT) to use for API access */
@@ -191,8 +183,6 @@ export class ProfileForm {
   isSeekingEmployment = false
   /** Whether this profile should appear in the public search */
   isPublic = false
-  /** The user's real name */
-  realName = ""
   /** The ID of the continent on which the citizen is located */
   continentId = ""
   /** The area within that continent where the citizen is located */
