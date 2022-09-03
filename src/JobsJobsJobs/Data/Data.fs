@@ -335,7 +335,7 @@ module Listings =
     
     /// Map a result for a listing view
     let private toListingForView row =
-        { listing = toDocument<Listing> row; continent = toDocumentFrom<Continent> "cont_data" row }
+        { Listing = toDocument<Listing> row; Continent = toDocumentFrom<Continent> "cont_data" row }
     
     /// Find all job listings posted by the given citizen
     let findByCitizen citizenId =
@@ -369,15 +369,15 @@ module Listings =
     /// Search job listings
     let search (search : ListingSearch) =
         let searches = [
-            match search.continentId with
+            match search.ContinentId with
             | Some contId -> "l.data ->> 'continentId' = @continentId", [ "@continentId", Sql.string contId ]
             | None -> ()
-            match search.region with
+            match search.Region with
             | Some region -> "l.data ->> 'region' ILIKE @region", [ "@region", like region ]
             | None -> ()
-            if search.remoteWork <> "" then
-                "l.data ->> 'isRemote' = @remote", [ "@remote", jsonBool (search.remoteWork = "yes") ]
-            match search.text with
+            if search.RemoteWork <> "" then
+                "l.data ->> 'isRemote' = @remote", [ "@remote", jsonBool (search.RemoteWork = "yes") ]
+            match search.Text with
             | Some text -> "l.data ->> 'text' ILIKE @text", [ "@text", like text ]
             | None -> ()
         ]
@@ -431,9 +431,9 @@ module Profiles =
                    AND p.data ->> 'isLegacy' = 'false'"
             |> Sql.parameters [ "@id", Sql.string (CitizenId.toString citizenId) ]
             |> Sql.executeAsync (fun row ->
-                {   profile   = toDocument<Profile> row
-                    citizen   = toDocumentFrom<Citizen>   "cit_data"  row
-                    continent = toDocumentFrom<Continent> "cont_data" row
+                {   Profile   = toDocument<Profile> row
+                    Citizen   = toDocumentFrom<Citizen>   "cit_data"  row
+                    Continent = toDocumentFrom<Continent> "cont_data" row
                 })
         return List.tryHead tryCitizen
     }
@@ -445,15 +445,15 @@ module Profiles =
     /// Search profiles (logged-on users)
     let search (search : ProfileSearch) = backgroundTask {
         let searches = [
-            match search.continentId with
+            match search.ContinentId with
             | Some contId -> "p.data ->> 'continentId' = @continentId", [ "@continentId", Sql.string contId ]
             | None -> ()
-            if search.remoteWork <> "" then
-                "p.data ->> 'remoteWork' = @remote", [ "@remote", jsonBool (search.remoteWork = "yes") ]
-            match search.skill with
+            if search.RemoteWork <> "" then
+                "p.data ->> 'remoteWork' = @remote", [ "@remote", jsonBool (search.RemoteWork = "yes") ]
+            match search.Skill with
             | Some skl -> "p.data -> 'skills' ->> 'description' ILIKE @description", [ "@description", like skl ]
             | None -> ()
-            match search.bioExperience with
+            match search.BioExperience with
             | Some text ->
                 "(p.data ->> 'biography' ILIKE @text OR p.data ->> 'experience' ILIKE @text)",
                 [ "@text", Sql.string text ]
@@ -471,28 +471,28 @@ module Profiles =
             |> Sql.executeAsync (fun row ->
                 let profile = toDocument<Profile> row
                 let citizen = toDocumentFrom<Citizen> "cit_data" row
-                {   citizenId         = profile.Id
-                    displayName       = Citizen.name citizen
-                    seekingEmployment = profile.IsSeekingEmployment
-                    remoteWork        = profile.IsRemote
-                    fullTime          = profile.IsFullTime
-                    lastUpdatedOn     = profile.LastUpdatedOn
+                {   CitizenId         = profile.Id
+                    DisplayName       = Citizen.name citizen
+                    SeekingEmployment = profile.IsSeekingEmployment
+                    RemoteWork        = profile.IsRemote
+                    FullTime          = profile.IsFullTime
+                    LastUpdatedOn     = profile.LastUpdatedOn
                 })
-        return results |> List.sortBy (fun psr -> psr.displayName.ToLowerInvariant ())
+        return results |> List.sortBy (fun psr -> psr.DisplayName.ToLowerInvariant ())
     }
 
     // Search profiles (public)
     let publicSearch (search : PublicSearch) =
         let searches = [
-            match search.continentId with
+            match search.ContinentId with
             | Some contId -> "p.data ->> 'continentId' = @continentId", [ "@continentId", Sql.string contId ]
             | None -> ()
-            match search.region with
+            match search.Region with
             | Some region -> "p.data ->> 'region' ILIKE @region", [ "@region", like region ]
             | None -> ()
-            if search.remoteWork <> "" then
-                "p.data ->> 'remoteWork' = @remote", [ "@remote", jsonBool (search.remoteWork = "yes") ]
-            match search.skill with
+            if search.RemoteWork <> "" then
+                "p.data ->> 'remoteWork' = @remote", [ "@remote", jsonBool (search.RemoteWork = "yes") ]
+            match search.Skill with
             | Some skl ->
                 "p.data -> 'skills' ->> 'description' ILIKE @description", [ "@description", like skl ]
             | None -> ()
@@ -508,10 +508,10 @@ module Profiles =
         |> Sql.executeAsync (fun row ->
             let profile = toDocument<Profile> row
             let continent = toDocumentFrom<Continent> "cont_data" row
-            {   continent  = continent.Name
-                region     = profile.Region
-                remoteWork = profile.IsRemote
-                skills     = profile.Skills
+            {   Continent  = continent.Name
+                Region     = profile.Region
+                RemoteWork = profile.IsRemote
+                Skills     = profile.Skills
                              |> List.map (fun s ->
                                  let notes = match s.Notes with Some n -> $" ({n})" | None -> ""
                                  $"{s.Description}{notes}")
@@ -532,12 +532,12 @@ module Successes =
         |> Sql.executeAsync (fun row ->
             let success = toDocument<Success> row
             let citizen = toDocumentFrom<Citizen> "cit_data" row
-            {   id          = success.Id
-                citizenId   = success.CitizenId
-                citizenName = Citizen.name citizen
-                recordedOn  = success.RecordedOn
-                fromHere    = success.IsFromHere
-                hasStory    = Option.isSome success.Story
+            {   Id          = success.Id
+                CitizenId   = success.CitizenId
+                CitizenName = Citizen.name citizen
+                RecordedOn  = success.RecordedOn
+                FromHere    = success.IsFromHere
+                HasStory    = Option.isSome success.Story
             })
     
     /// Find a success story by its ID

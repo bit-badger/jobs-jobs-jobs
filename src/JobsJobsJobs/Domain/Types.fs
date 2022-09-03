@@ -3,8 +3,6 @@
 open NodaTime
 open System
 
-// fsharplint:disable FieldNames
-
 /// A user of Jobs, Jobs, Jobs; a citizen of Gitmo Nation
 [<CLIMutable; NoComparison; NoEquality>]
 type Citizen =

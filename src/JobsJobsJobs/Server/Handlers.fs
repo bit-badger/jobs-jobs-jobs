@@ -144,26 +144,26 @@ module Citizen =
     let confirmToken : HttpHandler = fun next ctx -> task {
         let! form = ctx.BindJsonAsync<{| token : string |}> ()
         let! valid = Citizens.confirmAccount form.token
-        return! json {| valid = valid |} next ctx
+        return! json {| Valid = valid |} next ctx
     }
     
     // DELETE: /api/citizen/deny
     let denyToken : HttpHandler = fun next ctx -> task {
         let! form = ctx.BindJsonAsync<{| token : string |}> ()
         let! valid = Citizens.denyAccount form.token
-        return! json {| valid = valid |} next ctx
+        return! json {| Valid = valid |} next ctx
     }
     
     // POST: /api/citizen/log-on
     let logOn : HttpHandler = fun next ctx -> task {
         let! form = ctx.BindJsonAsync<LogOnForm> ()
-        match! Citizens.tryLogOn form.email form.password Auth.Passwords.verify Auth.Passwords.hash (now ctx) with
+        match! Citizens.tryLogOn form.Email form.Password Auth.Passwords.verify Auth.Passwords.hash (now ctx) with
         | Ok citizen ->
             return!
                 json
-                    { jwt       = Auth.createJwt citizen (authConfig ctx)
-                      citizenId = CitizenId.toString citizen.Id
-                      name      = Citizen.name citizen
+                    { Jwt       = Auth.createJwt citizen (authConfig ctx)
+                      CitizenId = CitizenId.toString citizen.Id
+                      Name      = Citizen.name citizen
                     } next ctx
         | Error msg -> return! RequestErrors.BAD_REQUEST msg next ctx
     }
@@ -228,14 +228,14 @@ module Listing =
             Id            = ListingId.create ()
             CitizenId     = currentCitizenId ctx
             CreatedOn     = now
-            Title         = form.title
-            ContinentId   = ContinentId.ofString form.continentId
-            Region        = form.region
-            IsRemote      = form.remoteWork
+            Title         = form.Title
+            ContinentId   = ContinentId.ofString form.ContinentId
+            Region        = form.Region
+            IsRemote      = form.RemoteWork
             IsExpired     = false
             UpdatedOn     = now
-            Text          = Text form.text
-            NeededBy      = (form.neededBy |> Option.map parseDate)
+            Text          = Text form.Text
+            NeededBy      = (form.NeededBy |> Option.map parseDate)
             WasFilledHere = None
             IsLegacy      = false
         }
@@ -250,12 +250,12 @@ module Listing =
             let! form = ctx.BindJsonAsync<ListingForm> ()
             do! Listings.save
                     { listing with
-                        Title       = form.title
-                        ContinentId = ContinentId.ofString form.continentId
-                        Region      = form.region
-                        IsRemote    = form.remoteWork
-                        Text        = Text form.text
-                        NeededBy    = form.neededBy |> Option.map parseDate
+                        Title       = form.Title
+                        ContinentId = ContinentId.ofString form.ContinentId
+                        Region      = form.Region
+                        IsRemote    = form.RemoteWork
+                        Text        = Text form.Text
+                        NeededBy    = form.NeededBy |> Option.map parseDate
                         UpdatedOn   = now ctx
                     }
             return! ok next ctx
@@ -272,16 +272,16 @@ module Listing =
             do! Listings.save
                     { listing with
                         IsExpired     = true
-                        WasFilledHere = Some form.fromHere
+                        WasFilledHere = Some form.FromHere
                         UpdatedOn     = now
                     }
-            match form.successStory with
+            match form.SuccessStory with
             | Some storyText ->
                 do! Successes.save
                         { Id         = SuccessId.create()
                           CitizenId  = currentCitizenId ctx
                           RecordedOn = now
-                          IsFromHere = form.fromHere
+                          IsFromHere = form.FromHere
                           Source     = "listing"
                           Story      = (Text >> Some) storyText
                           }
@@ -328,7 +328,7 @@ module Profile =
     // GET: /api/profile/count
     let count : HttpHandler = authorize >=> fun next ctx -> task {
         let! theCount = Profiles.count ()
-        return! json { count = theCount } next ctx
+        return! json {| Count = theCount |} next ctx
     }
   
     // POST: /api/profile/save
@@ -342,21 +342,21 @@ module Profile =
         }
         do! Profiles.save
                 { profile with
-                    IsSeekingEmployment  = form.isSeekingEmployment
-                    IsPubliclySearchable = form.isPublic
-                    ContinentId          = ContinentId.ofString form.continentId
-                    Region               = form.region
-                    IsRemote             = form.remoteWork
-                    IsFullTime           = form.fullTime
-                    Biography            = Text form.biography
+                    IsSeekingEmployment  = form.IsSeekingEmployment
+                    IsPubliclySearchable = form.IsPublic
+                    ContinentId          = ContinentId.ofString form.ContinentId
+                    Region               = form.Region
+                    IsRemote             = form.RemoteWork
+                    IsFullTime           = form.FullTime
+                    Biography            = Text form.Biography
                     LastUpdatedOn        = now ctx
-                    Experience           = noneIfBlank form.experience |> Option.map Text
-                    Skills               = form.skills
+                    Experience           = noneIfBlank form.Experience |> Option.map Text
+                    Skills               = form.Skills
                                            |> List.map (fun s ->
-                                               {   Id          = if s.id.StartsWith "new" then SkillId.create ()
-                                                                 else SkillId.ofString s.id
-                                                   Description = s.description
-                                                   Notes       = noneIfBlank s.notes
+                                               {   Id          = if s.Id.StartsWith "new" then SkillId.create ()
+                                                                 else SkillId.ofString s.Id
+                                                   Description = s.Description
+                                                   Notes       = noneIfBlank s.Notes
                                                })
                 }
         return! ok next ctx
@@ -414,21 +414,21 @@ module Success =
         let  citizenId = currentCitizenId ctx
         let! form      = ctx.BindJsonAsync<StoryForm> ()
         let! success = task {
-            match form.id with
+            match form.Id with
             | "new" ->
                 return Some { Id         = SuccessId.create ()
                               CitizenId  = citizenId
                               RecordedOn = now ctx
-                              IsFromHere = form.fromHere
+                              IsFromHere = form.FromHere
                               Source     = "profile"
-                              Story      = noneIfEmpty form.story |> Option.map Text
+                              Story      = noneIfEmpty form.Story |> Option.map Text
                               }
             | successId ->
                 match! Successes.findById (SuccessId.ofString successId) with
                 | Some story when story.CitizenId = citizenId ->
                     return Some { story with
-                                    IsFromHere = form.fromHere
-                                    Story    = noneIfEmpty form.story |> Option.map Text
+                                    IsFromHere = form.FromHere
+                                    Story    = noneIfEmpty form.Story |> Option.map Text
                                 }
                 | Some _ | None -> return None
         }

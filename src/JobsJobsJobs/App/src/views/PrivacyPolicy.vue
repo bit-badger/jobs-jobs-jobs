@@ -410,7 +410,7 @@
     <hr>
 
     <p class="fst-italic">
-      Changes on August 30<sup>th</sup>, 2022 &ndash;
+      Changes on August 30<sup>th</sup>, 2022
     </p>
     <ul>
       <li class="fst-italic">Removed references to Mastodon</li>

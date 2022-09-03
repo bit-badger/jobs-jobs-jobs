@@ -5,8 +5,6 @@ open JobsJobsJobs.Domain
 open Microsoft.Extensions.Options
 open NodaTime
 
-// fsharplint:disable FieldNames
-
 /// The data required to register a new citizen (user)
 type CitizenRegistrationForm =
     {   /// The first name of the new citizen
@@ -31,45 +29,45 @@ type CitizenRegistrationForm =
 /// The data required to add or edit a job listing
 type ListingForm =
     {   /// The ID of the listing
-        id          : string
+        Id : string
         
         /// The listing title
-        title       : string
+        Title : string
         
         /// The ID of the continent on which this opportunity exists
-        continentId : string
+        ContinentId : string
         
         /// The region in which this opportunity exists
-        region      : string
+        Region : string
         
         /// Whether this is a remote work opportunity
-        remoteWork  : bool
+        RemoteWork : bool
         
         /// The text of the job listing
-        text        : string
+        Text : string
         
         /// The date by which this job listing is needed
-        neededBy    : string option
+        NeededBy : string option
     }
 
 
 /// The data needed to display a listing
 type ListingForView =
     {   /// The listing itself
-        listing   : Listing
+        Listing : Listing
         
         /// The continent for that listing
-        continent : Continent
+        Continent : Continent
     }
 
 
 /// The form submitted to expire a listing
 type ListingExpireForm =
     {   /// Whether the job was filled from here
-        fromHere     : bool
+        FromHere : bool
         
         /// The success story written by the user
-        successStory : string option
+        SuccessStory : string option
     }
 
 
@@ -77,46 +75,39 @@ type ListingExpireForm =
 [<CLIMutable>]
 type ListingSearch =
     {   /// Retrieve job listings for this continent
-        continentId : string option
+        ContinentId : string option
         
         /// Text for a search within a region
-        region      : string option
+        Region : string option
         
         /// Whether to retrieve job listings for remote work
-        remoteWork  : string
+        RemoteWork : string
         
         /// Text for a search with the job listing description
-        text        : string option
+        Text : string option
     }
 
 
 /// The fields needed to log on to Jobs, Jobs, Jobs
 type LogOnForm =
     {   /// The e-mail address for the citizen
-        email : string
+        Email : string
         
         /// The password provided by the user
-        password : string
+        Password : string
     }
 
 
 /// A successful logon
 type LogOnSuccess =
     {   /// The JSON Web Token (JWT) to use for API access
-        jwt       : string
+        Jwt : string
         
         /// The ID of the logged-in citizen (as a string)
-        citizenId : string
+        CitizenId : string
         
         /// The name of the logged-in citizen
-        name      : string
-    }
-
-
-/// A count
-type Count =
-    {   // The count being returned
-        count : int64
+        Name : string
     }
 
 
@@ -133,44 +124,44 @@ type AuthOptions () =
 /// The fields required for a skill
 type SkillForm =
     {   /// The ID of this skill
-        id : string
+        Id : string
         
         /// The description of the skill
-        description : string
+        Description : string
         
         /// Notes regarding the skill
-        notes : string option
+        Notes : string option
     }
 
 /// The data required to update a profile
 [<CLIMutable; NoComparison; NoEquality>]
 type ProfileForm =
     {   /// Whether the citizen to whom this profile belongs is actively seeking employment
-        isSeekingEmployment : bool
+        IsSeekingEmployment : bool
         
         /// Whether this profile should appear in the public search
-        isPublic : bool
+        IsPublic : bool
         
         /// The ID of the continent on which the citizen is located
-        continentId : string
+        ContinentId : string
         
         /// The area within that continent where the citizen is located
-        region : string
+        Region : string
         
         /// If the citizen is available for remote work
-        remoteWork : bool
+        RemoteWork : bool
         
         /// If the citizen is seeking full-time employment
-        fullTime : bool
+        FullTime : bool
         
         /// The user's professional biography
-        biography : string
+        Biography : string
         
         /// The user's past experience
-        experience : string option
+        Experience : string option
         
         /// The skills for the user
-        skills : SkillForm list
+        Skills : SkillForm list
     }
 
 /// Support functions for the ProfileForm type
@@ -178,19 +169,19 @@ module ProfileForm =
   
     /// Create an instance of this form from the given profile
     let fromProfile (profile : Profile) =
-        { isSeekingEmployment = profile.IsSeekingEmployment
-          isPublic            = profile.IsPubliclySearchable
-          continentId         = string profile.ContinentId
-          region              = profile.Region
-          remoteWork          = profile.IsRemote
-          fullTime            = profile.IsFullTime
-          biography           = MarkdownString.toString profile.Biography
-          experience          = profile.Experience |> Option.map MarkdownString.toString
-          skills              = profile.Skills
+        { IsSeekingEmployment = profile.IsSeekingEmployment
+          IsPublic            = profile.IsPubliclySearchable
+          ContinentId         = string profile.ContinentId
+          Region              = profile.Region
+          RemoteWork          = profile.IsRemote
+          FullTime            = profile.IsFullTime
+          Biography           = MarkdownString.toString profile.Biography
+          Experience          = profile.Experience |> Option.map MarkdownString.toString
+          Skills              = profile.Skills
                                 |> List.map (fun s ->
-                                    { id          = string s.Id
-                                      description = s.Description
-                                      notes       = s.Notes
+                                    { Id          = string s.Id
+                                      Description = s.Description
+                                      Notes       = s.Notes
                                       })
         }
 
@@ -199,51 +190,51 @@ module ProfileForm =
 [<CLIMutable>]
 type ProfileSearch =
     {   /// Retrieve citizens from this continent
-        continentId   : string option
+        ContinentId : string option
         
         /// Text for a search within a citizen's skills
-        skill         : string option
+        Skill : string option
         
         /// Text for a search with a citizen's professional biography and experience fields
-        bioExperience : string option
+        BioExperience : string option
         
         /// Whether to retrieve citizens who do or do not want remote work
-        remoteWork    : string
+        RemoteWork : string
     }
 
 
 /// A user matching the profile search
 type ProfileSearchResult =
     {   /// The ID of the citizen
-        citizenId         : CitizenId
+        CitizenId : CitizenId
         
         /// The citizen's display name
-        displayName       : string
+        DisplayName : string
         
         /// Whether this citizen is currently seeking employment
-        seekingEmployment : bool
+        SeekingEmployment : bool
         
         /// Whether this citizen is looking for remote work
-        remoteWork        : bool
+        RemoteWork : bool
         
         /// Whether this citizen is looking for full-time work
-        fullTime          : bool
+        FullTime : bool
         
         /// When this profile was last updated
-        lastUpdatedOn     : Instant
+        LastUpdatedOn : Instant
     }
 
 
 /// The data required to show a viewable profile
 type ProfileForView =
     {   /// The profile itself
-        profile : Profile
+        Profile : Profile
         
         /// The citizen to whom the profile belongs
-        citizen : Citizen
+        Citizen : Citizen
         
         /// The continent for the profile
-        continent : Continent
+        Continent : Continent
     }
 
 
@@ -251,25 +242,26 @@ type ProfileForView =
 [<CLIMutable>]
 type PublicSearch =
     {   /// Retrieve citizens from this continent
-        continentId : string option
+        ContinentId : string option
         
         /// Retrieve citizens from this region
-        region : string option
+        Region : string option
         
         /// Text for a search within a citizen's skills
-        skill : string option
+        Skill : string option
         
         /// Whether to retrieve citizens who do or do not want remote work
-        remoteWork : string
+        RemoteWork : string
     }
 
 /// Support functions for public searches
 module PublicSearch =
     /// Is the search empty?
     let isEmptySearch (search : PublicSearch) =
-        [ search.continentId
-          search.skill
-          match search.remoteWork with "" -> Some search.remoteWork | _ -> None
+        [   search.ContinentId
+            search.Region
+            search.Skill
+            if search.RemoteWork = "" then Some search.RemoteWork else None
         ]
         |> List.exists Option.isSome
 
@@ -277,49 +269,49 @@ module PublicSearch =
 /// A public profile search result
 type PublicSearchResult =
     {   /// The name of the continent on which the citizen resides
-        continent  : string
+        Continent : string
         
         /// The region in which the citizen resides
-        region     : string
+        Region : string
         
         /// Whether this citizen is seeking remote work
-        remoteWork : bool
+        RemoteWork : bool
         
         /// The skills this citizen has identified
-        skills     : string list
+        Skills : string list
     }
 
 
 /// The data required to provide a success story
 type StoryForm =
     {   /// The ID of this story
-        id       : string
+        Id : string
         
         /// Whether the employment was obtained from Jobs, Jobs, Jobs
-        fromHere : bool
+        FromHere : bool
         
         /// The success story
-        story    : string
+        Story : string
     }
 
 
 /// An entry in the list of success stories
 type StoryEntry =
     {   /// The ID of this success story
-        id          : SuccessId
+        Id : SuccessId
         
         /// The ID of the citizen who recorded this story
-        citizenId   : CitizenId
+        CitizenId : CitizenId
         
         /// The name of the citizen who recorded this story
-        citizenName : string
+        CitizenName : string
         
         /// When this story was recorded
-        recordedOn  : Instant
+        RecordedOn : Instant
         
         /// Whether this story involves an opportunity that arose due to Jobs, Jobs, Jobs
-        fromHere    : bool
+        FromHere : bool
         
         /// Whether this report has a further story, or if it is simply a "found work" entry
-        hasStory    : bool
+        HasStory : bool
     }

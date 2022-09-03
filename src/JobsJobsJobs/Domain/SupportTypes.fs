@@ -78,10 +78,23 @@ module MarkdownString =
     let toString = function Text text -> text
 
 
+/// Types of contacts supported by Jobs, Jobs, Jobs
+type ContactType =
+    /// E-mail addresses
+    | Email
+    /// Phone numbers (home, work, cell, etc.)
+    | Phone
+    /// Websites (personal, social, etc.)
+    | Website
+
+
 /// Another way to contact a citizen from this site 
 type OtherContact =
-    {   /// The name of the contact (Email, No Agenda Social, LinkedIn, etc.) 
-        Name : string
+    {   /// The type of contact
+        ContactType : ContactType
+        
+        /// The name of the contact (Email, No Agenda Social, LinkedIn, etc.) 
+        Name : string option
         
         /// The value for the contact (e-mail address, user name, URL, etc.)
         Value : string
