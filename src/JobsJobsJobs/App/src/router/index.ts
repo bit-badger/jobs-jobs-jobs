@@ -86,6 +86,12 @@ const routes: Array<RouteRecordRaw> = [
     meta: { auth: true, title: "Dashboard" }
   },
   {
+    path: "/citizen/account",
+    name: "AccountProfile",
+    component: () => import(/* webpackChunkName: "account" */ "../views/citizen/AccountProfile.vue"),
+    meta: { auth: true, title: "Account Profile" }
+  },
+  {
     path: "/citizen/log-off",
     name: "LogOff",
     component: () => import(/* webpackChunkName: "logoff" */ "../views/citizen/LogOff.vue"),

@@ -46,7 +46,7 @@
           <hr>
           <h4 class="pb-2">
             Skills &nbsp;
-            <button class="btn btn-sm btn-outline-primary.rounded-pill" @click.prevent="addSkill">Add a Skill</button>
+            <button class="btn btn-sm btn-outline-primary rounded-pill" @click.prevent="addSkill">Add a Skill</button>
           </h4>
         </div>
         <profile-skill-edit v-for="(skill, idx) in profile.skills" :key="skill.id" v-model="profile.skills[idx]"

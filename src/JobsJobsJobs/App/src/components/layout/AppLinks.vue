@@ -14,6 +14,9 @@
         <icon :icon="mdiThumbUp" />&nbsp; Success Stories
       </router-link>
       <div class="separator"></div>
+      <router-link to="/citizen/account" @click="hide">
+        <icon :icon="mdiAccountEdit" /> My Account
+      </router-link>
       <router-link to="/listings/mine" @click="hide">
         <icon :icon="mdiSignText" />&nbsp; My Job Listings
       </router-link>
@@ -46,8 +49,8 @@
 import { computed } from "vue"
 import { useRouter } from "vue-router"
 import { Offcanvas } from "bootstrap"
-import { useStore } from "@/store"
 import {
+  mdiAccountEdit,
   mdiHelpCircleOutline,
   mdiHome,
   mdiLoginVariant,
@@ -59,6 +62,10 @@ import {
   mdiViewDashboardVariant,
   mdiViewListOutline
 } from "@mdi/js"
+
+import { useStore } from "@/store"
+
+import Icon from "@/components/Icon.vue"
 
 const store = useStore()
 const router = useRouter()

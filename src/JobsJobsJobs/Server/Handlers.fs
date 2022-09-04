@@ -116,7 +116,7 @@ module Citizen =
                     Email       = form.Email
                     FirstName   = form.FirstName
                     LastName    = form.LastName
-                    DisplayName = noneIfEmpty form.DisplayName
+                    DisplayName = noneIfBlank form.DisplayName
                     JoinedOn    = now
                     LastSeenOn  = now
                 }
@@ -171,10 +171,38 @@ module Citizen =
     // GET: /api/citizen/[id]
     let get citizenId : HttpHandler = authorize >=> fun next ctx -> task {
         match! Citizens.findById (CitizenId citizenId) with
-        | Some citizen -> return! json citizen next ctx
+        | Some citizen -> return! json { citizen with PasswordHash = "" } next ctx
         | None -> return! Error.notFound next ctx
     }
-
+    
+    // PATCH: /api/citizen/account
+    let account : HttpHandler = authorize >=> fun next ctx -> task {
+        let! form = ctx.BindJsonAsync<AccountProfileForm> ()
+        match! Citizens.findById (currentCitizenId ctx) with
+        | Some citizen ->
+            let password =
+                if defaultArg form.NewPassword "" = "" then citizen.PasswordHash
+                else Auth.Passwords.hash citizen form.NewPassword.Value
+            do! Citizens.save
+                    { citizen with
+                        FirstName     = form.FirstName
+                        LastName      = form.LastName
+                        DisplayName   = noneIfBlank form.DisplayName
+                        PasswordHash  = password
+                        OtherContacts = form.Contacts
+                                        |> List.map (fun c -> {
+                                            Id          = if c.Id.StartsWith "new" then OtherContactId.create ()
+                                                          else OtherContactId.ofString c.Id
+                                            ContactType = ContactType.parse c.ContactType
+                                            Name        = noneIfBlank c.Name
+                                            Value       = c.Value
+                                            IsPublic    = c.IsPublic
+                                        })
+                         }
+            return! ok next ctx
+        | None -> return! Error.notFound next ctx
+    }
+    
     // DELETE: /api/citizen
     let delete : HttpHandler = authorize >=> fun next ctx -> task {
         do! Citizens.deleteById (currentCitizenId ctx)
@@ -447,7 +475,10 @@ let allEndpoints = [
     subRoute "/api" [
         subRoute "/citizen" [
             GET_HEAD [ routef "/%O" Citizen.get ]
-            PATCH [ route "/confirm" Citizen.confirmToken ]
+            PATCH [
+                route "/account" Citizen.account
+                route "/confirm" Citizen.confirmToken
+            ]
             POST [
                 route "/log-on"   Citizen.logOn
                 route "/register" Citizen.register

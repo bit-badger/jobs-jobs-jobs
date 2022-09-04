@@ -78,6 +78,22 @@ module MarkdownString =
     let toString = function Text text -> text
 
 
+/// The ID of an other contact
+type OtherContactId = OtherContactId of Guid
+
+/// Support functions for other contact IDs
+module OtherContactId =
+    
+    /// Create a new job listing ID
+    let create () = (Guid.NewGuid >> OtherContactId) ()
+    
+    /// A string representation of a listing ID
+    let toString = function OtherContactId it -> ShortGuid.fromGuid it
+    
+    /// Parse a string into a listing ID
+    let ofString = ShortGuid.toGuid >> OtherContactId
+
+
 /// Types of contacts supported by Jobs, Jobs, Jobs
 type ContactType =
     /// E-mail addresses
@@ -87,10 +103,31 @@ type ContactType =
     /// Websites (personal, social, etc.)
     | Website
 
+/// Functions to support contact types
+module ContactType =
+    
+    /// Parse a contact type from a string
+    let parse typ =
+        match typ with
+        | "Email" -> Email
+        | "Phone" -> Phone
+        | "Website" -> Website
+        | it -> invalidOp $"{it} is not a valid contact type"
+    
+    /// Convert a contact type to its string representation
+    let toString =
+        function
+        | Email -> "Email"
+        | Phone -> "Phone"
+        | Website -> "Website"
+
 
 /// Another way to contact a citizen from this site 
 type OtherContact =
-    {   /// The type of contact
+    {   /// The ID of the contact
+        Id : OtherContactId
+        
+        /// The type of contact
         ContactType : ContactType
         
         /// The name of the contact (Email, No Agenda Social, LinkedIn, etc.) 
@@ -98,6 +135,9 @@ type OtherContact =
         
         /// The value for the contact (e-mail address, user name, URL, etc.)
         Value : string
+        
+        /// Whether this contact is visible in public employment profiles and job listings
+        IsPublic : bool
     }
 
 
@@ -115,9 +155,6 @@ module SkillId =
     
     /// Parse a string into a skill ID
     let ofString = ShortGuid.toGuid >> SkillId
-    
-    /// Get the GUID value of a skill ID
-    let value = function SkillId guid -> guid
 
 
 /// The ID of a success report

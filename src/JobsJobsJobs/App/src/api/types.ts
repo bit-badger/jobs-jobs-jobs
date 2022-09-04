@@ -1,3 +1,32 @@
+/** An "other contact" for a citizen */
+export interface OtherContact {
+  /** The ID of this contact */
+  id : string
+  /** The contact type (uses server-side DU) */
+  contactType : string
+  /** The name for this contact */
+  name : string | undefined
+  /** The value of the contact (e-mail, phone number, URL, etc.) */
+  value : string
+  /** Whether this contact is visible on public employment profiles and job listings */
+  isPublic : boolean
+}
+
+/** The data a logged-on citizen can update */
+export class AccountProfileForm {
+  /** The citizen's first name */
+  firstName = ""
+  /** The citizen's last name */
+  lastName = ""
+  /** The name by which the citizen wishes to be known within the site */
+  displayName : string | undefined
+  /** The new password for the citizen */
+  newPassword : string | undefined
+  /** The confirmed new password for the citizen */
+  newPasswordConfirm : string | undefined
+  /** The other contacts for this citizen */
+  contacts : OtherContact[] = []
+}
 
 /** A user of Jobs, Jobs, Jobs */
 export interface Citizen {
@@ -15,8 +44,8 @@ export interface Citizen {
   lastName : string
   /** The citizen's display name */
   displayName : string | undefined
-  /** The user's real name */
-  otherContacts : any[]
+  /** The citizen's contact information */
+  otherContacts : OtherContact[]
 }
 
 /** The data required to register as a user */
@@ -28,7 +57,7 @@ export class CitizenRegistrationForm {
   /** The citizen's e-mail address */
   email = ""
   /** The name by which the citizen wishes to be known within the site */
-  displayName = ""
+  displayName : string | undefined
   /** The password for the citizen */
   password = ""
   /** The confirmed password for the citizen */

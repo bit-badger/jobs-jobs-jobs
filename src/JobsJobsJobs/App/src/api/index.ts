@@ -1,4 +1,5 @@
 import {
+  AccountProfileForm,
   Citizen,
   CitizenRegistrationForm,
   Continent,
@@ -164,6 +165,16 @@ export default {
      */
     retrieve: async (id : string, user : LogOnSuccess) : Promise<Citizen | string | undefined> =>
       apiResult<Citizen>(await fetch(apiUrl(`citizen/${id}`), reqInit("GET", user)), `retrieving citizen ${id}`),
+
+    /**
+     * Save a citizen's account profile
+     *
+     * @param form The data to be saved
+     * @param user The currently logged-on user
+     * @returns True if successful, an error message if not
+     */
+    save: async (form : AccountProfileForm, user : LogOnSuccess) : Promise<boolean | string> =>
+      apiSend(await fetch(apiUrl("citizen/account"), reqInit("PATCH", user, form)), "saving account profile"),
 
     /**
      * Delete the current citizen's entire Jobs, Jobs, Jobs record

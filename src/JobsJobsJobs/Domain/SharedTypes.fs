@@ -5,6 +5,47 @@ open JobsJobsJobs.Domain
 open Microsoft.Extensions.Options
 open NodaTime
 
+/// The data to add or update an other contact
+type OtherContactForm =
+    {   /// The ID of the contact
+        Id : string
+        
+        /// The type of the contact
+        ContactType : string
+        
+        /// The name of the contact
+        Name : string option
+        
+        /// The value of the contact (URL, e-mail address, phone, etc.)
+        Value : string
+        
+        /// Whether this contact is displayed for public employment profiles and job listings
+        IsPublic : bool
+    }
+
+
+/// The data available to update an account profile
+type AccountProfileForm =
+    {   /// The first name of the citizen
+        FirstName : string
+        
+        /// The last name of the citizen
+        LastName : string
+        
+        /// The display name for the citizen
+        DisplayName : string option
+        
+        /// The citizen's new password
+        NewPassword : string option
+        
+        /// Confirmation of the citizen's new password
+        NewPasswordConfirm : string option
+        
+        /// The contacts for this profile
+        Contacts : OtherContactForm list
+    }
+
+
 /// The data required to register a new citizen (user)
 type CitizenRegistrationForm =
     {   /// The first name of the new citizen
@@ -14,7 +55,7 @@ type CitizenRegistrationForm =
         LastName : string
         
         /// The display name for the new citizen
-        DisplayName : string
+        DisplayName : string option
         
         /// The citizen's e-mail address
         Email : string
@@ -25,6 +66,7 @@ type CitizenRegistrationForm =
         /// Confirmation of the citizen's password
         ConfirmPassword : string
     }
+
 
 /// The data required to add or edit a job listing
 type ListingForm =

@@ -1,5 +1,6 @@
 module JobsJobsJobs.Api.Email
 
+open System.Net
 open JobsJobsJobs.Domain
 open MailKit.Net.Smtp
 open MailKit.Security
@@ -8,7 +9,7 @@ open MimeKit
 /// Send an account confirmation e-mail
 let sendAccountConfirmation citizen security = backgroundTask {
     let name   = Citizen.name citizen
-    let token  = security.Token.Value
+    let token  = WebUtility.UrlEncode security.Token.Value
     use client = new SmtpClient ()
     do! client.ConnectAsync ("localhost", 25, SecureSocketOptions.None)
     

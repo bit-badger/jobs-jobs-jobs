@@ -13,7 +13,7 @@
         <div class="form-floating">
           <div class="form-floating">
             <input type="email" id="email" :class="{ 'form-control': true, 'is-invalid': v$.email.$error }"
-                   v-model="v$.email.$model" placeholder="E-mail Address">
+                   v-model="v$.email.$model" placeholder="E-mail Address" autofocus>
             <div class="invalid-feedback">Please enter a valid e-mail address</div>
             <label class="jjj-required" for="email">E-mail Address</label>
           </div>
