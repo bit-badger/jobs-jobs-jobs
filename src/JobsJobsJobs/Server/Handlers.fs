@@ -467,11 +467,21 @@ module Success =
         | None -> return! Error.notFound next ctx
     }
 
+[<RequireQualifiedAccess>]
+module Home =
+    open JobsJobsJobs.Views
+    open JobsJobsJobs.Views.Layout
+
+    let home : HttpHandler = fun next ctx -> task {
+        let render = { IsLoggedOn = false; PageTitle = "Welcome"; CurrentUrl = "/"; Content = Home.home }
+        return! htmlView (view render) next ctx
+    }
 
 open Giraffe.EndpointRouting
 
 /// All available endpoints for the application
 let allEndpoints = [
+    route "/" Home.home
     subRoute "/api" [
         subRoute "/citizen" [
             GET_HEAD [ routef "/%O" Citizen.get ]

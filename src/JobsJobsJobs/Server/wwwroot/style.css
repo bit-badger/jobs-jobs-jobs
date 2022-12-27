@@ -1,0 +1,212 @@
+/* Overall styling */
+html {
+  scroll-behavior: smooth;
+}
+a:link,
+a:visited {
+  text-decoration: none;
+}
+a:not(.btn):hover {
+  text-decoration: underline;
+}
+label.jjj-required::after {
+  color: red;
+  content: ' *';
+}
+.jjj-heading-label {
+  display: inline-block;
+  font-size: 1rem;
+  text-transform: uppercase;
+}
+.material-icons {
+  vertical-align: bottom;
+}
+/* Material Design Icon / Bootstrap styling */
+.mdi::before {
+  font-size: 24px;
+  line-height: 14px;
+}
+.btn .mdi::before {
+  position: relative;
+  top: 4px;
+}
+.btn-xs .mdi::before {
+  font-size: 18px;
+  top: 3px;
+}
+.btn-sm .mdi::before {
+  font-size: 18px;
+  top: 3px;
+}
+.dropdown-menu .mdi {
+  width: 18px;
+}
+.dropdown-menu .mdi::before {
+  position: relative;
+  top: 4px;
+  left: -8px;
+}
+.nav .mdi::before {
+  position: relative;
+  top: 4px;
+}
+.navbar .navbar-toggle .mdi::before {
+  position: relative;
+  top: 4px;
+  color: #FFF;
+}
+.breadcrumb .mdi::before {
+  position: relative;
+  top: 4px;
+}
+.breadcrumb a:hover {
+  text-decoration: none;
+}
+.breadcrumb a:hover span {
+  text-decoration: underline;
+}
+.alert .mdi::before {
+  position: relative;
+  top: 4px;
+  margin-right: 2px;
+}
+.input-group-addon .mdi::before {
+  position: relative;
+  top: 3px;
+}
+.navbar-brand .mdi::before {
+  position: relative;
+  top: 2px;
+  margin-right: 2px;
+}
+.list-group-item .mdi::before {
+  position: relative;
+  top: 3px;
+  left: -3px
+}
+/* Layout styling */
+.jjj-app {
+  display: flex;
+  flex-direction: row;
+}
+.jjj-main {
+  flex-grow: 1;
+  display: flex;
+  flex-flow: column;
+  min-height: 100vh;
+}
+.jjj-content {
+  flex-grow: 2;
+}
+/* Menu styling */
+.jjj-full-menu,
+.jjj-mobile-menu {
+  background-image: linear-gradient(180deg, darkgreen 0%, green 70%);
+  color: white;
+  font-size: 1.2rem;
+}
+.jjj-full-menu {
+  min-height: 100vh;
+  width: 250px;
+  min-width: 250px;
+  position: sticky;
+  top: 0;
+  display: none;
+}
+.jjj-full-menu .home-link {
+  font-size: 1.2rem;
+  text-align: center;
+  background-color: rgba(0, 0, 0, .4);
+  margin: -1rem;
+  padding: 1rem;
+}
+.jjj-full-menu a:link,
+.jjj-full-menu a:visited {
+  text-decoration: none;
+  color: white;
+}
+#jjjMenu {
+  flex-direction: column;
+  flex-grow: 1;
+}
+@media (min-width: 768px) {
+  .jjj-full-menu {
+    display: unset;
+  }
+  .jjj-mobile-menu {
+    display: none;
+  }
+  .navbar-expand-md .navbar-nav {
+    flex-direction: column;
+  }
+}
+.jjj-nav a:link,
+.jjj-nav a:visited {
+  text-decoration: none;
+  color: white;
+}
+nav.jjj-nav > a {
+  display: block;
+  width: 100%;
+  border-radius: .25rem;
+  padding: .5rem;
+  margin: .5rem 0;
+  font-size: 1rem;
+}
+nav.jjj-nav > a > i {
+  vertical-align: top;
+  margin-right: 1rem;
+}
+nav.jjj-nav > a > i.mdi::before {
+  line-height: 24px;
+}
+nav.jjj-nav > a.jjj-current-page {
+    background-color: rgba(255, 255, 255, .2);
+}
+nav.jjj-nav > a:hover {
+    background-color: rgba(255, 255, 255, .5);
+    color: black;
+    text-decoration: none;
+}
+nav.jjj-nav > div.separator {
+  border-bottom: solid 1px rgba(255, 255, 255, .75);
+  height: 1px;
+}
+/* Title bar styling */
+.jjj-main .navbar-dark {
+  background-image: linear-gradient(0deg, green 0%, darkgreen 70%);
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+.jjj-main .navbar-dark button {
+  padding: 0;
+}
+.jjj-main .navbar-dark .navbar-text {
+  font-weight: bold;
+  color: white;
+}
+.jjj-main .navbar-light .navbar-text {
+  font-style: italic;
+  padding: 0 1rem 0 0;
+}
+/* Audio Clip styling */
+.jjj-audio-clip audio {
+  display: none;
+}
+span.jjj-audio-clip {
+  border-bottom: dotted 1px lightgray;
+}
+span.jjj-audio-clip:hover {
+  cursor: pointer;
+}
+/* Footer styling */
+footer {
+  display: flex;
+  flex-direction: row-reverse;
+}
+footer p {
+  padding-top: 2rem;
+  padding-right: .5rem;
+  font-style: italic;
+  font-size: .8rem;
+}
