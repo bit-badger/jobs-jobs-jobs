@@ -19,17 +19,23 @@ type PageRenderContext =
         Content : XmlNode
     }
 
+/// Append the application name to the page title
+let private constructTitle ctx =
+    seq {
+        if ctx.PageTitle <> "" then
+            ctx.PageTitle; " | "
+        "Jobs, Jobs, Jobs"
+    }
+    |> Seq.reduce (+)
+    |> str
+    |> List.singleton
+    |> title []
+
 /// Generate the HTML head tag
 let private htmlHead ctx =
-    let pageTitle =
-        seq {
-            if ctx.PageTitle <> "" then
-                ctx.PageTitle; " | "
-            "Jobs, Jobs, Jobs"
-        } |> Seq.reduce (+)
     head [] [
         meta [ _name "viewport"; _content "width=device-width, initial-scale=1" ]
-        title [] [ str pageTitle ]
+        constructTitle ctx
         link [ _href        "https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css"
                _rel         "stylesheet"
                _integrity   "sha384-gH2yIJqKdNHPEq0n4Mqa/HGKIhSkIHeL5AyhkYV8i59U5AR6csBvApHHNl/vI1Bx"
@@ -53,9 +59,9 @@ let private links ctx =
             navLink "/profile/search"     "view-list-outline"                  "Employment Profiles"
             navLink "/success-story/list" "thumb-up"                           "Success Stories"
             div [ _class "separator" ] []
-            navLink "/citizen/account" "mdiAccountEdit" "My Account"
-            navLink "/listings/mine"   "mdiSignText"    "My Job Listings"
-            navLink "/profile/edit"    "mdiPencil"      "My Employment Profile"
+            navLink "/citizen/account" "account-edit" "My Account"
+            navLink "/listings/mine"   "sign-text"    "My Job Listings"
+            navLink "/profile/edit"    "pencil"       "My Employment Profile"
             div [ _class "separator" ] []
             navLink "/citizen/log-off" "mdiLogoutVariant" "Log Off"
         else
@@ -125,13 +131,12 @@ let private htmlFoot =
     ]
 
 /// Create a full view
-let view ctx =
+let full ctx =
     html [ _lang "en" ] [
         htmlHead ctx
         body [] [
-            div [ _class "jjj-app" ] [
+            div [ _class "jjj-app"; _hxBoost; _hxTarget "this" ] [
                 yield! sideNavs ctx
-                //otherSideNav ctx
                 div [ _class "jjj-main" ] [
                     yield! titleBars
                     main [ _class "jjj-content container-fluid" ] [ ctx.Content ]
@@ -144,5 +149,21 @@ let view ctx =
                      _integrity   "sha384-A3rJD856KowSb7dwlZdYEkO39Gagi7vIsF0jrRAoQmDKKtQBHUuLZ9AsSv4jD4Xa"
                      _crossorigin "anonymous" ] []
             script [ _src "/script.js" ] []
+        ]
+    ]
+
+/// Create a partial (boosted response) view
+let partial ctx =
+    html [ _lang "en" ] [
+        head [] [
+            constructTitle ctx
+        ]
+        body [] [
+            yield! sideNavs ctx
+            div [ _class "jjj-main" ] [
+                yield! titleBars
+                main [ _class "jjj-content container-fluid" ] [ ctx.Content ]
+                htmlFoot
+            ]
         ]
     ]

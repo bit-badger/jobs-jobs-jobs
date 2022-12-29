@@ -4,6 +4,7 @@ module JobsJobsJobs.Api.Handlers
 open Giraffe
 open JobsJobsJobs.Domain
 open JobsJobsJobs.Domain.SharedTypes
+open JobsJobsJobs.Views
 open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.Logging
 
@@ -56,6 +57,7 @@ open NodaTime
 module Helpers =
 
     open System.Security.Claims
+    open Giraffe.Htmx
     open Microsoft.Extensions.Configuration
     open Microsoft.Extensions.Options
 
@@ -94,6 +96,20 @@ module Helpers =
 
     /// Return an empty OK response
     let ok : HttpHandler = Successful.OK ""
+
+    // -- NEW --
+
+    /// Render a page-level view
+    let render pageTitle content : HttpHandler = fun _ ctx -> task {
+        let renderFunc = if ctx.Request.IsHtmx && not ctx.Request.IsHtmxRefresh then Layout.partial else Layout.full
+        let renderCtx : Layout.PageRenderContext = {
+            IsLoggedOn = Option.isSome (tryUser ctx)
+            CurrentUrl = ctx.Request.Path.Value
+            PageTitle  = pageTitle
+            Content    = content
+        }
+        return! ctx.WriteHtmlViewAsync (renderFunc renderCtx)
+    }
 
 
 open System
@@ -219,6 +235,27 @@ module Continent =
         let! continents = Continents.all ()
         return! json continents next ctx
     }
+
+
+/// Handlers for the home page, legal stuff, and help
+[<RequireQualifiedAccess>]
+module Home =
+
+    // GET: /
+    let home : HttpHandler =
+        render "Welcome" Home.home
+
+    // GET: /how-it-works
+    let howItWorks : HttpHandler =
+        render "How It Works" Home.howItWorks
+    
+    // GET: /privacy-policy
+    let privacyPolicy : HttpHandler =
+        render "Privacy Policy" Home.privacyPolicy
+    
+    // GET: /terms-of-service
+    let termsOfService : HttpHandler =
+        render "Terms of Service" Home.termsOfService
 
 
 /// Handlers for /api/listing[s] routes
@@ -467,21 +504,15 @@ module Success =
         | None -> return! Error.notFound next ctx
     }
 
-[<RequireQualifiedAccess>]
-module Home =
-    open JobsJobsJobs.Views
-    open JobsJobsJobs.Views.Layout
-
-    let home : HttpHandler = fun next ctx -> task {
-        let render = { IsLoggedOn = false; PageTitle = "Welcome"; CurrentUrl = "/"; Content = Home.home }
-        return! htmlView (view render) next ctx
-    }
 
 open Giraffe.EndpointRouting
 
 /// All available endpoints for the application
 let allEndpoints = [
-    route "/" Home.home
+    GET_HEAD [ route "/" Home.home ]
+    GET_HEAD [ route "/how-it-works" Home.howItWorks ]
+    GET_HEAD [ route "/privacy-policy" Home.privacyPolicy ]
+    GET_HEAD [ route "/terms-of-service" Home.termsOfService ]
     subRoute "/api" [
         subRoute "/citizen" [
             GET_HEAD [ routef "/%O" Citizen.get ]
