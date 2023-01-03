@@ -30,18 +30,19 @@ module Table =
 
 open Npgsql.FSharp
 
-/// Connection management for the Marten document store
+/// Connection management for the document store
 module DataConnection =
     
     open Microsoft.Extensions.Configuration
+    open Npgsql
     
-    /// The configuration from which a document store will be created
-    let mutable private config : IConfiguration option = None
+    /// The data source for the document store
+    let mutable private dataSource : NpgsqlDataSource option = None
     
     /// Get the connection string
     let connection () =
-        match config with
-        | Some cfg -> Sql.connect (cfg.GetConnectionString "PostgreSQL")
+        match dataSource with
+        | Some ds -> ds.OpenConnection () |> Sql.existingConnection
         | None -> invalidOp "Connection.setUp() must be called before accessing the database"
     
     /// Create tables
@@ -72,7 +73,7 @@ module DataConnection =
     
     /// Set up the data connection from the given configuration
     let setUp (cfg : IConfiguration) = backgroundTask {
-        config <- Some cfg
+        dataSource <- Some (NpgsqlDataSource.Create (cfg.GetConnectionString "PostgreSQL"))
         do! createTables ()
     }
 

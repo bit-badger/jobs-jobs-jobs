@@ -114,10 +114,94 @@ module Helpers =
 
 open System
 open JobsJobsJobs.Data
+open JobsJobsJobs.ViewModels
+
+/// Handlers for /citizen routes
+[<RequireQualifiedAccess>]
+module Citizen =
+    
+    open Microsoft.Extensions.Configuration
+
+    /// Support module for /citizen routes
+    module private Support =
+        
+        /// The challenge questions and answers from the configuration
+        let mutable private challenges : (string * string)[] option = None
+
+        /// The challenge questions and answers
+        let questions ctx =
+            match challenges with
+            | Some it -> it
+            | None ->
+                let qs = (config ctx).GetSection "ChallengeQuestions"
+                let qAndA =
+                    seq {
+                        for idx in 0..4 do
+                            let section = qs.GetSection(string idx)
+                            yield section["Question"], section["Answer"]
+                    }
+                    |> Array.ofSeq
+                challenges <- Some qAndA
+                qAndA
+        
+    // GET: /citizen/log-on
+    let logOn : HttpHandler =
+        render "Log On" (Citizen.logOn { ErrorMessage = None; Email = ""; Password = "" })
+
+    // GET: /citizen/register
+    let register : HttpHandler = fun next ctx -> task {
+        // Get two different indexes for NA-knowledge challenge questions
+        let q1Index = System.Random.Shared.Next(0, 5)
+        let mutable q2Index = System.Random.Shared.Next(0, 5)
+        while q1Index = q2Index do
+            q2Index <- System.Random.Shared.Next(0, 5)
+        let qAndA = Support.questions ctx
+        return! render "Register"
+            (Citizen.register (fst qAndA[q1Index]) (fst qAndA[q2Index])
+                { RegisterViewModel.empty with Question1Index = q1Index; Question2Index = q2Index }) next ctx
+    }
+    
+    // POST: /citizen/register
+    let doRegistration : HttpHandler = fun next ctx -> task {
+        let! form = ctx.BindFormAsync<RegisterViewModel> ()
+        // FIXME: stopped here; add validation
+        if form.Password.Length < 8 then
+            return! RequestErrors.BAD_REQUEST "Password out of range" next ctx
+        else
+            let now    = now ctx
+            let noPass =
+                { Citizen.empty with
+                    Id          = CitizenId.create ()
+                    Email       = form.Email
+                    FirstName   = form.FirstName
+                    LastName    = form.LastName
+                    DisplayName = noneIfBlank form.DisplayName
+                    JoinedOn    = now
+                    LastSeenOn  = now
+                }
+            let citizen = { noPass with PasswordHash = Auth.Passwords.hash noPass form.Password }
+            let security =
+                { SecurityInfo.empty with
+                    Id            = citizen.Id
+                    AccountLocked = true
+                    Token         = Some (Auth.createToken citizen)
+                    TokenUsage    = Some "confirm"
+                    TokenExpires  = Some (now + (Duration.FromDays 3))
+                }
+            let! success = Citizens.register citizen security
+            if success then
+                let! emailResponse = Email.sendAccountConfirmation citizen security
+                let logFac = logger ctx
+                let log    = logFac.CreateLogger "JobsJobsJobs.Api.Handlers.Citizen"
+                log.LogInformation $"Confirmation e-mail for {citizen.Email} received {emailResponse}"
+                return! ok next ctx
+            else
+                return! RequestErrors.CONFLICT "" next ctx
+    }
 
 /// Handlers for /api/citizen routes
 [<RequireQualifiedAccess>]
-module Citizen =
+module CitizenApi =
     
     // POST: /api/citizen/register
     let register : HttpHandler = fun next ctx -> task {
@@ -510,23 +594,30 @@ open Giraffe.EndpointRouting
 /// All available endpoints for the application
 let allEndpoints = [
     GET_HEAD [ route "/" Home.home ]
+    subRoute "/citizen" [
+        GET_HEAD [
+            route "/log-on"   Citizen.logOn
+            route "/register" Citizen.register
+        ]
+        POST [ route "/register" Citizen.doRegistration ]
+    ]
     GET_HEAD [ route "/how-it-works" Home.howItWorks ]
     GET_HEAD [ route "/privacy-policy" Home.privacyPolicy ]
     GET_HEAD [ route "/terms-of-service" Home.termsOfService ]
     subRoute "/api" [
         subRoute "/citizen" [
-            GET_HEAD [ routef "/%O" Citizen.get ]
+            GET_HEAD [ routef "/%O" CitizenApi.get ]
             PATCH [
-                route "/account" Citizen.account
-                route "/confirm" Citizen.confirmToken
+                route "/account" CitizenApi.account
+                route "/confirm" CitizenApi.confirmToken
             ]
             POST [
-                route "/log-on"   Citizen.logOn
-                route "/register" Citizen.register
+                route "/log-on"   CitizenApi.logOn
+                route "/register" CitizenApi.register
             ]
             DELETE [
-                route ""      Citizen.delete
-                route "/deny" Citizen.denyToken
+                route ""      CitizenApi.delete
+                route "/deny" CitizenApi.denyToken
             ]
         ]
         GET_HEAD [ route "/continents" Continent.all ]
