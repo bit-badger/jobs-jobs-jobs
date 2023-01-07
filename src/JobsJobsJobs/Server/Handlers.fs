@@ -99,6 +99,14 @@ module Helpers =
 
     // -- NEW --
 
+    /// Add a message to the response
+    let sendMessage (msg : string) : HttpHandler =
+        setHttpHeader "X-Message" msg
+    
+    /// Add an error message to the response
+    let sendError (msg : string) : HttpHandler =
+        sendMessage $"ERROR|||{msg}"
+    
     /// Render a page-level view
     let render pageTitle content : HttpHandler = fun _ ctx -> task {
         let renderFunc = if ctx.Request.IsHtmx && not ctx.Request.IsHtmxRefresh then Layout.partial else Layout.full
@@ -138,36 +146,67 @@ module Citizen =
                     seq {
                         for idx in 0..4 do
                             let section = qs.GetSection(string idx)
-                            yield section["Question"], section["Answer"]
+                            yield section["Question"], (section["Answer"].ToLowerInvariant ())
                     }
                     |> Array.ofSeq
                 challenges <- Some qAndA
                 qAndA
         
+    // GET: /citizen/confirm/[token]
+    let confirm token = fun next ctx -> task {
+        let! isConfirmed = Citizens.confirmAccount token
+        return! render "Account Confirmation" (Citizen.confirmAccount isConfirmed) next ctx
+    }
+
+    // GET: /citizen/deny/[token]
+    let deny token = fun next ctx -> task {
+        let! wasDeleted = Citizens.denyAccount token
+        return! render "Account Deletion" (Citizen.denyAccount wasDeleted) next ctx
+    }
+
     // GET: /citizen/log-on
     let logOn : HttpHandler =
         render "Log On" (Citizen.logOn { ErrorMessage = None; Email = ""; Password = "" })
 
     // GET: /citizen/register
-    let register : HttpHandler = fun next ctx -> task {
+    let register : HttpHandler = fun next ctx ->
         // Get two different indexes for NA-knowledge challenge questions
         let q1Index = System.Random.Shared.Next(0, 5)
         let mutable q2Index = System.Random.Shared.Next(0, 5)
         while q1Index = q2Index do
             q2Index <- System.Random.Shared.Next(0, 5)
         let qAndA = Support.questions ctx
-        return! render "Register"
+        render "Register"
             (Citizen.register (fst qAndA[q1Index]) (fst qAndA[q2Index])
                 { RegisterViewModel.empty with Question1Index = q1Index; Question2Index = q2Index }) next ctx
-    }
+    
     
     // POST: /citizen/register
     let doRegistration : HttpHandler = fun next ctx -> task {
-        let! form = ctx.BindFormAsync<RegisterViewModel> ()
-        // FIXME: stopped here; add validation
-        if form.Password.Length < 8 then
-            return! RequestErrors.BAD_REQUEST "Password out of range" next ctx
-        else
+        let! form  = ctx.BindFormAsync<RegisterViewModel> ()
+        let  qAndA = Support.questions ctx
+        let mutable badForm = false
+        let errors = [
+            if form.FirstName.Length < 1 then "First name is required"
+            if form.LastName.Length  < 1 then "Last name is required"
+            if form.Email.Length     < 1 then "E-mail address is required"
+            if form.Password.Length  < 8 then "Password is too short"
+            if   form.Question1Index < 0 || form.Question1Index > 4
+              || form.Question2Index < 0 || form.Question2Index > 4
+              || form.Question1Index = form.Question2Index then
+                badForm <- true
+            else if   (snd qAndA[form.Question1Index]) <> (form.Question1Answer.Trim().ToLowerInvariant ())
+              || (snd qAndA[form.Question2Index]) <> (form.Question2Answer.Trim().ToLowerInvariant ()) then
+                 "Question answers are incorrect"
+        ]
+        let refreshPage () =
+            render "Register"
+                (Citizen.register (fst qAndA[form.Question1Index]) (fst qAndA[form.Question2Index])
+                    { form with Password = "" })
+        if badForm then
+            let handle = sendError "The form posted was invalid; please complete it again" >=> register
+            return! handle next ctx
+        else if List.isEmpty errors then
             let now    = now ctx
             let noPass =
                 { Citizen.empty with
@@ -191,12 +230,17 @@ module Citizen =
             let! success = Citizens.register citizen security
             if success then
                 let! emailResponse = Email.sendAccountConfirmation citizen security
-                let logFac = logger ctx
-                let log    = logFac.CreateLogger "JobsJobsJobs.Api.Handlers.Citizen"
+                let  logFac        = logger ctx
+                let  log           = logFac.CreateLogger "JobsJobsJobs.Handlers.Citizen"
                 log.LogInformation $"Confirmation e-mail for {citizen.Email} received {emailResponse}"
-                return! ok next ctx
+                return! render "Registration Successful" Citizen.registered next ctx
             else
-                return! RequestErrors.CONFLICT "" next ctx
+                return! (sendError "There is already an account registered to the e-mail address provided"
+                         >=> refreshPage ()) next ctx
+        else
+            let errMsg = String.Join ("</li><li>", errors)
+            return! (sendError $"Please correct the following errors:<ul><li>{errMsg}</li></ul>" >=> refreshPage ())
+                    next ctx
     }
 
 /// Handlers for /api/citizen routes
@@ -596,8 +640,10 @@ let allEndpoints = [
     GET_HEAD [ route "/" Home.home ]
     subRoute "/citizen" [
         GET_HEAD [
-            route "/log-on"   Citizen.logOn
-            route "/register" Citizen.register
+            routef "/confirm/%s" Citizen.confirm
+            routef "/deny/%s"    Citizen.deny
+            route  "/log-on"     Citizen.logOn
+            route  "/register"   Citizen.register
         ]
         POST [ route "/register" Citizen.doRegistration ]
     ]

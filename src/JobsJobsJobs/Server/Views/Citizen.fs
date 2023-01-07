@@ -6,6 +6,34 @@ open Giraffe.ViewEngine
 open Giraffe.ViewEngine.Htmx
 open JobsJobsJobs.ViewModels
 
+/// The account confirmation page
+let confirmAccount isConfirmed =
+    article [] [
+        h3 [ _class "pb-3" ] [ rawText "Account Confirmation" ]
+        p [] [
+            if isConfirmed then
+                rawText "Your account was confirmed successfully! You may "
+                a [ _href "/citizen/log-on" ] [ rawText "log on here" ]; rawText "."
+            else
+                rawText "The confirmation token did not match any pending accounts. Confirmation tokens are only valid "
+                rawText "for 3 days; if the token expired, you will need to re-register, which "
+                a [ _href "/citizen/register" ] [ rawText "you can do here" ]; rawText "."
+        ]
+    ]
+
+/// The account denial page
+let denyAccount wasDeleted =
+    article [] [
+        h3 [ _class "pb-3" ] [ rawText "Account Deletion" ]
+        p [] [
+            if wasDeleted then
+                rawText "The account was deleted successfully; sorry for the trouble."
+            else
+                rawText "The confirmation token did not match any pending accounts; if this was an inadvertently "
+                rawText "created account, it has likely already been deleted."
+        ]
+    ]
+
 /// The log on page
 let logOn (m : LogOnViewModel) =
     article [] [
@@ -151,5 +179,24 @@ let register q1 q2 (m : RegisterViewModel) =
                     }
                 })"""
             ]
+        ]
+    ]
+
+/// The confirmation page for user registration
+let registered =
+    article [] [
+        h3 [ _class "pb-3" ] [ rawText "Registration Successful" ]
+        p [] [
+            rawText "You have been successfully registered with Jobs, Jobs, Jobs. Check your e-mail for a confirmation "
+            rawText "link; it will be valid for the next 72 hours (3 days). Once you confirm your account, you will be "
+            rawText "able to log on using the e-mail address and password you provided."
+        ]
+        p [] [
+            rawText "If the account is not confirmed within the 72-hour window, it will be deleted, and you will need "
+            rawText "to register again."
+        ]
+        p [] [
+            rawText "If you encounter issues, feel free to reach out to @danieljsummers on No Agenda Social for "
+            rawText "assistance."
         ]
     ]
