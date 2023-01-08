@@ -15,6 +15,7 @@ type LogOnViewModel =
 
 
 /// View model for the registration page
+[<CLIMutable>]
 type RegisterViewModel =
     {   /// The user's first name
         FirstName : string

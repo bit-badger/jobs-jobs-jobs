@@ -4,6 +4,7 @@ module JobsJobsJobs.Views.Citizen
 
 open Giraffe.ViewEngine
 open Giraffe.ViewEngine.Htmx
+open JobsJobsJobs.Domain
 open JobsJobsJobs.ViewModels
 
 /// The account confirmation page
@@ -21,6 +22,77 @@ let confirmAccount isConfirmed =
         ]
     ]
 
+/// The citizen's dashboard page
+let dashboard (citizen : Citizen) (profile : Profile option) profileCount =
+    article [ _class "container" ] [
+        h3 [ _class "pb-4" ] [ rawText "ITM, "; str citizen.FirstName; rawText "!" ]
+        div [ _class "row row-cols-1 row-cols-md-2" ] [
+            div [ _class "col" ] [
+                div [ _class "card h-100" ] [
+                    h5 [ _class "card-header" ] [ rawText "Your Profile" ]
+                    div [ _class "card-body" ] [
+                        match profile with
+                        | Some prfl ->
+                            h6 [ _class "card-subtitle mb-3 text-muted fst-italic" ] [
+                                rawText "Last updated "; (* full-date-time :date="profile.lastUpdatedOn" *)
+                            ]
+                            p [ _class "card-text" ] [
+                                rawText "Your profile currently lists "; str $"{List.length prfl.Skills}"
+                                rawText " skill"; rawText (if List.length prfl.Skills <> 1 then "s" else "")
+                                rawText "."
+                                if prfl.IsSeekingEmployment then
+                                    br []; br []
+                                    rawText "Your profile indicates that you are seeking employment. Once you find it, "
+                                    a [ _href "/success-story/add" ] [ rawText "tell your fellow citizens about it!" ]
+                            ]
+                        | None ->
+                            p [ _class "card-text" ] [
+                                rawText "You do not have an employment profile established; click below (or "
+                                rawText "&ldquo;Edit Profile&rdquo; in the menu) to get started!"
+                            ]
+                    ]
+                    div [ _class "card-footer" ] [
+                        match profile with
+                        | Some p ->
+                            a [ _href $"/profile/{citizen.Id}/view"; _class "btn btn-outline-secondary" ] [
+                                rawText "View Profile"
+                            ]; rawText "&nbsp; &nbsp;"
+                            a [ _href "/profile/edit"; _class "btn btn-outline-secondary" ] [ rawText "Edit Profile" ]
+                        | None ->
+                            a [ _href "/profile/edit"; _class "btn btn-primary" ] [ rawText "Create Profile" ]
+                    ]
+                ]
+            ]
+            div [ _class "col" ] [
+                div [ _class "card h-100" ] [
+                    h5 [ _class "card-header" ] [ rawText "Other Citizens" ]
+                    div [ _class "card-body" ] [
+                        h6 [ _class "card-subtitle mb-3 text-muted fst-italic" ] [
+                            rawText (if profileCount = 0 then "No" else $"{profileCount} Total")
+                            rawText " Employment Profile"; rawText (if profileCount <> 1 then "s" else "")
+                        ]
+                        p [ _class "card-text" ] [
+                            if profileCount = 1 && Option.isSome profile then
+                                "It looks like, for now, it&rsquo;s just you&hellip;"
+                            else if profileCount > 0 then "Take a look around and see if you can help them find work!"
+                            else "You can click below, but you will not find anything&hellip;"
+                            |> rawText
+                        ]
+                    ]
+                    div [ _class "card-footer" ] [
+                        a [ _href "/profile/search"; _class "btn btn-outline-secondary" ] [ rawText "Search Profiles" ]
+                    ]
+                ]
+            ]
+        ]
+        p [] [ rawText "&nbsp;" ]
+        p [] [
+            rawText "To see how this application works, check out &ldquo;How It Works&rdquo; in the sidebar (last "
+            rawText "updated August 29<sup>th</sup>, 2021)."
+        ]
+    ]
+
+
 /// The account denial page
 let denyAccount wasDeleted =
     article [] [
@@ -35,7 +107,7 @@ let denyAccount wasDeleted =
     ]
 
 /// The log on page
-let logOn (m : LogOnViewModel) =
+let logOn (m : LogOnViewModel) csrf =
     article [] [
         h3 [ _class "pb-3" ] [ rawText "Log On" ]
         match m.ErrorMessage with
@@ -50,6 +122,7 @@ let logOn (m : LogOnViewModel) =
             ]
         | None -> ()
         form [ _class "row g-3 pb-3"; _hxPost "/citizen/log-on" ] [
+            antiForgery csrf
             div [ _class "col-12 col-md-6" ] [
                 div [ _class "form-floating" ] [
                     input [ _type        "email"
@@ -89,10 +162,11 @@ let logOn (m : LogOnViewModel) =
     ]
 
 /// The registration page
-let register q1 q2 (m : RegisterViewModel) =
+let register q1 q2 (m : RegisterViewModel) csrf =
     article [] [
         h3 [ _class "pb-3" ] [ rawText "Register" ]
         form [ _class  "row g-3"; _hxPost "/citizen/register" ] [
+            antiForgery csrf
             div [ _class "col-6 col-xl-4" ] [
                 div [ _class "form-floating" ] [
                     input [ _type "text"; _class "form-control"; _id (nameof m.FirstName); _name (nameof m.FirstName)

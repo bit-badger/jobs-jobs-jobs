@@ -58,7 +58,9 @@ module Helpers =
 
     open System.Security.Claims
     open Giraffe.Htmx
+    open Microsoft.AspNetCore.Antiforgery
     open Microsoft.Extensions.Configuration
+    open Microsoft.Extensions.DependencyInjection
     open Microsoft.Extensions.Options
 
     /// Get the NodaTime clock from the request context
@@ -99,13 +101,20 @@ module Helpers =
 
     // -- NEW --
 
+    let antiForgery (ctx : HttpContext) =
+        ctx.RequestServices.GetRequiredService<IAntiforgery> ()
+    
+    /// Obtain an anti-forgery token set
+    let csrf ctx =
+        (antiForgery ctx).GetAndStoreTokens ctx
+    
     /// Add a message to the response
     let sendMessage (msg : string) : HttpHandler =
         setHttpHeader "X-Message" msg
     
     /// Add an error message to the response
     let sendError (msg : string) : HttpHandler =
-        sendMessage $"ERROR|||{msg}"
+        sendMessage $"error|||{msg}"
     
     /// Render a page-level view
     let render pageTitle content : HttpHandler = fun _ ctx -> task {
@@ -117,6 +126,13 @@ module Helpers =
             Content    = content
         }
         return! ctx.WriteHtmlViewAsync (renderFunc renderCtx)
+    }
+
+    /// Validate the anti cross-site request forgery token in the current request
+    let validateCsrf : HttpHandler = fun next ctx -> task {
+        match! (antiForgery ctx).IsRequestValidAsync ctx with
+        | true -> return! next ctx
+        | false -> return! RequestErrors.BAD_REQUEST "CSRF token invalid" earlyReturn ctx
     }
 
 
@@ -165,8 +181,24 @@ module Citizen =
     }
 
     // GET: /citizen/log-on
-    let logOn : HttpHandler =
-        render "Log On" (Citizen.logOn { ErrorMessage = None; Email = ""; Password = "" })
+    let logOn : HttpHandler = fun next ctx ->
+        render "Log On" (Citizen.logOn { ErrorMessage = None; Email = ""; Password = "" } (csrf ctx)) next ctx
+
+    // POST: /citizen/log-on
+    // TODO: convert
+    let doLogOn = validateCsrf >=> fun next ctx -> task {
+        let! form = ctx.BindJsonAsync<LogOnForm> ()
+        
+        match! Citizens.tryLogOn form.Email form.Password Auth.Passwords.verify Auth.Passwords.hash (now ctx) with
+        | Ok citizen ->
+            return!
+                json
+                    { Jwt       = Auth.createJwt citizen (authConfig ctx)
+                      CitizenId = CitizenId.toString citizen.Id
+                      Name      = Citizen.name citizen
+                    } next ctx
+        | Error msg -> return! RequestErrors.BAD_REQUEST msg next ctx
+    }
 
     // GET: /citizen/register
     let register : HttpHandler = fun next ctx ->
@@ -178,11 +210,11 @@ module Citizen =
         let qAndA = Support.questions ctx
         render "Register"
             (Citizen.register (fst qAndA[q1Index]) (fst qAndA[q2Index])
-                { RegisterViewModel.empty with Question1Index = q1Index; Question2Index = q2Index }) next ctx
+                { RegisterViewModel.empty with Question1Index = q1Index; Question2Index = q2Index } (csrf ctx)) next ctx
     
     
     // POST: /citizen/register
-    let doRegistration : HttpHandler = fun next ctx -> task {
+    let doRegistration = validateCsrf >=> fun next ctx -> task {
         let! form  = ctx.BindFormAsync<RegisterViewModel> ()
         let  qAndA = Support.questions ctx
         let mutable badForm = false
@@ -202,7 +234,7 @@ module Citizen =
         let refreshPage () =
             render "Register"
                 (Citizen.register (fst qAndA[form.Question1Index]) (fst qAndA[form.Question2Index])
-                    { form with Password = "" })
+                    { form with Password = "" } (csrf ctx))
         if badForm then
             let handle = sendError "The form posted was invalid; please complete it again" >=> register
             return! handle next ctx
@@ -246,71 +278,6 @@ module Citizen =
 /// Handlers for /api/citizen routes
 [<RequireQualifiedAccess>]
 module CitizenApi =
-    
-    // POST: /api/citizen/register
-    let register : HttpHandler = fun next ctx -> task {
-        let! form = ctx.BindJsonAsync<CitizenRegistrationForm> ()
-        if form.Password.Length < 8 || form.ConfirmPassword.Length < 8 || form.Password <> form.ConfirmPassword then
-            return! RequestErrors.BAD_REQUEST "Password out of range" next ctx
-        else
-            let now    = now ctx
-            let noPass =
-                { Citizen.empty with
-                    Id          = CitizenId.create ()
-                    Email       = form.Email
-                    FirstName   = form.FirstName
-                    LastName    = form.LastName
-                    DisplayName = noneIfBlank form.DisplayName
-                    JoinedOn    = now
-                    LastSeenOn  = now
-                }
-            let citizen = { noPass with PasswordHash = Auth.Passwords.hash noPass form.Password }
-            let security =
-                { SecurityInfo.empty with
-                    Id            = citizen.Id
-                    AccountLocked = true
-                    Token         = Some (Auth.createToken citizen)
-                    TokenUsage    = Some "confirm"
-                    TokenExpires  = Some (now + (Duration.FromDays 3))
-                }
-            let! success = Citizens.register citizen security
-            if success then
-                let! emailResponse = Email.sendAccountConfirmation citizen security
-                let logFac = logger ctx
-                let log    = logFac.CreateLogger "JobsJobsJobs.Api.Handlers.Citizen"
-                log.LogInformation $"Confirmation e-mail for {citizen.Email} received {emailResponse}"
-                return! ok next ctx
-            else
-                return! RequestErrors.CONFLICT "" next ctx
-    }
-    
-    // PATCH: /api/citizen/confirm
-    let confirmToken : HttpHandler = fun next ctx -> task {
-        let! form = ctx.BindJsonAsync<{| token : string |}> ()
-        let! valid = Citizens.confirmAccount form.token
-        return! json {| Valid = valid |} next ctx
-    }
-    
-    // DELETE: /api/citizen/deny
-    let denyToken : HttpHandler = fun next ctx -> task {
-        let! form = ctx.BindJsonAsync<{| token : string |}> ()
-        let! valid = Citizens.denyAccount form.token
-        return! json {| Valid = valid |} next ctx
-    }
-    
-    // POST: /api/citizen/log-on
-    let logOn : HttpHandler = fun next ctx -> task {
-        let! form = ctx.BindJsonAsync<LogOnForm> ()
-        match! Citizens.tryLogOn form.Email form.Password Auth.Passwords.verify Auth.Passwords.hash (now ctx) with
-        | Ok citizen ->
-            return!
-                json
-                    { Jwt       = Auth.createJwt citizen (authConfig ctx)
-                      CitizenId = CitizenId.toString citizen.Id
-                      Name      = Citizen.name citizen
-                    } next ctx
-        | Error msg -> return! RequestErrors.BAD_REQUEST msg next ctx
-    }
     
     // GET: /api/citizen/[id]
     let get citizenId : HttpHandler = authorize >=> fun next ctx -> task {
@@ -645,7 +612,10 @@ let allEndpoints = [
             route  "/log-on"     Citizen.logOn
             route  "/register"   Citizen.register
         ]
-        POST [ route "/register" Citizen.doRegistration ]
+        POST [
+            route "/log-on"   Citizen.doLogOn
+            route "/register" Citizen.doRegistration
+        ]
     ]
     GET_HEAD [ route "/how-it-works" Home.howItWorks ]
     GET_HEAD [ route "/privacy-policy" Home.privacyPolicy ]
@@ -655,15 +625,9 @@ let allEndpoints = [
             GET_HEAD [ routef "/%O" CitizenApi.get ]
             PATCH [
                 route "/account" CitizenApi.account
-                route "/confirm" CitizenApi.confirmToken
-            ]
-            POST [
-                route "/log-on"   CitizenApi.logOn
-                route "/register" CitizenApi.register
             ]
             DELETE [
                 route ""      CitizenApi.delete
-                route "/deny" CitizenApi.denyToken
             ]
         ]
         GET_HEAD [ route "/continents" Continent.all ]

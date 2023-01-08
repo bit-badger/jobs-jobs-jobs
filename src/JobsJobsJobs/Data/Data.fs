@@ -39,7 +39,7 @@ module DataConnection =
     /// The data source for the document store
     let mutable private dataSource : NpgsqlDataSource option = None
     
-    /// Get the connection string
+    /// Get a connection
     let connection () =
         match dataSource with
         | Some ds -> ds.OpenConnection () |> Sql.existingConnection
@@ -212,10 +212,9 @@ module Citizens =
         
     /// Register a citizen (saves citizen and security settings); returns false if the e-mail is already taken
     let register citizen (security : SecurityInfo) = backgroundTask {
-        let connProps = connection ()
-        use conn      = Sql.createConnection connProps
-        do! conn.OpenAsync ()
-        use! txn = conn.BeginTransactionAsync ()
+        let  connProps = connection ()
+        use  conn      = Sql.createConnection connProps
+        use! txn       = conn.BeginTransactionAsync ()
         try
             do! saveCitizen  citizen  connProps
             do! saveSecurity security connProps
