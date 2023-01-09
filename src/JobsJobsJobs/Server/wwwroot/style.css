@@ -155,7 +155,7 @@ nav.jjj-nav > a {
 }
 nav.jjj-nav > a > i {
   vertical-align: top;
-  margin-right: 1rem;
+  margin-right: .25rem;
 }
 nav.jjj-nav > a > i.mdi::before {
   line-height: 24px;

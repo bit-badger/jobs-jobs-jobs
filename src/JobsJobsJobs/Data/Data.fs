@@ -73,7 +73,9 @@ module DataConnection =
     
     /// Set up the data connection from the given configuration
     let setUp (cfg : IConfiguration) = backgroundTask {
-        dataSource <- Some (NpgsqlDataSource.Create (cfg.GetConnectionString "PostgreSQL"))
+        let builder = NpgsqlDataSourceBuilder (cfg.GetConnectionString "PostgreSQL")
+        let _ = builder.UseNodaTime ()
+        dataSource <- Some (builder.Build ())
         do! createTables ()
     }
 

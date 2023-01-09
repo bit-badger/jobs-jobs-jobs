@@ -76,6 +76,7 @@ this.jjj = {
 htmx.on("htmx:afterOnLoad", function (evt) {
   const hdrs = evt.detail.xhr.getAllResponseHeaders()
   // Show a message if there was one in the response
+  console.info(`Here are the headers: ${hdrs}`)
   if (hdrs.indexOf("x-toast") >= 0) {
     jjj.showToast(evt.detail.xhr.getResponseHeader("x-toast"))
   }

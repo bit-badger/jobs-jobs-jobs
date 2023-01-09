@@ -1,4 +1,4 @@
-module JobsJobsJobs.Api.Email
+module JobsJobsJobs.Server.Email
 
 open System.Net
 open JobsJobsJobs.Domain

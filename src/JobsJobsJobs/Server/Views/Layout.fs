@@ -63,7 +63,7 @@ let private links ctx =
             navLink "/listings/mine"   "sign-text"    "My Job Listings"
             navLink "/profile/edit"    "pencil"       "My Employment Profile"
             div [ _class "separator" ] []
-            navLink "/citizen/log-off" "mdiLogoutVariant" "Log Off"
+            navLink "/citizen/log-off" "logout-variant" "Log Off"
         else
             navLink "/"                "home"              "Home"
             navLink "/profile/seeking" "view-list-outline" "Job Seekers"

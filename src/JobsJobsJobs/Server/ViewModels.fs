@@ -2,6 +2,7 @@
 module JobsJobsJobs.ViewModels
 
 /// View model for the log on page
+[<CLIMutable>]
 type LogOnViewModel =
     {   /// A message regarding an error encountered during a log on attempt
         ErrorMessage : string option
@@ -11,6 +12,9 @@ type LogOnViewModel =
 
         /// The password of the user attempting to log on
         Password : string
+
+        /// The URL where the user should be redirected after logging on
+        ReturnTo : string option
     }
 
 

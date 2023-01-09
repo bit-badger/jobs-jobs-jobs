@@ -1,74 +1,68 @@
-/// The main API application for Jobs, Jobs, Jobs
-module JobsJobsJobs.Api.App
+/// The main web server application for Jobs, Jobs, Jobs
+module JobsJobsJobs.Server.App
 
-open Microsoft.AspNetCore.Builder
-open Microsoft.AspNetCore.Hosting
-open Microsoft.Extensions.DependencyInjection
-open Microsoft.Extensions.Hosting
+open System
+open System.Text
 open Giraffe
 open Giraffe.EndpointRouting
-
-/// Configure the ASP.NET Core pipeline to use Giraffe
-let configureApp (app : IApplicationBuilder) =
-    app.UseCors(fun p -> p.AllowAnyOrigin().AllowAnyHeader() |> ignore)
-        .UseStaticFiles()
-        .UseRouting()
-        .UseAuthentication()
-        .UseAuthorization()
-        .UseGiraffeErrorHandler(Handlers.Error.unexpectedError)
-        .UseEndpoints(fun e ->
-            e.MapGiraffeEndpoints Handlers.allEndpoints
-            e.MapFallbackToFile "index.html" |> ignore)
-    |> ignore
-
-open System.Text
-open Microsoft.AspNetCore.Authentication.JwtBearer
-open Microsoft.Extensions.Configuration
-open Microsoft.IdentityModel.Tokens
-open NodaTime
 open JobsJobsJobs.Data
-open JobsJobsJobs.Domain.SharedTypes
+open Microsoft.AspNetCore.Authentication.Cookies
+open Microsoft.AspNetCore.Builder
+open Microsoft.AspNetCore.Http
+open Microsoft.AspNetCore.HttpOverrides
+open Microsoft.Extensions.Caching.Distributed
+open Microsoft.Extensions.Configuration
+open Microsoft.Extensions.DependencyInjection
+open Microsoft.Extensions.Hosting
+open NodaTime
 
-/// Configure dependency injection
-let configureServices (svc : IServiceCollection) =
+
+[<EntryPoint>]
+let main args =
+    
+    let builder = WebApplication.CreateBuilder args
+    let svc     = builder.Services
+
     let _ = svc.AddGiraffe ()
     let _ = svc.AddSingleton<IClock> SystemClock.Instance
     let _ = svc.AddLogging ()
     let _ = svc.AddCors ()
-    
     let _ = svc.AddSingleton<Json.ISerializer> (SystemTextJson.Serializer Json.options)
-    let cfg = svc.BuildServiceProvider().GetRequiredService<IConfiguration> ()
-    
-    // Set up JWTs for API access
-    let _ =
-        svc.AddAuthentication(fun o ->
-            o.DefaultAuthenticateScheme <- JwtBearerDefaults.AuthenticationScheme
-            o.DefaultChallengeScheme    <- JwtBearerDefaults.AuthenticationScheme
-            o.DefaultScheme             <- JwtBearerDefaults.AuthenticationScheme)
-            .AddJwtBearer(fun opt ->
-                opt.RequireHttpsMetadata      <- false
-                opt.TokenValidationParameters <- TokenValidationParameters (
-                    ValidateIssuer   = true,
-                    ValidateAudience = true,
-                    ValidAudience    = "https://noagendacareers.com",
-                    ValidIssuer      = "https://noagendacareers.com",
-                    IssuerSigningKey = SymmetricSecurityKey (
-                        Encoding.UTF8.GetBytes (cfg.GetSection "Auth").["ServerSecret"])))
+    let _ = svc.Configure<ForwardedHeadersOptions>(fun (opts : ForwardedHeadersOptions) ->
+                opts.ForwardedHeaders <- ForwardedHeaders.XForwardedFor ||| ForwardedHeaders.XForwardedProto)
+    let _ = svc.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+                .AddCookie(fun o ->
+                    o.ExpireTimeSpan    <- TimeSpan.FromMinutes 60
+                    o.SlidingExpiration <- true
+                    o.AccessDeniedPath  <- "/error/not-authorized"
+                    o.ClaimsIssuer      <- "https://noagendacareers.com")
     let _ = svc.AddAuthorization ()
-    let _ = svc.Configure<AuthOptions> (cfg.GetSection "Auth")
+    let _ = svc.AddAntiforgery ()
     
     // Set up the data store
+    let cfg = svc.BuildServiceProvider().GetRequiredService<IConfiguration> ()
     let _ = DataConnection.setUp cfg |> Async.AwaitTask |> Async.RunSynchronously
-    ()
+    let _ = svc.AddSingleton<IDistributedCache> (fun _ -> DistributedCache () :> IDistributedCache)
+    let _ = svc.AddSession(fun opts ->
+                opts.IdleTimeout        <- TimeSpan.FromMinutes 60
+                opts.Cookie.HttpOnly    <- true
+                opts.Cookie.IsEssential <- true)
+    
+    let app = builder.Build ()
 
-[<EntryPoint>]
-let main _ =
-    Host.CreateDefaultBuilder()
-        .ConfigureWebHostDefaults(fun webHostBuilder ->
-            webHostBuilder
-                .Configure(configureApp)
-                .ConfigureServices(configureServices)
-            |> ignore)
-        .Build()
-        .Run ()
+    let _ = app.UseForwardedHeaders ()
+    let _ = app.UseCookiePolicy (CookiePolicyOptions (MinimumSameSitePolicy = SameSiteMode.Strict))
+    let _ = app.UseStaticFiles ()
+    let _ = app.UseRouting ()
+    let _ = app.UseAuthentication ()
+    let _ = app.UseAuthorization ()
+    let _ = app.UseSession ()
+    let _ = app.UseGiraffeErrorHandler Handlers.Error.unexpectedError
+    let _ = app.UseEndpoints (
+        fun e ->
+            e.MapGiraffeEndpoints Handlers.allEndpoints
+            e.MapFallbackToFile "index.html" |> ignore)
+
+    app.Run ()
+
     0

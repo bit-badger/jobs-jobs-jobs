@@ -68,7 +68,7 @@ let dashboard (citizen : Citizen) (profile : Profile option) profileCount =
                     h5 [ _class "card-header" ] [ rawText "Other Citizens" ]
                     div [ _class "card-body" ] [
                         h6 [ _class "card-subtitle mb-3 text-muted fst-italic" ] [
-                            rawText (if profileCount = 0 then "No" else $"{profileCount} Total")
+                            rawText (if profileCount = 0L then "No" else $"{profileCount} Total")
                             rawText " Employment Profile"; rawText (if profileCount <> 1 then "s" else "")
                         ]
                         p [ _class "card-text" ] [
@@ -123,6 +123,9 @@ let logOn (m : LogOnViewModel) csrf =
         | None -> ()
         form [ _class "row g-3 pb-3"; _hxPost "/citizen/log-on" ] [
             antiForgery csrf
+            match m.ReturnTo with
+            | Some returnTo -> input [ _type "hidden"; _name (nameof m.ReturnTo); _value returnTo ]
+            | None -> ()
             div [ _class "col-12 col-md-6" ] [
                 div [ _class "form-floating" ] [
                     input [ _type        "email"

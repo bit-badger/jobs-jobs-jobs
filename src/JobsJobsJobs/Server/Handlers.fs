@@ -1,5 +1,5 @@
 /// Route handlers for Giraffe endpoints
-module JobsJobsJobs.Api.Handlers
+module JobsJobsJobs.Server.Handlers
 
 open Giraffe
 open JobsJobsJobs.Domain
@@ -15,9 +15,12 @@ module Vue =
     let app = htmlFile "wwwroot/index.html"
 
 
+open Giraffe.Htmx
+
 /// Handlers for error conditions
 module Error =
   
+    open System.Net
     open System.Threading.Tasks
 
     /// URL prefixes for the Vue app
@@ -39,10 +42,22 @@ module Error =
             log.LogInformation "Returning 404"
             return! RequestErrors.NOT_FOUND $"The URL {path} was not recognized as a valid URL" next ctx
     }
-  
-    /// Handler that returns a 403 NOT AUTHORIZED response
-    let notAuthorized : HttpHandler =
-        setStatusCode 403 >=> fun _ _ -> Task.FromResult<HttpContext option> None
+    
+    /// Is the request from htmx?
+    let isHtmx (ctx : HttpContext) =
+        ctx.Request.IsHtmx && not ctx.Request.IsHtmxRefresh
+    
+    /// Handle unauthorized actions, redirecting to log on for GETs, otherwise returning a 401 Not Authorized response
+    let notAuthorized : HttpHandler = fun next ctx ->
+        if ctx.Request.Method = "GET" then
+            let redirectUrl = $"/user/log-on?returnUrl={WebUtility.UrlEncode ctx.Request.Path}"
+            if isHtmx ctx then (withHxRedirect redirectUrl >=> redirectTo false redirectUrl) next ctx
+            else redirectTo false redirectUrl next ctx
+        else
+            if isHtmx ctx then
+                (setHttpHeader "X-Toast" $"error|||You are not authorized to access the URL {ctx.Request.Path.Value}"
+                 >=> setStatusCode 401) earlyReturn ctx
+            else setStatusCode 401 earlyReturn ctx
 
     /// Handler to log 500s and return a message we can display in the application
     let unexpectedError (ex: exn) (log : ILogger) =
@@ -57,7 +72,7 @@ open NodaTime
 module Helpers =
 
     open System.Security.Claims
-    open Giraffe.Htmx
+    open System.Text.Json
     open Microsoft.AspNetCore.Antiforgery
     open Microsoft.Extensions.Configuration
     open Microsoft.Extensions.DependencyInjection
@@ -108,16 +123,51 @@ module Helpers =
     let csrf ctx =
         (antiForgery ctx).GetAndStoreTokens ctx
     
+    /// The key to use to indicate if we have loaded the session
+    let private sessionLoadedKey = "session-loaded"
+
+    /// Load the session if we have not yet
+    let private loadSession (ctx : HttpContext) = task {
+        if not (ctx.Items.ContainsKey sessionLoadedKey) then
+            do! ctx.Session.LoadAsync ()
+            ctx.Items.Add (sessionLoadedKey, "yes")
+    }
+
+    /// Save the session if we have loaded it
+    let private saveSession (ctx : HttpContext) = task {
+        if ctx.Items.ContainsKey sessionLoadedKey then do! ctx.Session.CommitAsync ()
+    }
+
+    /// Get the messages from the session (destructively)
+    let messages ctx = task {
+        do! loadSession ctx
+        let msgs =
+            match ctx.Session.GetString "messages" with
+            | null -> []
+            | m -> JsonSerializer.Deserialize<string list> m
+        if not (List.isEmpty msgs) then ctx.Session.Remove "messages"
+        return List.rev msgs
+    }
+
     /// Add a message to the response
-    let sendMessage (msg : string) : HttpHandler =
-        setHttpHeader "X-Message" msg
+    let addMessage (level : string) (msg : string) ctx = task {
+        do! loadSession ctx
+        let! msgs = messages ctx
+        ctx.Session.SetString ("messages", JsonSerializer.Serialize ($"{level}|||{msg}" :: msgs))
+    }
+    
+    /// Add a success message to the response
+    let addSuccess msg ctx = task {
+        do! addMessage "success" msg ctx
+    }
     
     /// Add an error message to the response
-    let sendError (msg : string) : HttpHandler =
-        sendMessage $"error|||{msg}"
+    let addError msg ctx = task {
+        do! addMessage "error" msg ctx
+    }
     
     /// Render a page-level view
-    let render pageTitle content : HttpHandler = fun _ ctx -> task {
+    let render pageTitle (next : HttpFunc) (ctx : HttpContext) content = task {
         let renderFunc = if ctx.Request.IsHtmx && not ctx.Request.IsHtmxRefresh then Layout.partial else Layout.full
         let renderCtx : Layout.PageRenderContext = {
             IsLoggedOn = Option.isSome (tryUser ctx)
@@ -125,8 +175,17 @@ module Helpers =
             PageTitle  = pageTitle
             Content    = content
         }
-        return! ctx.WriteHtmlViewAsync (renderFunc renderCtx)
+        let! msgs = messages ctx
+        let! newCtx = task {
+            if List.isEmpty msgs then return Some ctx
+            else return! (msgs |> List.map (fun m -> setHttpHeader "X-Toast" m) |> List.reduce (>=>)) next ctx
+        }
+        return! newCtx.Value.WriteHtmlViewAsync (renderFunc renderCtx)
     }
+
+    /// Render as a composable HttpHandler
+    let renderHandler pageTitle content : HttpHandler = fun next ctx ->
+        render pageTitle next ctx content
 
     /// Validate the anti cross-site request forgery token in the current request
     let validateCsrf : HttpHandler = fun next ctx -> task {
@@ -135,16 +194,42 @@ module Helpers =
         | false -> return! RequestErrors.BAD_REQUEST "CSRF token invalid" earlyReturn ctx
     }
 
+    /// Require a user to be logged on for a route
+    let requireUser = requiresAuthentication Error.notAuthorized
+    
+    /// Is the request from htmx?
+    // TODO: need to only define this once
+    let isHtmx (ctx : HttpContext) =
+        ctx.Request.IsHtmx && not ctx.Request.IsHtmxRefresh
+
+    /// Redirect to another page, saving the session before redirecting
+    let redirectToGet (url : string) next ctx = task {
+        do! saveSession ctx
+        let action =
+            if     not (isNull url)
+                && not (url = "")
+                        // "/" or "/foo" but not "//" or "/\"
+                && (   (url[0] = '/' && (url.Length = 1 || (url[1] <> '/' && url[1] <> '\\')))
+                        // "~/" or "~/foo"
+                    || (url.Length > 1 && url[0] = '~' && url[1] = '/')) then
+                if isHtmx ctx then withHxRedirect url else redirectTo false url
+            else RequestErrors.BAD_REQUEST ""
+        return! action next ctx
+    }
+
 
 open System
 open JobsJobsJobs.Data
 open JobsJobsJobs.ViewModels
 
+
 /// Handlers for /citizen routes
 [<RequireQualifiedAccess>]
 module Citizen =
     
-    open Microsoft.Extensions.Configuration
+    open Microsoft.AspNetCore.Authentication
+    open Microsoft.AspNetCore.Authentication.Cookies
+    open System.Security.Claims
 
     /// Support module for /citizen routes
     module private Support =
@@ -169,49 +254,71 @@ module Citizen =
                 qAndA
         
     // GET: /citizen/confirm/[token]
-    let confirm token = fun next ctx -> task {
+    let confirm token next ctx = task {
         let! isConfirmed = Citizens.confirmAccount token
-        return! render "Account Confirmation" (Citizen.confirmAccount isConfirmed) next ctx
+        return! Citizen.confirmAccount isConfirmed |> render "Account Confirmation" next ctx
+    }
+
+    // GET: /citizen/dashboard
+    let dashboard = requireUser >=> fun next ctx -> task {
+        let  citizenId = CitizenId.ofString (tryUser ctx).Value
+        let! citizen   = Citizens.findById citizenId
+        let! profile   = Profiles.findById citizenId
+        let! prfCount  = Profiles.count ()
+        return! Citizen.dashboard citizen.Value profile prfCount |> render "Dashboard" next ctx
     }
 
     // GET: /citizen/deny/[token]
-    let deny token = fun next ctx -> task {
+    let deny token next ctx = task {
         let! wasDeleted = Citizens.denyAccount token
-        return! render "Account Deletion" (Citizen.denyAccount wasDeleted) next ctx
+        return! Citizen.denyAccount wasDeleted |> render "Account Deletion" next ctx
+    }
+
+    // GET: /citizen/log-off
+    let logOff = requireUser >=> fun next ctx -> task {
+        do! ctx.SignOutAsync CookieAuthenticationDefaults.AuthenticationScheme
+        do! addSuccess "Log off successful" ctx
+        return! redirectToGet "/" next ctx
     }
 
     // GET: /citizen/log-on
     let logOn : HttpHandler = fun next ctx ->
-        render "Log On" (Citizen.logOn { ErrorMessage = None; Email = ""; Password = "" } (csrf ctx)) next ctx
+        let returnTo =
+            if ctx.Request.Query.ContainsKey "returnUrl" then Some ctx.Request.Query["returnUrl"].[0] else None
+        Citizen.logOn { ErrorMessage = None; Email = ""; Password = ""; ReturnTo = returnTo } (csrf ctx)
+        |> render "Log On" next ctx
 
     // POST: /citizen/log-on
-    // TODO: convert
     let doLogOn = validateCsrf >=> fun next ctx -> task {
-        let! form = ctx.BindJsonAsync<LogOnForm> ()
-        
+        let! form = ctx.BindFormAsync<LogOnViewModel> ()
         match! Citizens.tryLogOn form.Email form.Password Auth.Passwords.verify Auth.Passwords.hash (now ctx) with
         | Ok citizen ->
-            return!
-                json
-                    { Jwt       = Auth.createJwt citizen (authConfig ctx)
-                      CitizenId = CitizenId.toString citizen.Id
-                      Name      = Citizen.name citizen
-                    } next ctx
-        | Error msg -> return! RequestErrors.BAD_REQUEST msg next ctx
+            let claims = seq {
+                Claim (ClaimTypes.NameIdentifier, CitizenId.toString citizen.Id)
+                Claim (ClaimTypes.Name,           Citizen.name citizen)
+            }
+            let identity = ClaimsIdentity (claims, CookieAuthenticationDefaults.AuthenticationScheme)
+
+            do! ctx.SignInAsync (identity.AuthenticationType, ClaimsPrincipal identity,
+                AuthenticationProperties (IssuedUtc = DateTimeOffset.UtcNow))
+            do! addSuccess "Log on successful" ctx
+            return! redirectToGet (defaultArg form.ReturnTo "/citizen/dashboard") next ctx
+        | Error msg ->
+            do! addError msg ctx
+            return! Citizen.logOn { form with Password = "" } (csrf ctx) |> render "Log On" next ctx
     }
 
     // GET: /citizen/register
-    let register : HttpHandler = fun next ctx ->
+    let register next ctx =
         // Get two different indexes for NA-knowledge challenge questions
         let q1Index = System.Random.Shared.Next(0, 5)
         let mutable q2Index = System.Random.Shared.Next(0, 5)
         while q1Index = q2Index do
             q2Index <- System.Random.Shared.Next(0, 5)
         let qAndA = Support.questions ctx
-        render "Register"
-            (Citizen.register (fst qAndA[q1Index]) (fst qAndA[q2Index])
-                { RegisterViewModel.empty with Question1Index = q1Index; Question2Index = q2Index } (csrf ctx)) next ctx
-    
+        Citizen.register (fst qAndA[q1Index]) (fst qAndA[q2Index])
+            { RegisterViewModel.empty with Question1Index = q1Index; Question2Index = q2Index } (csrf ctx)
+        |> render "Register" next ctx
     
     // POST: /citizen/register
     let doRegistration = validateCsrf >=> fun next ctx -> task {
@@ -232,12 +339,12 @@ module Citizen =
                  "Question answers are incorrect"
         ]
         let refreshPage () =
-            render "Register"
-                (Citizen.register (fst qAndA[form.Question1Index]) (fst qAndA[form.Question2Index])
-                    { form with Password = "" } (csrf ctx))
+            Citizen.register (fst qAndA[form.Question1Index]) (fst qAndA[form.Question2Index])
+                    { form with Password = "" } (csrf ctx) |> renderHandler "Register"
+                
         if badForm then
-            let handle = sendError "The form posted was invalid; please complete it again" >=> register
-            return! handle next ctx
+            do! addError "The form posted was invalid; please complete it again" ctx
+            return! register next ctx
         else if List.isEmpty errors then
             let now    = now ctx
             let noPass =
@@ -265,15 +372,16 @@ module Citizen =
                 let  logFac        = logger ctx
                 let  log           = logFac.CreateLogger "JobsJobsJobs.Handlers.Citizen"
                 log.LogInformation $"Confirmation e-mail for {citizen.Email} received {emailResponse}"
-                return! render "Registration Successful" Citizen.registered next ctx
+                return! Citizen.registered |> render "Registration Successful" next ctx
             else
-                return! (sendError "There is already an account registered to the e-mail address provided"
-                         >=> refreshPage ()) next ctx
+                do! addError "There is already an account registered to the e-mail address provided" ctx
+                return! refreshPage () next ctx
         else
             let errMsg = String.Join ("</li><li>", errors)
-            return! (sendError $"Please correct the following errors:<ul><li>{errMsg}</li></ul>" >=> refreshPage ())
-                    next ctx
+            do! addError $"Please correct the following errors:<ul><li>{errMsg}</li></ul>" ctx
+            return! refreshPage () next ctx
     }
+
 
 /// Handlers for /api/citizen routes
 [<RequireQualifiedAccess>]
@@ -338,19 +446,19 @@ module Home =
 
     // GET: /
     let home : HttpHandler =
-        render "Welcome" Home.home
+        renderHandler "Welcome" Home.home
 
     // GET: /how-it-works
     let howItWorks : HttpHandler =
-        render "How It Works" Home.howItWorks
+        renderHandler "How It Works" Home.howItWorks
     
     // GET: /privacy-policy
     let privacyPolicy : HttpHandler =
-        render "Privacy Policy" Home.privacyPolicy
+        renderHandler "Privacy Policy" Home.privacyPolicy
     
     // GET: /terms-of-service
     let termsOfService : HttpHandler =
-        render "Terms of Service" Home.termsOfService
+        renderHandler "Terms of Service" Home.termsOfService
 
 
 /// Handlers for /api/listing[s] routes
@@ -608,7 +716,9 @@ let allEndpoints = [
     subRoute "/citizen" [
         GET_HEAD [
             routef "/confirm/%s" Citizen.confirm
+            route  "/dashboard"  Citizen.dashboard
             routef "/deny/%s"    Citizen.deny
+            route  "/log-off"    Citizen.logOff
             route  "/log-on"     Citizen.logOn
             route  "/register"   Citizen.register
         ]

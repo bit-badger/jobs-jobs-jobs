@@ -1,5 +1,5 @@
 /// Authorization / authentication functions
-module JobsJobsJobs.Api.Auth
+module JobsJobsJobs.Server.Auth
 
 open System
 open System.Text
