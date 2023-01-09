@@ -17,6 +17,14 @@ module Vue =
 
 open Giraffe.Htmx
 
+[<AutoOpen>]
+module private HtmxHelpers =
+    
+    /// Is the request from htmx?
+    let isHtmx (ctx : HttpContext) =
+        ctx.Request.IsHtmx && not ctx.Request.IsHtmxRefresh
+
+
 /// Handlers for error conditions
 module Error =
   
@@ -42,10 +50,6 @@ module Error =
             log.LogInformation "Returning 404"
             return! RequestErrors.NOT_FOUND $"The URL {path} was not recognized as a valid URL" next ctx
     }
-    
-    /// Is the request from htmx?
-    let isHtmx (ctx : HttpContext) =
-        ctx.Request.IsHtmx && not ctx.Request.IsHtmxRefresh
     
     /// Handle unauthorized actions, redirecting to log on for GETs, otherwise returning a 401 Not Authorized response
     let notAuthorized : HttpHandler = fun next ctx ->
@@ -139,7 +143,7 @@ module Helpers =
     }
 
     /// Get the messages from the session (destructively)
-    let messages ctx = task {
+    let popMessages ctx = task {
         do! loadSession ctx
         let msgs =
             match ctx.Session.GetString "messages" with
@@ -152,7 +156,7 @@ module Helpers =
     /// Add a message to the response
     let addMessage (level : string) (msg : string) ctx = task {
         do! loadSession ctx
-        let! msgs = messages ctx
+        let! msgs = popMessages ctx
         ctx.Session.SetString ("messages", JsonSerializer.Serialize ($"{level}|||{msg}" :: msgs))
     }
     
@@ -167,20 +171,17 @@ module Helpers =
     }
     
     /// Render a page-level view
-    let render pageTitle (next : HttpFunc) (ctx : HttpContext) content = task {
-        let renderFunc = if ctx.Request.IsHtmx && not ctx.Request.IsHtmxRefresh then Layout.partial else Layout.full
-        let renderCtx : Layout.PageRenderContext = {
+    let render pageTitle (_ : HttpFunc) (ctx : HttpContext) content = task {
+        let! messages = popMessages ctx
+        let  renderCtx : Layout.PageRenderContext = {
             IsLoggedOn = Option.isSome (tryUser ctx)
             CurrentUrl = ctx.Request.Path.Value
             PageTitle  = pageTitle
             Content    = content
+            Messages   = messages
         }
-        let! msgs = messages ctx
-        let! newCtx = task {
-            if List.isEmpty msgs then return Some ctx
-            else return! (msgs |> List.map (fun m -> setHttpHeader "X-Toast" m) |> List.reduce (>=>)) next ctx
-        }
-        return! newCtx.Value.WriteHtmlViewAsync (renderFunc renderCtx)
+        let renderFunc = if isHtmx ctx then Layout.partial else Layout.full
+        return! ctx.WriteHtmlViewAsync (renderFunc renderCtx)
     }
 
     /// Render as a composable HttpHandler
@@ -197,23 +198,17 @@ module Helpers =
     /// Require a user to be logged on for a route
     let requireUser = requiresAuthentication Error.notAuthorized
     
-    /// Is the request from htmx?
-    // TODO: need to only define this once
-    let isHtmx (ctx : HttpContext) =
-        ctx.Request.IsHtmx && not ctx.Request.IsHtmxRefresh
-
     /// Redirect to another page, saving the session before redirecting
-    let redirectToGet (url : string) next ctx = task {
+    let redirectToGet url next ctx = task {
         do! saveSession ctx
         let action =
-            if     not (isNull url)
-                && not (url = "")
+            if Option.isSome (noneIfEmpty url)
                         // "/" or "/foo" but not "//" or "/\"
                 && (   (url[0] = '/' && (url.Length = 1 || (url[1] <> '/' && url[1] <> '\\')))
                         // "~/" or "~/foo"
                     || (url.Length > 1 && url[0] = '~' && url[1] = '/')) then
                 if isHtmx ctx then withHxRedirect url else redirectTo false url
-            else RequestErrors.BAD_REQUEST ""
+            else RequestErrors.BAD_REQUEST "Invalid redirect URL"
         return! action next ctx
     }
 
@@ -445,7 +440,7 @@ module Continent =
 module Home =
 
     // GET: /
-    let home : HttpHandler =
+    let home =
         renderHandler "Welcome" Home.home
 
     // GET: /how-it-works

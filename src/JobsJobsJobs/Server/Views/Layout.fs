@@ -17,6 +17,9 @@ type PageRenderContext =
 
         /// The page content
         Content : XmlNode
+
+        /// User messages to be displayed
+        Messages : string list
     }
 
 /// Append the application name to the page title
@@ -130,6 +133,24 @@ let private htmlFoot =
         ]
     ]
 
+/// Render any messages
+let private messages ctx =
+    ctx.Messages
+    |> List.map (fun msg ->
+        let parts   = msg.Split "|||"
+        let level   = if parts[0] = "error" then "danger" else parts[0]
+        let message = parts[1]
+        div [ _class $"alert alert-{level} alert-dismissable fade show d-flex justify-content-between p-2 mb-1 mt-1"
+              _roleAlert ] [
+            p [ _class "mb-0" ] [
+                if level <> "success" then
+                    strong [] [ rawText (parts[0].ToUpperInvariant ()); rawText ": " ]
+                rawText message
+            ]
+            button [ _type "button"; _class "btn-close"; _data "bs-dismiss" "alert"; _ariaLabel "Close" ] []
+        ])
+    |> div [ _id "alerts" ]
+    
 /// Create a full view
 let full ctx =
     html [ _lang "en" ] [
@@ -139,7 +160,10 @@ let full ctx =
                 yield! sideNavs ctx
                 div [ _class "jjj-main" ] [
                     yield! titleBars
-                    main [ _class "jjj-content container-fluid" ] [ ctx.Content ]
+                    main [ _class "jjj-content container-fluid" ] [
+                        messages ctx
+                        ctx.Content
+                    ]
                     htmlFoot
                 ]
             ]
@@ -149,6 +173,13 @@ let full ctx =
                      _integrity   "sha384-A3rJD856KowSb7dwlZdYEkO39Gagi7vIsF0jrRAoQmDKKtQBHUuLZ9AsSv4jD4Xa"
                      _crossorigin "anonymous" ] []
             script [ _src "/script.js" ] []
+            template [ _id "alertTemplate" ] [
+                div [ _class $"alert alert-dismissable fade show d-flex justify-content-between p-2 mb-1 mt-1"
+                      _roleAlert ] [
+                    p [ _class "mb-0" ] []
+                    button [ _type "button"; _class "btn-close"; _data "bs-dismiss" "alert"; _ariaLabel "Close" ] []
+                ]
+            ]
         ]
     ]
 
@@ -162,7 +193,10 @@ let partial ctx =
             yield! sideNavs ctx
             div [ _class "jjj-main" ] [
                 yield! titleBars
-                main [ _class "jjj-content container-fluid" ] [ ctx.Content ]
+                main [ _class "jjj-content container-fluid" ] [
+                    messages ctx
+                    ctx.Content
+                ]
                 htmlFoot
             ]
         ]

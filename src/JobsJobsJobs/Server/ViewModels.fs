@@ -2,7 +2,7 @@
 module JobsJobsJobs.ViewModels
 
 /// View model for the log on page
-[<CLIMutable>]
+[<CLIMutable; NoComparison; NoEquality>]
 type LogOnViewModel =
     {   /// A message regarding an error encountered during a log on attempt
         ErrorMessage : string option
@@ -19,7 +19,7 @@ type LogOnViewModel =
 
 
 /// View model for the registration page
-[<CLIMutable>]
+[<CLIMutable; NoComparison; NoEquality>]
 type RegisterViewModel =
     {   /// The user's first name
         FirstName : string
