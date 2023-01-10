@@ -54,7 +54,7 @@ module Error =
     /// Handle unauthorized actions, redirecting to log on for GETs, otherwise returning a 401 Not Authorized response
     let notAuthorized : HttpHandler = fun next ctx ->
         if ctx.Request.Method = "GET" then
-            let redirectUrl = $"/user/log-on?returnUrl={WebUtility.UrlEncode ctx.Request.Path}"
+            let redirectUrl = $"/citizen/log-on?returnUrl={WebUtility.UrlEncode ctx.Request.Path}"
             if isHtmx ctx then (withHxRedirect redirectUrl >=> redirectTo false redirectUrl) next ctx
             else redirectTo false redirectUrl next ctx
         else
@@ -256,7 +256,7 @@ module Citizen =
 
     // GET: /citizen/dashboard
     let dashboard = requireUser >=> fun next ctx -> task {
-        let  citizenId = CitizenId.ofString (tryUser ctx).Value
+        let  citizenId = currentCitizenId ctx
         let! citizen   = Citizens.findById citizenId
         let! profile   = Profiles.findById citizenId
         let! prfCount  = Profiles.count ()
@@ -561,9 +561,24 @@ module Listing =
     }
   
 
-/// Handlers for /api/profile routes
+/// Handlers for /profile routes
 [<RequireQualifiedAccess>]
 module Profile =
+
+    // GET: /profile/edit
+    let edit = requireUser >=> fun next ctx -> task {
+        let! profile    = Profiles.findById (currentCitizenId ctx)
+        let! continents = Continents.all ()
+        let  isNew      = Option.isNone profile
+        let  form       = if isNew then EditProfileViewModel.empty else EditProfileViewModel.fromProfile profile.Value
+        let  title      = $"""{if isNew then "Create" else "Edit"} Profile"""
+        return! Profile.edit form continents isNew (csrf ctx) |> render title next ctx
+    }
+
+
+/// Handlers for /api/profile routes
+[<RequireQualifiedAccess>]
+module ProfileApi =
 
     // GET: /api/profile
     //      This returns the current citizen's profile, or a 204 if it is not found (a citizen not having a profile yet
@@ -724,7 +739,13 @@ let allEndpoints = [
     ]
     GET_HEAD [ route "/how-it-works" Home.howItWorks ]
     GET_HEAD [ route "/privacy-policy" Home.privacyPolicy ]
+    subRoute "/profile" [
+        GET_HEAD [
+            route "/edit" Profile.edit
+        ]
+    ]
     GET_HEAD [ route "/terms-of-service" Home.termsOfService ]
+    
     subRoute "/api" [
         subRoute "/citizen" [
             GET_HEAD [ routef "/%O" CitizenApi.get ]
@@ -749,15 +770,15 @@ let allEndpoints = [
         ]
         subRoute "/profile" [
             GET_HEAD [
-                route  ""               Profile.current
-                route  "/count"         Profile.count
-                routef "/%O"            Profile.get
-                routef "/%O/view"       Profile.view
-                route  "/public-search" Profile.publicSearch
-                route  "/search"        Profile.search
+                route  ""               ProfileApi.current
+                route  "/count"         ProfileApi.count
+                routef "/%O"            ProfileApi.get
+                routef "/%O/view"       ProfileApi.view
+                route  "/public-search" ProfileApi.publicSearch
+                route  "/search"        ProfileApi.search
             ]
-            PATCH [ route "/employment-found" Profile.employmentFound ]
-            POST [ route "" Profile.save ]
+            PATCH [ route "/employment-found" ProfileApi.employmentFound ]
+            POST [ route "" ProfileApi.save ]
         ]
         subRoute "/success" [
             GET_HEAD [
