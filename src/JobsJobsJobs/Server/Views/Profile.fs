@@ -7,6 +7,40 @@ open Giraffe.ViewEngine
 open Giraffe.ViewEngine.Htmx
 open JobsJobsJobs.ViewModels
 
+let skillEdit (skills : SkillForm array) =
+    let mapToInputs (idx : int) (skill : SkillForm) =
+        div [ _class "row pb-3" ] [
+            div [ _class "col-2 col-md-1 align-self-center" ] [
+                button [ _class "btn btn-sm btn-outline-danger rounded-pill"; _title "Delete"
+                         _onclick $"jjj.removeSkill('{skill.Id}')" ] [
+                    rawText "&nbsp;&minus;&nbsp;"
+                ]
+            ]
+            div [ _class "col-10 col-md-6" ] [
+                div [ _class "form-floating" ] [
+                    input [ _type "text"; _id $"skillDesc{skill.Id}"; _name $"Skills[{idx}].Description"
+                            _class "form-control"; _placeholder "A skill (language, design technique, process, etc.)"
+                            _maxlength "200"; _value skill.Description; _required ]
+                    label [ _class "jjj-label"; _for $"skillDesc{skill.Id}" ] [ rawText "Skill" ]
+                ]
+                div [ _class "form-text" ] [ rawText "A skill (language, design technique, process, etc.)" ]
+            ]
+            div [ _class "col-12 col-md-5" ] [
+                div [ _class "form-floating" ] [
+                    input [ _type "text"; _id $"skillNotes{skill.Id}"; _name $"Skills[{idx}].Notes";
+                            _class "form-control"; _maxlength "1000"
+                            _placeholder "A further description of the skill (1,000 characters max)"
+                            _value (defaultArg skill.Notes "") ]
+                    label [ _class "jjj-label"; _for $"skillNotes{skill.Id}" ] [ rawText "Notes" ]
+                ]
+                div [ _class "form-text" ] [ rawText "A further description of the skill" ]
+            ]
+        ]
+    template [ _id "newSkill" ] [ mapToInputs -1 { Id = ""; Description = ""; Notes = None } ]
+    :: (skills
+        |> Array.mapi mapToInputs
+        |> List.ofArray)
+
 /// The profile edit page
 let edit (m : EditProfileViewModel) continents isNew csrf =
     article [] [
@@ -68,8 +102,7 @@ let edit (m : EditProfileViewModel) continents isNew csrf =
                     ]
                 ]
             ]
-            //<profile-skill-edit v-for="(skill, idx) in profile.skills" :key="skill.id" v-model="profile.skills[idx]"
-            //                    @remove="removeSkill(skill.id)" @input="v$.skills.$touch" />
+            yield! skillEdit m.Skills
             div [ _class "col-12" ] [
                 hr []
                 h4 [] [ rawText "Experience" ]

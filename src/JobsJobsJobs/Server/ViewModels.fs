@@ -44,7 +44,7 @@ type EditProfileViewModel =
         Experience : string option
         
         /// The skills for the user
-        Skills : SkillForm list
+        Skills : SkillForm array
     }
 
 /// Support functions for the ProfileForm type
@@ -60,7 +60,7 @@ module EditProfileViewModel =
             FullTime            = false
             Biography           = ""
             Experience          = None
-            Skills              = [ { Id = ""; Description = ""; Notes = None } ]
+            Skills              = [||]
         }
     
     /// Create an instance of this form from the given profile
@@ -79,6 +79,7 @@ module EditProfileViewModel =
                                           Description = s.Description
                                           Notes       = s.Notes
                                       })
+                                  |> Array.ofList
         }
 
 

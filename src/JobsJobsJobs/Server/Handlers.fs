@@ -77,6 +77,7 @@ module Helpers =
 
     open System.Security.Claims
     open System.Text.Json
+    open System.Text.RegularExpressions
     open Microsoft.AspNetCore.Antiforgery
     open Microsoft.Extensions.Configuration
     open Microsoft.Extensions.DependencyInjection
@@ -198,15 +199,14 @@ module Helpers =
     /// Require a user to be logged on for a route
     let requireUser = requiresAuthentication Error.notAuthorized
     
+    /// Regular expression to validate that a URL is a local URL
+    let isLocal = Regex """^/[^\/\\].*"""
+
     /// Redirect to another page, saving the session before redirecting
-    let redirectToGet url next ctx = task {
+    let redirectToGet (url : string) next ctx = task {
         do! saveSession ctx
         let action =
-            if Option.isSome (noneIfEmpty url)
-                        // "/" or "/foo" but not "//" or "/\"
-                && (   (url[0] = '/' && (url.Length = 1 || (url[1] <> '/' && url[1] <> '\\')))
-                        // "~/" or "~/foo"
-                    || (url.Length > 1 && url[0] = '~' && url[1] = '/')) then
+            if Option.isSome (noneIfEmpty url) && isLocal.IsMatch url then
                 if isHtmx ctx then withHxRedirect url else redirectTo false url
             else RequestErrors.BAD_REQUEST "Invalid redirect URL"
         return! action next ctx
