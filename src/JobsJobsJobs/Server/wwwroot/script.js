@@ -41,17 +41,73 @@ this.jjj = {
   /**
    * The time zone of the current browser
    * @type {string}
-   **/
-   timeZone: undefined,
+   */
+  timeZone: undefined,
   
-   /**
-    * Derive the time zone from the current browser
-    */
-   deriveTimeZone () {
+  /**
+   * Derive the time zone from the current browser
+   */
+  deriveTimeZone () {
      try {
        this.timeZone = (new Intl.DateTimeFormat()).resolvedOptions().timeZone
      } catch (_) { }
-   }
+  },
+
+  /**
+   * Script for profile pages
+   */
+  profile: {
+    
+    /**
+     * The next index for a newly-added skill
+     * @type {number}
+     */
+    nextIndex: 0,
+
+    /**
+     * Add a skill to the profile form
+     */
+    addSkill() {
+      const newId = `new${this.nextIndex}`
+      
+      /** @type {HTMLTemplateElement} */
+      const newSkillTemplate = document.getElementById("newSkill")
+      /** @type {HTMLDivElement} */
+      const newSkill = newSkillTemplate.content.firstElementChild.cloneNode(true)
+      newSkill.setAttribute("id", `skillRow${newId}`)
+
+      const cols = newSkill.children
+      // Button column
+      cols[0].querySelector("button").setAttribute("onclick", `jjj.profile.removeSkill('${newId}')`)
+      // Skill column
+      const skillField = cols[1].querySelector("input")
+      skillField.setAttribute("id", `skillDesc${newId}`)
+      skillField.setAttribute("name", `Skills[${this.nextIndex}].Description`)
+      cols[1].querySelector("label").setAttribute("for", `skillDesc${newId}`)
+      if (this.nextIndex > 0) cols[1].querySelector("div.form-text").remove()
+      // Notes column
+      const notesField = cols[2].querySelector("input")
+      notesField.setAttribute("id", `skillNotes${newId}`)
+      notesField.setAttribute("name", `Skills[${this.nextIndex}].Notes`)
+      cols[2].querySelector("label").setAttribute("for", `skillNotes${newId}`)
+      if (this.nextIndex > 0) cols[2].querySelector("div.form-text").remove()
+
+      // Add the row
+      const skills = document.querySelectorAll("div[id^=skillRow]")
+      const sibling = skills.length > 0 ? skills[skills.length - 1] : newSkillTemplate
+      sibling.insertAdjacentElement('afterend', newSkill)
+
+      this.nextIndex++
+    },
+
+    /**
+     * Remove a skill row from the profile form
+     * @param {string} id The ID of the skill row to remove
+     */
+    removeSkill(id) {
+      document.getElementById(`skillRow${id}`).remove()
+    }
+  }
 }
 
 htmx.on("htmx:configRequest", function (evt) {

@@ -7,12 +7,13 @@ open Giraffe.ViewEngine
 open Giraffe.ViewEngine.Htmx
 open JobsJobsJobs.ViewModels
 
+/// Render the skill edit template and existing skills
 let skillEdit (skills : SkillForm array) =
     let mapToInputs (idx : int) (skill : SkillForm) =
-        div [ _class "row pb-3" ] [
+        div [ _id $"skillRow{skill.Id}"; _class "row pb-3" ] [
             div [ _class "col-2 col-md-1 align-self-center" ] [
                 button [ _class "btn btn-sm btn-outline-danger rounded-pill"; _title "Delete"
-                         _onclick $"jjj.removeSkill('{skill.Id}')" ] [
+                         _onclick $"jjj.profile.removeSkill('{skill.Id}')" ] [
                     rawText "&nbsp;&minus;&nbsp;"
                 ]
             ]
@@ -23,7 +24,8 @@ let skillEdit (skills : SkillForm array) =
                             _maxlength "200"; _value skill.Description; _required ]
                     label [ _class "jjj-label"; _for $"skillDesc{skill.Id}" ] [ rawText "Skill" ]
                 ]
-                div [ _class "form-text" ] [ rawText "A skill (language, design technique, process, etc.)" ]
+                if idx < 1 then
+                    div [ _class "form-text" ] [ rawText "A skill (language, design technique, process, etc.)" ]
             ]
             div [ _class "col-12 col-md-5" ] [
                 div [ _class "form-floating" ] [
@@ -33,7 +35,8 @@ let skillEdit (skills : SkillForm array) =
                             _value (defaultArg skill.Notes "") ]
                     label [ _class "jjj-label"; _for $"skillNotes{skill.Id}" ] [ rawText "Notes" ]
                 ]
-                div [ _class "form-text" ] [ rawText "A further description of the skill" ]
+                if idx < 1 then
+                    div [ _class "form-text" ] [ rawText "A further description of the skill" ]
             ]
         ]
     template [ _id "newSkill" ] [ mapToInputs -1 { Id = ""; Description = ""; Notes = None } ]
@@ -97,7 +100,7 @@ let edit (m : EditProfileViewModel) continents isNew csrf =
                 hr []
                 h4 [ _class "pb-2" ] [
                     rawText "Skills &nbsp; "
-                    button [ _class "btn btn-sm btn-outline-primary rounded-pill"; _onclick "jjj.addSkill" ] [
+                    button [ _class "btn btn-sm btn-outline-primary rounded-pill"; _onclick "jjj.profile.addSkill()" ] [
                         rawText "Add a Skill"
                     ]
                 ]
@@ -139,5 +142,10 @@ let edit (m : EditProfileViewModel) continents isNew csrf =
         p [ _class "text-muted fst-italic" ] [
             rawText "(If you want to delete your profile, or your entire account, "
             a [ _href "/so-long/options" ] [ rawText "see your deletion options here" ]; rawText ".)"
+        ]
+        script [] [
+            rawText """addEventListener("DOMContentLoaded", function () {"""
+            rawText $" jjj.profile.nextIndex = {m.Skills.Length} "
+            rawText "})"
         ]
     ]
