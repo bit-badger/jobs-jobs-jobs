@@ -163,18 +163,6 @@ type AuthOptions () =
         override this.Value = this
 
 
-/// The fields required for a skill
-type SkillForm =
-    {   /// The ID of this skill
-        Id : string
-        
-        /// The description of the skill
-        Description : string
-        
-        /// Notes regarding the skill
-        Notes : string option
-    }
-
 /// The data required to update a profile
 [<CLIMutable; NoComparison; NoEquality>]
 type ProfileForm =
@@ -203,7 +191,7 @@ type ProfileForm =
         Experience : string option
         
         /// The skills for the user
-        Skills : SkillForm list
+        Skills : Skill list
     }
 
 /// Support functions for the ProfileForm type
@@ -220,11 +208,6 @@ module ProfileForm =
           Biography           = MarkdownString.toString profile.Biography
           Experience          = profile.Experience |> Option.map MarkdownString.toString
           Skills              = profile.Skills
-                                |> List.map (fun s ->
-                                    { Id          = string s.Id
-                                      Description = s.Description
-                                      Notes       = s.Notes
-                                      })
         }
 
 

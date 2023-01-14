@@ -145,28 +145,28 @@ this.jjj = {
      * Add a skill to the profile form
      */
     addSkill() {
-      const newId = `new${this.nextIndex}`
+      const next = this.nextIndex
       
       /** @type {HTMLTemplateElement} */
       const newSkillTemplate = document.getElementById("newSkill")
       /** @type {HTMLDivElement} */
       const newSkill = newSkillTemplate.content.firstElementChild.cloneNode(true)
-      newSkill.setAttribute("id", `skillRow${newId}`)
+      newSkill.setAttribute("id", `skillRow${next}`)
 
       const cols = newSkill.children
       // Button column
-      cols[0].querySelector("button").setAttribute("onclick", `jjj.profile.removeSkill('${newId}')`)
+      cols[0].querySelector("button").setAttribute("onclick", `jjj.profile.removeSkill('${next}')`)
       // Skill column
       const skillField = cols[1].querySelector("input")
-      skillField.setAttribute("id", `skillDesc${newId}`)
+      skillField.setAttribute("id", `skillDesc${next}`)
       skillField.setAttribute("name", `Skills[${this.nextIndex}].Description`)
-      cols[1].querySelector("label").setAttribute("for", `skillDesc${newId}`)
+      cols[1].querySelector("label").setAttribute("for", `skillDesc${next}`)
       if (this.nextIndex > 0) cols[1].querySelector("div.form-text").remove()
       // Notes column
       const notesField = cols[2].querySelector("input")
-      notesField.setAttribute("id", `skillNotes${newId}`)
+      notesField.setAttribute("id", `skillNotes${next}`)
       notesField.setAttribute("name", `Skills[${this.nextIndex}].Notes`)
-      cols[2].querySelector("label").setAttribute("for", `skillNotes${newId}`)
+      cols[2].querySelector("label").setAttribute("for", `skillNotes${next}`)
       if (this.nextIndex > 0) cols[2].querySelector("div.form-text").remove()
 
       // Add the row
@@ -179,7 +179,7 @@ this.jjj = {
 
     /**
      * Remove a skill row from the profile form
-     * @param {string} id The ID of the skill row to remove
+     * @param {number} id The ID of the skill row to remove
      */
     removeSkill(id) {
       document.getElementById(`skillRow${id}`).remove()

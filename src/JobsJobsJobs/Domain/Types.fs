@@ -178,19 +178,6 @@ module SecurityInfo =
     }
 
 
-/// A skill the job seeker possesses
-type Skill =
-    {   /// The ID of the skill
-        Id          : SkillId
-        
-        /// A description of the skill
-        Description : string
-        
-        /// Notes regarding this skill (level, duration, etc.)
-        Notes       : string option
-    }
-
-
 /// A job seeker profile
 [<CLIMutable; NoComparison; NoEquality>]
 type Profile =

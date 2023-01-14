@@ -141,20 +141,14 @@ type OtherContact =
     }
 
 
-/// The ID of a skill
-type SkillId = SkillId of Guid
-
-/// Support functions for skill IDs
-module SkillId =
-    
-    /// Create a new skill ID
-    let create () = (Guid.NewGuid >> SkillId) ()
-    
-    /// A string representation of a skill ID
-    let toString = function SkillId it -> ShortGuid.fromGuid it
-    
-    /// Parse a string into a skill ID
-    let ofString = ShortGuid.toGuid >> SkillId
+/// A skill the job seeker possesses
+type Skill =
+    {   /// A description of the skill
+        Description : string
+        
+        /// Notes regarding this skill (level, duration, etc.)
+        Notes       : string option
+    }
 
 
 /// The ID of a success report

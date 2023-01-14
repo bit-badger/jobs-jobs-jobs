@@ -54,7 +54,8 @@ let dashboard (citizen : Citizen) (profile : Profile option) profileCount =
                     div [ _class "card-footer" ] [
                         match profile with
                         | Some p ->
-                            a [ _href $"/profile/{citizen.Id}/view"; _class "btn btn-outline-secondary" ] [
+                            a [ _href $"/profile/{CitizenId.toString citizen.Id}/view"
+                                _class "btn btn-outline-secondary" ] [
                                 rawText "View Profile"
                             ]; rawText "&nbsp; &nbsp;"
                             a [ _href "/profile/edit"; _class "btn btn-outline-secondary" ] [ rawText "Edit Profile" ]

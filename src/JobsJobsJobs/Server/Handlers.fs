@@ -69,6 +69,7 @@ module Error =
         clearResponse >=> ServerErrors.INTERNAL_ERROR ex.Message
   
 
+open System
 open NodaTime
 
 /// Helper functions
@@ -170,6 +171,12 @@ module Helpers =
     let addError msg ctx = task {
         do! addMessage "error" msg ctx
     }
+
+    /// Add a list of errors to the response
+    let addErrors (errors : string list) ctx = task {
+        let errMsg = String.Join ("</li><li>", errors)
+        do! addError $"Please correct the following errors:<ul><li>{errMsg}</li></ul>" ctx
+    }
     
     /// Render a page-level view
     let render pageTitle (_ : HttpFunc) (ctx : HttpContext) content = task {
@@ -213,7 +220,6 @@ module Helpers =
     }
 
 
-open System
 open JobsJobsJobs.Data
 open JobsJobsJobs.ViewModels
 
@@ -387,8 +393,7 @@ module Citizen =
                 do! addError "There is already an account registered to the e-mail address provided" ctx
                 return! refreshPage () next ctx
         else
-            let errMsg = String.Join ("</li><li>", errors)
-            do! addError $"Please correct the following errors:<ul><li>{errMsg}</li></ul>" ctx
+            do! addErrors errors ctx
             return! refreshPage () next ctx
     }
 
@@ -581,7 +586,7 @@ module Listing =
 module Profile =
 
     // GET: /profile/edit
-    let edit = requireUser >=> fun next ctx -> task {
+    let edit : HttpHandler = requireUser >=> fun next ctx -> task {
         let! profile    = Profiles.findById (currentCitizenId ctx)
         let! continents = Continents.all ()
         let  isNew      = Option.isNone profile
@@ -590,6 +595,72 @@ module Profile =
         return! Profile.edit form continents isNew (csrf ctx) |> render title next ctx
     }
 
+    // POST: /profile/save
+    let save : HttpHandler = requireUser >=> fun next ctx -> task {
+        let  citizenId = currentCitizenId ctx
+        let! theForm   = ctx.BindFormAsync<EditProfileViewModel> ()
+        let  form      = { theForm with Skills = theForm.Skills |> Array.filter (box >> isNull >> not) }
+        let  errors    = [
+            if form.ContinentId = "" then "Continent is required"
+            if form.Region      = "" then "Region is required"
+            if form.Biography   = "" then "Professional Biography is required"
+            if form.Skills |> Array.exists (fun s -> s.Description = "") then "All skill Descriptions are required"
+        ]
+        let! profile = task {
+            match! Profiles.findById citizenId with
+            | Some p -> return p
+            | None -> return { Profile.empty with Id = citizenId }
+        }
+        let isNew = profile.Region = ""
+        if List.isEmpty errors then
+            do! Profiles.save
+                    { profile with
+                        IsSeekingEmployment  = form.IsSeekingEmployment
+                        IsPubliclySearchable = form.IsPublic
+                        ContinentId          = ContinentId.ofString form.ContinentId
+                        Region               = form.Region
+                        IsRemote             = form.RemoteWork
+                        IsFullTime           = form.FullTime
+                        Biography            = Text form.Biography
+                        LastUpdatedOn        = now ctx
+                        Experience           = noneIfBlank form.Experience |> Option.map Text
+                        Skills               = form.Skills
+                                               |> Array.filter (fun s -> (box >> isNull >> not) s)
+                                               |> Array.map SkillForm.toSkill
+                                               |> List.ofArray
+                    }
+            let action = if isNew then "cre" else "upd"
+            do! addSuccess $"Employment Profile {action}ated successfully" ctx
+            return! redirectToGet "/profile/edit" next ctx
+        else
+            do! addErrors errors ctx
+            let! continents = Continents.all ()
+            return!
+                Profile.edit form continents isNew (csrf ctx)
+                |> render $"""{if isNew then "Create" else "Edit"} Profile""" next ctx
+    }
+
+    // GET: /profile/[id]/view
+    let view citizenId : HttpHandler = fun next ctx -> task {
+        let citId = CitizenId.ofString citizenId
+        match! Citizens.findById citId with
+        | Some citizen ->
+            match! Profiles.findById citId with
+            | Some profile ->
+                let currentCitizen = tryUser ctx |> Option.map CitizenId.ofString
+                if not profile.IsPubliclyLinkable && Option.isNone currentCitizen then
+                    return! Error.notAuthorized next ctx
+                else
+                    let! continent     = Continents.findById profile.ContinentId
+                    let  continentName = match continent with Some c -> c.Name | None -> "not found"
+                    let  title         = $"Employment Profile for {Citizen.name citizen}"
+                    return!
+                        Profile.view citizen profile continentName title currentCitizen
+                        |> render title next ctx
+            | None -> return! Error.notFound next ctx
+        | None -> return! Error.notFound next ctx
+    }
+  
 
 /// Handlers for /api/profile routes
 [<RequireQualifiedAccess>]
@@ -622,37 +693,6 @@ module ProfileApi =
     let count : HttpHandler = authorize >=> fun next ctx -> task {
         let! theCount = Profiles.count ()
         return! json {| Count = theCount |} next ctx
-    }
-  
-    // POST: /api/profile/save
-    let save : HttpHandler = authorize >=> fun next ctx -> task {
-        let  citizenId = currentCitizenId ctx
-        let! form      = ctx.BindJsonAsync<ProfileForm>()
-        let! profile   = task {
-            match! Profiles.findById citizenId with
-            | Some p -> return p
-            | None -> return { Profile.empty with Id = citizenId }
-        }
-        do! Profiles.save
-                { profile with
-                    IsSeekingEmployment  = form.IsSeekingEmployment
-                    IsPubliclySearchable = form.IsPublic
-                    ContinentId          = ContinentId.ofString form.ContinentId
-                    Region               = form.Region
-                    IsRemote             = form.RemoteWork
-                    IsFullTime           = form.FullTime
-                    Biography            = Text form.Biography
-                    LastUpdatedOn        = now ctx
-                    Experience           = noneIfBlank form.Experience |> Option.map Text
-                    Skills               = form.Skills
-                                           |> List.map (fun s ->
-                                               {   Id          = if s.Id.StartsWith "new" then SkillId.create ()
-                                                                 else SkillId.ofString s.Id
-                                                   Description = s.Description
-                                                   Notes       = noneIfBlank s.Notes
-                                               })
-                }
-        return! ok next ctx
     }
   
     // PATCH: /api/profile/employment-found
@@ -756,8 +796,10 @@ let allEndpoints = [
     GET_HEAD [ route "/privacy-policy" Home.privacyPolicy ]
     subRoute "/profile" [
         GET_HEAD [
-            route "/edit" Profile.edit
+            routef "/%s/view" Profile.view
+            route  "/edit"    Profile.edit
         ]
+        POST [ route "/save" Profile.save ]
     ]
     GET_HEAD [ route "/terms-of-service" Home.termsOfService ]
     
@@ -794,7 +836,6 @@ let allEndpoints = [
                 route  "/search"        ProfileApi.search
             ]
             PATCH [ route "/employment-found" ProfileApi.employmentFound ]
-            POST [ route "" ProfileApi.save ]
         ]
         subRoute "/success" [
             GET_HEAD [

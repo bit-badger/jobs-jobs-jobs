@@ -6,15 +6,23 @@ open JobsJobsJobs.Domain
 /// The fields required for a skill
 [<CLIMutable; NoComparison; NoEquality>]
 type SkillForm =
-    {   /// The ID of this skill
-        Id : string
-        
-        /// The description of the skill
-        Description : string
+    {   Description : string
         
         /// Notes regarding the skill
         Notes : string option
     }
+
+/// Functions to support skill forms
+module SkillForm =
+
+    /// Create a skill form from a skill
+    let fromSkill (skill : Skill) =
+        { SkillForm.Description = skill.Description; Notes = skill.Notes }
+    
+    /// Create a skill from a skill form
+    let toSkill (form : SkillForm) =
+        { Skill.Description = form.Description; Notes = form.Notes }
+
 
 /// The data required to update a profile
 [<CLIMutable; NoComparison; NoEquality>]
@@ -73,13 +81,7 @@ module EditProfileViewModel =
             FullTime            = profile.IsFullTime
             Biography           = MarkdownString.toString profile.Biography
             Experience          = profile.Experience |> Option.map MarkdownString.toString
-            Skills              = profile.Skills
-                                  |> List.map (fun s ->
-                                      {   Id          = string s.Id
-                                          Description = s.Description
-                                          Notes       = s.Notes
-                                      })
-                                  |> Array.ofList
+            Skills              = profile.Skills |> List.map SkillForm.fromSkill |> Array.ofList
         }
 
 

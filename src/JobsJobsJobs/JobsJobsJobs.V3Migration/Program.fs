@@ -141,8 +141,7 @@ task {
                 Skills               = p["skills"].Children()
                                        |> Seq.map (fun s ->
                                             let notes = s["notes"].Value<string> ()
-                                            {   Skill.Id    = SkillId.ofString (s["id"].Value<string> ())
-                                                Description = s["description"].Value<string> ()
+                                            {   Description = s["description"].Value<string> ()
                                                 Notes       = if isNull notes then None else Some notes
                                             })
                                        |> List.ofSeq

@@ -130,18 +130,6 @@ const routes: Array<RouteRecordRaw> = [
   },
   // Profile URLs
   {
-    path: "/profile/:id/view",
-    name: "ViewProfile",
-    component: () => import(/* webpackChunkName: "profview" */ "../views/profile/ProfileView.vue"),
-    meta: { auth: true, title: "Loading Profile..." }
-  },
-  {
-    path: "/profile/edit",
-    name: "EditProfile",
-    component: () => import(/* webpackChunkName: "profedit" */ "../views/profile/EditProfile.vue"),
-    meta: { auth: true, title: "Edit Profile" }
-  },
-  {
     path: "/profile/search",
     name: "SearchProfiles",
     component: () => import(/* webpackChunkName: "profview" */ "../views/profile/ProfileSearch.vue"),

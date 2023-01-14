@@ -24,7 +24,6 @@ let options =
         WrappedJsonConverter (ListingId.ofString,      ListingId.toString)
         WrappedJsonConverter (Text,                    MarkdownString.toString)
         WrappedJsonConverter (OtherContactId.ofString, OtherContactId.toString)
-        WrappedJsonConverter (SkillId.ofString,        SkillId.toString)
         WrappedJsonConverter (SuccessId.ofString,      SuccessId.toString)
         JsonFSharpConverter    ()
     ]
