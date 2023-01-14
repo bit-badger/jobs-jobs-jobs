@@ -33,14 +33,19 @@ let continentList attrs name (continents : Continent list) emptyLabel selectedVa
 let markdownEditor attrs name value editorLabel =
     div [ _class "col-12" ] [
         nav [ _class "nav nav-pills pb-1" ] [
-            button [ _type "button"; _class "jjj-md-source"; _onclick "jjj.showMarkdown('TODO')" ] [
+            button [ _type "button"; _id $"{name}EditButton"; _class "btn btn-primary btn-sm rounded-pill" ] [
                 rawText "Markdown"
-            ]; rawText " &nbsp; "
-            button [ _type "button"; _class "jjj-md-preview"; _onclick "jjj.showPreview('TODO')" ] [ rawText "Preview" ]
+            ]
+            rawText " &nbsp; "
+            button [ _type "button"; _id $"{name}PreviewButton"; _class "btn btn-outline-secondary btn-sm rounded-pill"
+                     _onclick $"jjj.showPreview('{name}')" ] [
+                rawText "Preview"
+            ]
         ]
-        section [ _id $"{name}Preview"; _class "jjj-preview"; _ariaLabel "Rendered Markdown preview" ] []
-        div [ _class "form-floating" ] [
-            textarea (List.append attrs [ _id name; _name name; _class "form-control md-edit"; _rows "10" ]) [
+        section [ _id $"{name}Preview"; _class "jjj-not-shown"; _ariaLabel "Rendered Markdown preview" ] []
+        div [ _id $"{name}Edit"; _class "form-floating jjj-shown" ] [
+            textarea (List.append attrs
+                                  [ _id name; _name name; _class "form-control jjj-markdown-editor"; _rows "10" ]) [
                 rawText value
             ]
             label [ _for name ] [ rawText editorLabel ]

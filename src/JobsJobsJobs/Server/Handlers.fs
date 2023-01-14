@@ -218,6 +218,20 @@ open JobsJobsJobs.Data
 open JobsJobsJobs.ViewModels
 
 
+/// Handlers for /api routes
+[<RequireQualifiedAccess>]
+module Api =
+    
+    open System.IO
+
+    // POST: /api/markdown-preview
+    let markdownPreview : HttpHandler = requireUser >=> fun next ctx -> task {
+        use reader = new StreamReader (ctx.Request.Body)
+        let! preview = reader.ReadToEndAsync ()
+        return! htmlString (MarkdownString.toHtml (Text (defaultArg (Option.ofObj preview) "--"))) next ctx
+    }
+
+
 /// Handlers for /citizen routes
 [<RequireQualifiedAccess>]
 module Citizen =
@@ -768,6 +782,7 @@ let allEndpoints = [
             POST [ route "s" Listing.add ]
             PUT [ routef "/%O" Listing.update ]
         ]
+        POST [ route "/markdown-preview" Api.markdownPreview ]
         subRoute "/profile" [
             GET_HEAD [
                 route  ""               ProfileApi.current

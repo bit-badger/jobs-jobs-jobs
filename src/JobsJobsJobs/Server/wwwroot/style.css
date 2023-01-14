@@ -199,6 +199,19 @@ span.jjj-audio-clip {
 span.jjj-audio-clip:hover {
   cursor: pointer;
 }
+/* Markdown Editor styling */
+.jjj-not-shown {
+  display: none;
+}
+.jjj-shown {
+  display: inherit;
+}
+.jjj-markdown-editor {
+  width: 100%;
+  /* When wrapping this with Bootstrap's floating label, it shrinks the input down to what a normal one-line input
+     would be; this overrides that for this textarea specifically */
+  height: inherit !important;
+}
 /* Footer styling */
 footer {
   display: flex;

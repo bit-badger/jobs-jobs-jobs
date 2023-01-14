@@ -54,6 +54,73 @@ this.jjj = {
   },
 
   /**
+   * Show a preview of the Markdown in the given editor
+   * @param {string} editorId The ID of the Markdown editor whose preview should be shown
+   */
+  async showPreview(editorId) {
+    /** @type {HTMLButtonElement} */
+    const editBtn = document.getElementById(`${editorId}EditButton`)
+    /** @type {HTMLDivElement} */
+    const editDiv = document.getElementById(`${editorId}Edit`)
+    /** @type {HTMLButtonElement} */
+    const previewBtn = document.getElementById(`${editorId}PreviewButton`)
+    /** @type {HTMLDivElement} */
+    const previewDiv = document.getElementById(`${editorId}Preview`)
+
+    editBtn.classList.remove("btn-primary")
+    editBtn.classList.add("btn-outline-secondary")
+    editBtn.addAttribute("onclick", `jjj.showEditor('{editorId}')`)
+    previewBtn.classList.remove("btn-outline-secondary")
+    previewBtn.classList.add("btn-primary")
+    previewBtn.removeAttribute("onclick")
+
+    editDiv.classList.remove("jjj-shown")
+    editDiv.classList.add("jjj-not-shown")
+    previewDiv.innerHTML = "<p><strong><em>Loading preview...</em></strong></p>"
+    previewtDiv.classList.remove("jjj-not-shown")
+    previewDiv.classList.add("jjj-shown")
+
+    const preview = await fetch("/api/markdown-preview",
+      { method: "POST", body: document.getElementById(editorId).textContent })
+    
+    let text
+    if (preview.ok) {
+      text = await preview.text()
+    } else {
+      text = `<p class="text-danger"><strong> ERROR ${preview.status}</strong> &ndash; ${preview.statusText}`
+    }
+    previewDiv.innerHTML = text
+  },
+
+  /**
+   * Show the Markdown editor (hides preview)
+   * @param {string} editorId The ID of the Markdown editor to show
+   */
+  showEditor(editorId) {
+    /** @type {HTMLButtonElement} */
+    const editBtn = document.getElementById(`${editorId}EditButton`)
+    /** @type {HTMLDivElement} */
+    const editDiv = document.getElementById(`${editorId}Edit`)
+    /** @type {HTMLButtonElement} */
+    const previewBtn = document.getElementById(`${editorId}PreviewButton`)
+    /** @type {HTMLDivElement} */
+    const previewDiv = document.getElementById(`${editorId}Preview`)
+
+    previewtBtn.classList.remove("btn-primary")
+    previewBtn.classList.add("btn-outline-secondary")
+    previewtBtn.addAttribute("onclick", `jjj.showPreview('{editorId}')`)
+    editBtn.classList.remove("btn-outline-secondary")
+    editBtn.classList.add("btn-primary")
+    editBtn.removeAttribute("onclick")
+
+    previewDiv.classList.remove("jjj-shown")
+    previewDiv.classList.add("jjj-not-shown")
+    previewDiv.innerHTML = ""
+    editDiv.classList.remove("jjj-not-shown")
+    editDiv.classList.add("jjj-shown")
+  },
+
+  /**
    * Script for profile pages
    */
   profile: {
