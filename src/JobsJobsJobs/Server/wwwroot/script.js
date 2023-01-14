@@ -54,6 +54,14 @@ this.jjj = {
   },
 
   /**
+   * Set up the onClick event for the preview button
+   * @param {string} editorId The ID of the editor to wire up
+   */
+  markdownOnLoad(editorId) {
+    document.getElementById(`${editorId}PreviewButton`).addEventListener("click", () => { this.showPreview(editorId) })
+  },
+
+  /**
    * Show a preview of the Markdown in the given editor
    * @param {string} editorId The ID of the Markdown editor whose preview should be shown
    */
@@ -62,6 +70,8 @@ this.jjj = {
     const editBtn = document.getElementById(`${editorId}EditButton`)
     /** @type {HTMLDivElement} */
     const editDiv = document.getElementById(`${editorId}Edit`)
+    /** @type {HTMLTextAreaElement} */
+    const editor = document.getElementById(editorId)
     /** @type {HTMLButtonElement} */
     const previewBtn = document.getElementById(`${editorId}PreviewButton`)
     /** @type {HTMLDivElement} */
@@ -69,20 +79,12 @@ this.jjj = {
 
     editBtn.classList.remove("btn-primary")
     editBtn.classList.add("btn-outline-secondary")
-    editBtn.addAttribute("onclick", `jjj.showEditor('{editorId}')`)
+    editBtn.addEventListener("click", () => { this.showEditor(editorId) })
     previewBtn.classList.remove("btn-outline-secondary")
     previewBtn.classList.add("btn-primary")
-    previewBtn.removeAttribute("onclick")
+    previewBtn.removeEventListener("click", () => { this.showPreview(editorId) })
 
-    editDiv.classList.remove("jjj-shown")
-    editDiv.classList.add("jjj-not-shown")
-    previewDiv.innerHTML = "<p><strong><em>Loading preview...</em></strong></p>"
-    previewtDiv.classList.remove("jjj-not-shown")
-    previewDiv.classList.add("jjj-shown")
-
-    const preview = await fetch("/api/markdown-preview",
-      { method: "POST", body: document.getElementById(editorId).textContent })
-    
+    const preview = await fetch("/api/markdown-preview", { method: "POST", body: editor.value })
     let text
     if (preview.ok) {
       text = await preview.text()
@@ -90,6 +92,12 @@ this.jjj = {
       text = `<p class="text-danger"><strong> ERROR ${preview.status}</strong> &ndash; ${preview.statusText}`
     }
     previewDiv.innerHTML = text
+    
+    editDiv.classList.remove("jjj-shown")
+    editDiv.classList.add("jjj-not-shown")
+    previewDiv.classList.remove("jjj-not-shown")
+    previewDiv.classList.add("jjj-shown")
+
   },
 
   /**
@@ -101,17 +109,19 @@ this.jjj = {
     const editBtn = document.getElementById(`${editorId}EditButton`)
     /** @type {HTMLDivElement} */
     const editDiv = document.getElementById(`${editorId}Edit`)
+    /** @type {HTMLTextAreaElement} */
+    const editor = document.getElementById(editorId)
     /** @type {HTMLButtonElement} */
     const previewBtn = document.getElementById(`${editorId}PreviewButton`)
     /** @type {HTMLDivElement} */
     const previewDiv = document.getElementById(`${editorId}Preview`)
 
-    previewtBtn.classList.remove("btn-primary")
+    previewBtn.classList.remove("btn-primary")
     previewBtn.classList.add("btn-outline-secondary")
-    previewtBtn.addAttribute("onclick", `jjj.showPreview('{editorId}')`)
+    this.markdownOnLoad(editorId)
     editBtn.classList.remove("btn-outline-secondary")
     editBtn.classList.add("btn-primary")
-    editBtn.removeAttribute("onclick")
+    editBtn.removeEventListener("click", () => { this.showEditor(editorId) })
 
     previewDiv.classList.remove("jjj-shown")
     previewDiv.classList.add("jjj-not-shown")

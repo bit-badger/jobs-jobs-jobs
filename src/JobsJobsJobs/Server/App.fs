@@ -17,6 +17,15 @@ open Microsoft.Extensions.Hosting
 open NodaTime
 
 
+/// Enable buffering on the request body
+type BufferedBodyMiddleware (next : RequestDelegate) =
+
+    member _.InvokeAsync (ctx : HttpContext) = task {
+        ctx.Request.EnableBuffering ()
+        return! next.Invoke ctx
+    }
+
+
 [<EntryPoint>]
 let main args =
     
@@ -54,6 +63,7 @@ let main args =
     let _ = app.UseCookiePolicy (CookiePolicyOptions (MinimumSameSitePolicy = SameSiteMode.Strict))
     let _ = app.UseStaticFiles ()
     let _ = app.UseRouting ()
+    let _ = app.UseMiddleware<BufferedBodyMiddleware> ()
     let _ = app.UseAuthentication ()
     let _ = app.UseAuthorization ()
     let _ = app.UseSession ()

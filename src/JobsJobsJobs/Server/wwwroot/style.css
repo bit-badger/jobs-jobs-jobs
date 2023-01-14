@@ -212,6 +212,10 @@ span.jjj-audio-clip:hover {
      would be; this overrides that for this textarea specifically */
   height: inherit !important;
 }
+.jjj-markdown-preview {
+  border: solid 1px lightgray;
+  border-radius: .5rem;
+}
 /* Footer styling */
 footer {
   display: flex;

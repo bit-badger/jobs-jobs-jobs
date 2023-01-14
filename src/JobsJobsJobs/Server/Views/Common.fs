@@ -37,17 +37,23 @@ let markdownEditor attrs name value editorLabel =
                 rawText "Markdown"
             ]
             rawText " &nbsp; "
-            button [ _type "button"; _id $"{name}PreviewButton"; _class "btn btn-outline-secondary btn-sm rounded-pill"
-                     _onclick $"jjj.showPreview('{name}')" ] [
+            button [ _type "button"; _id $"{name}PreviewButton"
+                     _class "btn btn-outline-secondary btn-sm rounded-pill" ] [
                 rawText "Preview"
             ]
         ]
-        section [ _id $"{name}Preview"; _class "jjj-not-shown"; _ariaLabel "Rendered Markdown preview" ] []
+        section [ _id $"{name}Preview"; _class "jjj-not-shown jjj-markdown-preview px-2 pt-2"
+                  _ariaLabel "Rendered Markdown preview" ] []
         div [ _id $"{name}Edit"; _class "form-floating jjj-shown" ] [
             textarea (List.append attrs
                                   [ _id name; _name name; _class "form-control jjj-markdown-editor"; _rows "10" ]) [
                 rawText value
             ]
             label [ _for name ] [ rawText editorLabel ]
+        ]
+        script [] [
+            rawText """document.addEventListener("DOMContentLoaded", function () {"""
+            rawText $" jjj.markdownOnLoad('{name}') "
+            rawText "})"
         ]
     ]

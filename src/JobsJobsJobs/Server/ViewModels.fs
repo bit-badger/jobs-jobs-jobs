@@ -60,11 +60,7 @@ module EditProfileViewModel =
             FullTime            = false
             Biography           = ""
             Experience          = None
-            Skills              = [|
-                { Id = "1"; Description = "test 1"; Notes = None }
-                { Id = "3"; Description = "test 2"; Notes = Some "noted" }
-                { Id = "4"; Description = "asfasdfa"; Notes = None }
-            |]
+            Skills              = [||]
         }
     
     /// Create an instance of this form from the given profile
