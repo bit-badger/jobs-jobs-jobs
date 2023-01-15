@@ -6,7 +6,6 @@ import {
   RouteRecordRaw
 } from "vue-router"
 import store, { Mutations } from "@/store"
-import Home from "@/views/Home.vue"
 
 /** The URL to which the user should be pointed once they have authorized with Mastodon */
 export const AFTER_LOG_ON_URL = "jjj-after-log-on-url"
@@ -24,12 +23,6 @@ export function queryValue (route: RouteLocationNormalizedLoaded, key : string) 
 }
 
 const routes: Array<RouteRecordRaw> = [
-  {
-    path: "/",
-    name: "Home",
-    component: Home,
-    meta: { title: "Welcome!" }
-  },
   {
     path: "/how-it-works",
     name: "HowItWorks",
@@ -67,12 +60,6 @@ const routes: Array<RouteRecordRaw> = [
     name: "ViewListing",
     component: () => import(/* webpackChunkName: "joblist" */ "../views/listing/ListingView.vue"),
     meta: { auth: true, title: "Loading Job Listing..." }
-  },
-  {
-    path: "/listings/mine",
-    name: "MyListings",
-    component: () => import(/* webpackChunkName: "joblist" */ "../views/listing/MyListings.vue"),
-    meta: { auth: true, title: "My Job Listings" }
   },
   // Success Story URLs
   {

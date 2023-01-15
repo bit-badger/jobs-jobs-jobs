@@ -486,18 +486,23 @@ module Home =
         renderHandler "Terms of Service" Home.termsOfService
 
 
-/// Handlers for /api/listing[s] routes
+/// Handlers for /listing[s] routes
 [<RequireQualifiedAccess>]
 module Listing =
+    
+    // GET: /listings/mine
+    let mine : HttpHandler = requireUser >=> fun next ctx -> task {
+        let! listings = Listings.findByCitizen (currentCitizenId ctx)
+        return! Listing.mine listings (timeZone ctx) |> render "My Job Listings" next ctx
+    }
+
+
+/// Handlers for /api/listing[s] routes
+[<RequireQualifiedAccess>]
+module ListingApi =
 
     /// Parse the string we receive from JSON into a NodaTime local date
     let private parseDate = DateTime.Parse >> LocalDate.FromDateTime
-
-    // GET: /api/listings/mine
-    let mine : HttpHandler = authorize >=> fun next ctx -> task {
-        let! listings = Listings.findByCitizen (currentCitizenId ctx)
-        return! json listings next ctx
-    }
 
     // GET: /api/listing/[id]
     let get listingId : HttpHandler = authorize >=> fun next ctx -> task {
@@ -826,6 +831,11 @@ let allEndpoints = [
         ]
     ]
     GET_HEAD [ route "/how-it-works" Home.howItWorks ]
+    subRoute "/listing" [
+        GET_HEAD [
+            route  "s/mine"   Listing.mine
+        ]
+    ]
     GET_HEAD [ route "/privacy-policy" Home.privacyPolicy ]
     subRoute "/profile" [
         GET_HEAD [
@@ -851,14 +861,13 @@ let allEndpoints = [
         GET_HEAD [ route "/continents" Continent.all ]
         subRoute "/listing" [
             GET_HEAD [
-                routef "/%O"      Listing.get
-                route  "/search"  Listing.search
-                routef "/%O/view" Listing.view
-                route  "s/mine"   Listing.mine
+                routef "/%O"      ListingApi.get
+                route  "/search"  ListingApi.search
+                routef "/%O/view" ListingApi.view
             ]
-            PATCH [ routef "/%O" Listing.expire ]
-            POST [ route "s" Listing.add ]
-            PUT [ routef "/%O" Listing.update ]
+            PATCH [ routef "/%O" ListingApi.expire ]
+            POST [ route "s" ListingApi.add ]
+            PUT [ routef "/%O" ListingApi.update ]
         ]
         POST [ route "/markdown-preview" Api.markdownPreview ]
         subRoute "/profile" [

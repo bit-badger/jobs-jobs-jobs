@@ -96,7 +96,14 @@ let yesOrNo value =
 open NodaTime
 open NodaTime.Text
 
-/// Generate a full date from an instant in the citizen's local time zone
+/// Generate a full date in the citizen's local time zone
 let fullDate (value : Instant) tz =
     (ZonedDateTimePattern.CreateWithCurrentCulture ("MMMM d, yyyy", DateTimeZoneProviders.Tzdb))
         .Format(value.InZone(DateTimeZoneProviders.Tzdb[tz]))
+
+/// Generate a full date/time in the citizen's local time
+let fullDateTime (value : Instant) tz =
+    let dtPattern   = ZonedDateTimePattern.CreateWithCurrentCulture ("MMMM d, yyyy h:mm", DateTimeZoneProviders.Tzdb)
+    let amPmPattern = ZonedDateTimePattern.CreateWithCurrentCulture ("tt", DateTimeZoneProviders.Tzdb)
+    let tzValue     = value.InZone(DateTimeZoneProviders.Tzdb[tz])
+    $"{dtPattern.Format(tzValue)} {amPmPattern.Format(tzValue).ToLowerInvariant()}"
