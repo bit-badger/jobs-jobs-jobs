@@ -128,28 +128,10 @@ let logOn (m : LogOnViewModel) csrf =
             | Some returnTo -> input [ _type "hidden"; _name (nameof m.ReturnTo); _value returnTo ]
             | None -> ()
             div [ _class "col-12 col-md-6" ] [
-                div [ _class "form-floating" ] [
-                    input [ _type        "email"
-                            _class       "form-control"
-                            _id          (nameof m.Email)
-                            _name        (nameof m.Email)
-                            _placeholder "E-mail Address"
-                            _value       m.Email
-                            _required
-                            _autofocus ]
-                    label [ _class "jjj-required"; _for (nameof m.Email) ] [ rawText "E-mail Address" ]
-                ]
+                textBox [ _type "email"; _autofocus ] (nameof m.Email) m.Email "E-mail Address" true
             ]
             div [ _class "col-12 col-md-6" ] [
-                div [ _class "form-floating" ] [
-                    input [ _type        "password"
-                            _class       "form-control"
-                            _id          (nameof m.Password)
-                            _name        (nameof m.Password)
-                            _placeholder "Password"
-                            _required ]
-                    label [ _class "jjj-required"; _for (nameof m.Password) ] [ rawText "Password" ]
-                ]
+                textBox [ _type "password" ] (nameof m.Password) "" "Password" true
             ]
             div [ _class "col-12" ] [
                 button [ _class "btn btn-primary"; _type "submit" ] [
@@ -172,48 +154,23 @@ let register q1 q2 (m : RegisterViewModel) csrf =
         form [ _class  "row g-3"; _hxPost "/citizen/register" ] [
             antiForgery csrf
             div [ _class "col-6 col-xl-4" ] [
-                div [ _class "form-floating" ] [
-                    input [ _type "text"; _class "form-control"; _id (nameof m.FirstName); _name (nameof m.FirstName)
-                            _value m.FirstName; _placeholder "First Name"; _required; _autofocus ]
-                    label [ _class "jjj-required"; _for (nameof m.FirstName) ] [ rawText "First Name" ]
-                ]
+                textBox [ _type "text"; _autofocus ] (nameof m.FirstName) m.FirstName "First Name" true
             ]
             div [ _class "col-6 col-xl-4" ] [
-                div [ _class "form-floating" ] [
-                    input [ _type "text"; _class "form-control"; _id (nameof m.LastName); _name (nameof m.LastName)
-                            _value m.LastName; _placeholder "Last Name"; _required ]
-                    label [ _class "jjj-required"; _for (nameof m.LastName) ] [ rawText "Last Name" ]
-                ]
+                textBox [ _type "text" ] (nameof m.LastName) m.LastName "Last Name" true
             ]
             div [ _class "col-6 col-xl-4" ] [
-                div [ _class "form-floating" ] [
-                    input [ _type "text"; _class "form-control"; _id (nameof m.DisplayName)
-                            _name (nameof m.DisplayName); _value (defaultArg m.DisplayName "")
-                            _placeholder "Display Name" ]
-                    label [ _for (nameof m.DisplayName) ] [ rawText "Display Name" ]
-                    div [ _class "form-text" ] [ em [] [ rawText "Optional; overrides first/last for display" ] ]
-                ]
+                textBox [ _type "text" ] (nameof m.DisplayName) (defaultArg m.DisplayName "") "Display Name" false
+                div [ _class "form-text" ] [ em [] [ rawText "Optional; overrides first/last for display" ] ]
             ]
             div [ _class "col-6 col-xl-4" ] [
-                div [ _class "form-floating" ] [
-                    input [ _type "email"; _class "form-control"; _id (nameof m.Email); _name (nameof m.Email)
-                            _value m.Email; _placeholder "E-mail Address"; _required ]
-                    label [ _class "jjj-required"; _for (nameof m.Email) ] [ rawText "E-mail Address" ]
-                ]
+                textBox [ _type "text" ] (nameof m.Email) m.Email "E-mail Address" true
             ]
             div [ _class "col-6 col-xl-4" ] [
-                div [ _class "form-floating" ] [
-                    input [ _type "password"; _class "form-control"; _id (nameof m.Password); _name (nameof m.Password)
-                            _placeholder "Password"; _minlength "8"; _required ]
-                    label [ _class "jjj-required"; _for (nameof m.Password) ] [ rawText "Password" ]
-                ]
+                textBox [ _type "password"; _minlength "8" ] (nameof m.Password) "" "Password" true
             ]
             div [ _class "col-6 col-xl-4" ] [
-                div [ _class "form-floating" ] [
-                    input [ _type "password"; _class "form-control"; _id "ConfirmPassword"
-                            _placeholder "Confirm Password"; _minlength "8"; _required ]
-                    label [ _class "jjj-required"; _for "ConfirmPassword" ] [ rawText "Confirm Password" ]
-                ]
+                textBox [ _type "password"; _minlength "8" ] "ConfirmPassword" "" "Confirm Password" true
             ]
             div [ _class "col-12" ] [
                 hr []
@@ -222,21 +179,11 @@ let register q1 q2 (m : RegisterViewModel) csrf =
                 ]
             ]
             div [ _class "col-12 col-xl-6" ] [
-                div [ _class "form-floating" ] [
-                    input [ _type "text"; _class "form-control"; _id (nameof m.Question1Answer)
-                            _name (nameof m.Question1Answer); _value m.Question1Answer; _placeholder "Question 1"
-                            _maxlength "30"; _required ]
-                    label [ _class "jjj-required"; _for (nameof m.Question1Answer) ] [ str q1 ]
-                ]
+                textBox [ _type "text"; _maxlength "30" ] (nameof m.Question1Answer) m.Question1Answer "Question 1" true
                 input [ _type "hidden"; _name (nameof m.Question1Index); _value (string m.Question1Index ) ]
             ]
             div [ _class "col-12 col-xl-6" ] [
-                div [ _class "form-floating" ] [
-                    input [ _type "text"; _class "form-control"; _id (nameof m.Question2Answer)
-                            _name (nameof m.Question2Answer); _value m.Question2Answer; _placeholder "Question 2"
-                            _maxlength "30"; _required ]
-                    label [ _class "jjj-required"; _for (nameof m.Question2Answer) ] [ str q2 ]
-                ]
+                textBox [ _type "text"; _maxlength "30" ] (nameof m.Question2Answer) m.Question2Answer "Question 2" true
                 input [ _type "hidden"; _name (nameof m.Question2Index); _value (string m.Question2Index ) ]
             ]
             div [ _class "col-12" ] [

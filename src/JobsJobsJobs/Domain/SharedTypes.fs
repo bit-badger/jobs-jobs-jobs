@@ -163,65 +163,17 @@ type AuthOptions () =
         override this.Value = this
 
 
-/// The data required to update a profile
+/// The various ways profiles can be searched
 [<CLIMutable; NoComparison; NoEquality>]
-type ProfileForm =
-    {   /// Whether the citizen to whom this profile belongs is actively seeking employment
-        IsSeekingEmployment : bool
-        
-        /// Whether this profile should appear in the public search
-        IsPublic : bool
-        
-        /// The ID of the continent on which the citizen is located
+type ProfileSearchForm =
+    {   /// Retrieve citizens from this continent
         ContinentId : string
         
-        /// The area within that continent where the citizen is located
-        Region : string
-        
-        /// If the citizen is available for remote work
-        RemoteWork : bool
-        
-        /// If the citizen is seeking full-time employment
-        FullTime : bool
-        
-        /// The user's professional biography
-        Biography : string
-        
-        /// The user's past experience
-        Experience : string option
-        
-        /// The skills for the user
-        Skills : Skill list
-    }
-
-/// Support functions for the ProfileForm type
-module ProfileForm =
-  
-    /// Create an instance of this form from the given profile
-    let fromProfile (profile : Profile) =
-        { IsSeekingEmployment = profile.IsSeekingEmployment
-          IsPublic            = profile.IsPubliclySearchable
-          ContinentId         = string profile.ContinentId
-          Region              = profile.Region
-          RemoteWork          = profile.IsRemote
-          FullTime            = profile.IsFullTime
-          Biography           = MarkdownString.toString profile.Biography
-          Experience          = profile.Experience |> Option.map MarkdownString.toString
-          Skills              = profile.Skills
-        }
-
-
-/// The various ways profiles can be searched
-[<CLIMutable>]
-type ProfileSearch =
-    {   /// Retrieve citizens from this continent
-        ContinentId : string option
-        
         /// Text for a search within a citizen's skills
-        Skill : string option
+        Skill : string
         
         /// Text for a search with a citizen's professional biography and experience fields
-        BioExperience : string option
+        BioExperience : string
         
         /// Whether to retrieve citizens who do or do not want remote work
         RemoteWork : string
@@ -229,6 +181,7 @@ type ProfileSearch =
 
 
 /// A user matching the profile search
+[<NoComparison; NoEquality>]
 type ProfileSearchResult =
     {   /// The ID of the citizen
         CitizenId : CitizenId

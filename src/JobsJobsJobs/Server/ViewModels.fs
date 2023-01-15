@@ -9,7 +9,7 @@ type SkillForm =
     {   Description : string
         
         /// Notes regarding the skill
-        Notes : string option
+        Notes : string
     }
 
 /// Functions to support skill forms
@@ -17,11 +17,11 @@ module SkillForm =
 
     /// Create a skill form from a skill
     let fromSkill (skill : Skill) =
-        { SkillForm.Description = skill.Description; Notes = skill.Notes }
+        { SkillForm.Description = skill.Description; Notes = defaultArg skill.Notes "" }
     
     /// Create a skill from a skill form
     let toSkill (form : SkillForm) =
-        { Skill.Description = form.Description; Notes = form.Notes }
+        { Skill.Description = form.Description; Notes = if form.Notes = "" then None else Some form.Notes }
 
 
 /// The data required to update a profile
@@ -29,9 +29,6 @@ module SkillForm =
 type EditProfileViewModel =
     {   /// Whether the citizen to whom this profile belongs is actively seeking employment
         IsSeekingEmployment : bool
-        
-        /// Whether this profile should appear in the public search
-        IsPublic : bool
         
         /// The ID of the continent on which the citizen is located
         ContinentId : string
@@ -48,11 +45,17 @@ type EditProfileViewModel =
         /// The user's professional biography
         Biography : string
         
+        /// The skills for the user
+        Skills : SkillForm array
+
         /// The user's past experience
         Experience : string option
         
-        /// The skills for the user
-        Skills : SkillForm array
+        /// Whether this profile should appear in the public search
+        IsPubliclySearchable : bool
+        
+        /// Whether this profile should be shown publicly
+        IsPubliclyLinkable : bool
     }
 
 /// Support functions for the ProfileForm type
@@ -60,28 +63,30 @@ module EditProfileViewModel =
 
     /// An empty view model (used for new profiles)
     let empty =
-        {   IsSeekingEmployment = false
-            IsPublic            = false
-            ContinentId         = ""
-            Region              = ""
-            RemoteWork          = false
-            FullTime            = false
-            Biography           = ""
-            Experience          = None
-            Skills              = [||]
+        {   IsSeekingEmployment  = false
+            ContinentId          = ""
+            Region               = ""
+            RemoteWork           = false
+            FullTime             = false
+            Biography            = ""
+            Skills               = [||]
+            Experience           = None
+            IsPubliclySearchable = false
+            IsPubliclyLinkable   = false
         }
     
     /// Create an instance of this form from the given profile
     let fromProfile (profile : Profile) =
-        {   IsSeekingEmployment = profile.IsSeekingEmployment
-            IsPublic            = profile.IsPubliclySearchable
-            ContinentId         = string profile.ContinentId
-            Region              = profile.Region
-            RemoteWork          = profile.IsRemote
-            FullTime            = profile.IsFullTime
-            Biography           = MarkdownString.toString profile.Biography
-            Experience          = profile.Experience |> Option.map MarkdownString.toString
-            Skills              = profile.Skills |> List.map SkillForm.fromSkill |> Array.ofList
+        {   IsSeekingEmployment  = profile.IsSeekingEmployment
+            ContinentId          = ContinentId.toString profile.ContinentId
+            Region               = profile.Region
+            RemoteWork           = profile.IsRemote
+            FullTime             = profile.IsFullTime
+            Biography            = MarkdownString.toString profile.Biography
+            Skills               = profile.Skills |> List.map SkillForm.fromSkill |> Array.ofList
+            Experience           = profile.Experience |> Option.map MarkdownString.toString
+            IsPubliclySearchable = profile.IsPubliclySearchable
+            IsPubliclyLinkable   = profile.IsPubliclyLinkable
         }
 
 

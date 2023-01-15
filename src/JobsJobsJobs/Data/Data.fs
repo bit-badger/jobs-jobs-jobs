@@ -445,21 +445,20 @@ module Profiles =
         connection () |> saveDocument Table.Profile (CitizenId.toString profile.Id) <| mkDoc profile
     
     /// Search profiles (logged-on users)
-    let search (search : ProfileSearch) = backgroundTask {
+    let search (search : ProfileSearchForm) = backgroundTask {
         let searches = [
-            match search.ContinentId with
-            | Some contId -> "p.data ->> 'continentId' = @continentId", [ "@continentId", Sql.string contId ]
-            | None -> ()
+            if search.ContinentId <> "" then
+                "p.data ->> 'continentId' = @continentId", [ "@continentId", Sql.string search.ContinentId ]
             if search.RemoteWork <> "" then
-                "p.data ->> 'remoteWork' = @remote", [ "@remote", jsonBool (search.RemoteWork = "yes") ]
-            match search.Skill with
-            | Some skl -> "p.data -> 'skills' ->> 'description' ILIKE @description", [ "@description", like skl ]
-            | None -> ()
-            match search.BioExperience with
-            | Some text ->
+                "p.data ->> 'isRemote' = @remote", [ "@remote", jsonBool (search.RemoteWork = "yes") ]
+            if search.Skill <> "" then
+                "EXISTS (
+                    SELECT 1 FROM jsonb_array_elements(p.data['skills']) x(elt)
+                     WHERE x ->> 'description' ILIKE @description)",
+                [ "@description", like search.Skill ]
+            if search.BioExperience <> "" then
                 "(p.data ->> 'biography' ILIKE @text OR p.data ->> 'experience' ILIKE @text)",
-                [ "@text", Sql.string text ]
-            | None -> ()
+                [ "@text", like search.BioExperience ]
         ]
         let! results =
             connection ()

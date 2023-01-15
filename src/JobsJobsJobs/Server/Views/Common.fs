@@ -16,17 +16,35 @@ let audioClip clip text =
 let antiForgery (csrf : AntiforgeryTokenSet) =
     input [ _type "hidden"; _name csrf.FormFieldName; _value csrf.RequestToken ]
 
-/// Create a select list of continents
-let continentList attrs name (continents : Continent list) emptyLabel selectedValue =
+/// Create a floating-label text input box
+let textBox attrs name value fieldLabel isRequired =
     div [ _class "form-floating" ] [
-        select (List.append attrs [ _id name; _name name; _class "form-select" ]) (
+        List.append attrs [
+            _id name; _name name; _class "form-control"; _placeholder fieldLabel; _value value
+            if isRequired then _required
+        ] |> input
+        label [ _class (if isRequired then "jjj-required" else "jjj-label"); _for name ] [ rawText fieldLabel ]
+    ]
+
+/// Create a checkbox that will post "true" if checked
+let checkBox name isChecked checkLabel =
+    div [ _class "form-check" ] [
+        input [ _type "checkbox"; _id name; _name name; _class "form-check-input"; _value "true"
+                if isChecked then _checked ]
+        label [ _class "form-check-label"; _for name ] [ str checkLabel ]
+    ]
+
+/// Create a select list of continents
+let continentList attrs name (continents : Continent list) emptyLabel selectedValue isRequired =
+    div [ _class "form-floating" ] [
+        select (List.append attrs [ _id name; _name name; _class "form-select"; if isRequired then _required ]) (
             option [ _value ""; if selectedValue = "" then _selected ] [
                 rawText $"""&ndash; {defaultArg emptyLabel "Select"} &ndash;""" ]
             :: (continents
                 |> List.map (fun c ->
                     let theId = ContinentId.toString c.Id
                     option [ _value theId; if theId = selectedValue then _selected ] [ str c.Name ])))
-        label [ _class "jjj-required"; _for name ] [ rawText "Continent" ]
+        label [ _class (if isRequired then "jjj-required" else "jjj-label"); _for name ] [ rawText "Continent" ]
     ]
 
 /// Create a Markdown editor
@@ -57,3 +75,28 @@ let markdownEditor attrs name value editorLabel =
             rawText "})"
         ]
     ]
+
+/// Wrap content in a collapsing panel
+let collapsePanel header content =
+    div [ _class "card" ] [
+        div [ _class "card-body" ] [
+            h6 [ _class "card-title" ] [
+                // TODO: toggle collapse
+                //a [ _href "#"; _class "{ 'cp-c': collapsed, 'cp-o': !collapsed }"; @click.prevent="toggle">{{headerText}} ]
+                rawText header
+            ]
+            yield! content
+        ]
+    ]
+
+/// "Yes" or "No" based on a boolean value
+let yesOrNo value =
+    if value then "Yes" else "No"
+
+open NodaTime
+open NodaTime.Text
+
+/// Generate a full date from an instant in the citizen's local time zone
+let fullDate (value : Instant) tz =
+    (ZonedDateTimePattern.CreateWithCurrentCulture ("MMMM d, yyyy", DateTimeZoneProviders.Tzdb))
+        .Format(value.InZone(DateTimeZoneProviders.Tzdb[tz]))

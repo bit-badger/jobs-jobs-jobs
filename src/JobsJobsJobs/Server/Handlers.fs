@@ -129,6 +129,11 @@ module Helpers =
     let csrf ctx =
         (antiForgery ctx).GetAndStoreTokens ctx
     
+    /// Get the time zone from the citizen's browser
+    let timeZone (ctx : HttpContext) =
+        let tz = string ctx.Request.Headers["X-Time-Zone"]
+        defaultArg (noneIfEmpty tz) "Etc/UTC"
+
     /// The key to use to indicate if we have loaded the session
     let private sessionLoadedKey = "session-loaded"
 
@@ -587,12 +592,13 @@ module Profile =
 
     // GET: /profile/edit
     let edit : HttpHandler = requireUser >=> fun next ctx -> task {
-        let! profile    = Profiles.findById (currentCitizenId ctx)
+        let  citizenId  = currentCitizenId ctx
+        let! profile    = Profiles.findById citizenId
         let! continents = Continents.all ()
         let  isNew      = Option.isNone profile
         let  form       = if isNew then EditProfileViewModel.empty else EditProfileViewModel.fromProfile profile.Value
         let  title      = $"""{if isNew then "Create" else "Edit"} Profile"""
-        return! Profile.edit form continents isNew (csrf ctx) |> render title next ctx
+        return! Profile.edit form continents isNew citizenId (csrf ctx) |> render title next ctx
     }
 
     // POST: /profile/save
@@ -616,18 +622,19 @@ module Profile =
             do! Profiles.save
                     { profile with
                         IsSeekingEmployment  = form.IsSeekingEmployment
-                        IsPubliclySearchable = form.IsPublic
                         ContinentId          = ContinentId.ofString form.ContinentId
                         Region               = form.Region
                         IsRemote             = form.RemoteWork
                         IsFullTime           = form.FullTime
                         Biography            = Text form.Biography
                         LastUpdatedOn        = now ctx
-                        Experience           = noneIfBlank form.Experience |> Option.map Text
                         Skills               = form.Skills
                                                |> Array.filter (fun s -> (box >> isNull >> not) s)
                                                |> Array.map SkillForm.toSkill
                                                |> List.ofArray
+                        Experience           = noneIfBlank form.Experience |> Option.map Text
+                        IsPubliclySearchable = form.IsPubliclySearchable
+                        IsPubliclyLinkable   = form.IsPubliclyLinkable
                     }
             let action = if isNew then "cre" else "upd"
             do! addSuccess $"Employment Profile {action}ated successfully" ctx
@@ -636,8 +643,24 @@ module Profile =
             do! addErrors errors ctx
             let! continents = Continents.all ()
             return!
-                Profile.edit form continents isNew (csrf ctx)
+                Profile.edit form continents isNew citizenId (csrf ctx)
                 |> render $"""{if isNew then "Create" else "Edit"} Profile""" next ctx
+    }
+
+    // GET: /profile/search
+    let search : HttpHandler = requireUser >=> fun next ctx -> task {
+        let! continents = Continents.all ()
+        let form =
+            match ctx.TryBindQueryString<ProfileSearchForm> () with
+            | Ok f -> f
+            | Error _ -> { ContinentId = ""; RemoteWork = ""; Skill = ""; BioExperience = "" }
+        let! results = task {
+            if string ctx.Request.Query["searched"] = "true" then
+                let! it = Profiles.search form
+                return Some it
+            else return None
+        }
+        return! Profile.search form continents (timeZone ctx) results |> render "Profile Search" next ctx
     }
 
     // GET: /profile/[id]/view
@@ -708,13 +731,6 @@ module ProfileApi =
     let delete : HttpHandler = authorize >=> fun next ctx -> task {
         do! Profiles.deleteById (currentCitizenId ctx)
         return! ok next ctx
-    }
-  
-    // GET: /api/profile/search
-    let search : HttpHandler = authorize >=> fun next ctx -> task {
-        let  search  = ctx.BindQueryString<ProfileSearch> ()
-        let! results = Profiles.search search
-        return! json results next ctx
     }
   
     // GET: /api/profile/public-search
@@ -798,6 +814,7 @@ let allEndpoints = [
         GET_HEAD [
             routef "/%s/view" Profile.view
             route  "/edit"    Profile.edit
+            route  "/search"  Profile.search
         ]
         POST [ route "/save" Profile.save ]
     ]
@@ -833,7 +850,6 @@ let allEndpoints = [
                 routef "/%O"            ProfileApi.get
                 routef "/%O/view"       ProfileApi.view
                 route  "/public-search" ProfileApi.publicSearch
-                route  "/search"        ProfileApi.search
             ]
             PATCH [ route "/employment-found" ProfileApi.employmentFound ]
         ]

@@ -50,52 +50,10 @@ const routes: Array<RouteRecordRaw> = [
   },
   // Citizen URLs
   {
-    path: "/citizen/register",
-    name: "CitizenRegistration",
-    component: () => import(/* webpackChunkName: "register" */ "../views/citizen/Register.vue"),
-    meta: { auth: false, title: "Register" }
-  },
-  {
-    path: "/citizen/registered",
-    name: "CitizenRegistered",
-    component: () => import(/* webpackChunkName: "register" */ "../views/citizen/Registered.vue"),
-    meta: { auth: false, title: "Registration Successful" }
-  },
-  {
-    path: "/citizen/confirm/:token",
-    name: "ConfirmRegistration",
-    component: () => import(/* webpackChunkName: "logon" */ "../views/citizen/ConfirmRegistration.vue"),
-    meta: { auth: false, title: "Account Confirmation" }
-  },
-  {
-    path: "/citizen/deny/:token",
-    name: "DenyRegistration",
-    component: () => import(/* webpackChunkName: "deny" */ "../views/citizen/DenyRegistration.vue"),
-    meta: { auth: false, title: "Account Deletion" }
-  },
-  {
-    path: "/citizen/log-on",
-    name: "LogOn",
-    component: () => import(/* webpackChunkName: "logon" */ "../views/citizen/LogOn.vue"),
-    meta: { auth: false, title: "Log On" }
-  },
-  {
-    path: "/citizen/dashboard",
-    name: "Dashboard",
-    component: () => import(/* webpackChunkName: "dashboard" */ "../views/citizen/Dashboard.vue"),
-    meta: { auth: true, title: "Dashboard" }
-  },
-  {
     path: "/citizen/account",
     name: "AccountProfile",
     component: () => import(/* webpackChunkName: "account" */ "../views/citizen/AccountProfile.vue"),
     meta: { auth: true, title: "Account Profile" }
-  },
-  {
-    path: "/citizen/log-off",
-    name: "LogOff",
-    component: () => import(/* webpackChunkName: "logoff" */ "../views/citizen/LogOff.vue"),
-    meta: { auth: true, title: "Logging Off" }
   },
   // Job Listing URLs
   {
@@ -129,12 +87,6 @@ const routes: Array<RouteRecordRaw> = [
     meta: { auth: true, title: "My Job Listings" }
   },
   // Profile URLs
-  {
-    path: "/profile/search",
-    name: "SearchProfiles",
-    component: () => import(/* webpackChunkName: "profview" */ "../views/profile/ProfileSearch.vue"),
-    meta: { auth: true, title: "Search Profiles" }
-  },
   {
     path: "/profile/seeking",
     name: "PublicSearchProfiles",
