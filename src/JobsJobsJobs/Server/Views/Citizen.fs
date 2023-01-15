@@ -94,6 +94,46 @@ let dashboard (citizen : Citizen) (profile : Profile option) profileCount =
     ]
 
 
+/// The account deletion success page
+let deleted =
+    article [] [
+        h3 [ _class "pb-3" ] [ rawText "Account Deletion Success" ]
+        p [] [ rawText "&nbsp;" ]
+        p [] [ rawText "Your account has been successfully deleted." ]
+        p [] [ rawText "&nbsp;" ]
+        p [] [ rawText "Thank you for participating, and thank you for your courage. #GitmoNation" ]
+    ]
+
+
+/// The profile or account deletion page
+let deletionOptions csrf =
+    article [] [
+        h3 [ _class "pb-3" ] [ rawText "Account Deletion Options" ]
+        h4 [ _class "pb-3" ] [ rawText "Option 1 &ndash; Delete Your Profile" ]
+        p [] [
+            rawText "Utilizing this option will remove your current employment profile and skills. This will preserve "
+            rawText "any job listings you may have posted, or any success stories you may have written, and preserves "
+            rawText "this application&rsquo;s knowledge of you. This is what you want to use if you want to clear out "
+            rawText "your profile and start again (and remove the current one from others&rsquo; view)."
+        ]
+        form [ _class "text-center"; _method "POST"; _action "/profile/delete" ] [
+            antiForgery csrf
+            button [ _type "submit"; _class "btn btn-danger" ] [ rawText "Delete Your Profile" ]
+        ]
+        hr []
+        h4 [ _class "pb-3" ] [ rawText "Option 2 &ndash; Delete Your Account" ]
+        p [] [
+            rawText "This option will make it like you never visited this site. It will delete your profile, skills, "
+            rawText "job listings, success stories, and account. This is what you want to use if you want to disappear "
+            rawText "from this application."
+        ]
+        form [ _class "text-center"; _method "POST"; _action "/citizen/delete" ] [
+            antiForgery csrf
+            button [ _type "submit"; _class "btn btn-danger" ] [ rawText "Delete Your Entire Account" ]
+        ]
+    ]
+
+
 /// The account denial page
 let denyAccount wasDeleted =
     article [] [
@@ -179,11 +219,11 @@ let register q1 q2 (m : RegisterViewModel) csrf =
                 ]
             ]
             div [ _class "col-12 col-xl-6" ] [
-                textBox [ _type "text"; _maxlength "30" ] (nameof m.Question1Answer) m.Question1Answer "Question 1" true
+                textBox [ _type "text"; _maxlength "30" ] (nameof m.Question1Answer) m.Question1Answer q1 true
                 input [ _type "hidden"; _name (nameof m.Question1Index); _value (string m.Question1Index ) ]
             ]
             div [ _class "col-12 col-xl-6" ] [
-                textBox [ _type "text"; _maxlength "30" ] (nameof m.Question2Answer) m.Question2Answer "Question 2" true
+                textBox [ _type "text"; _maxlength "30" ] (nameof m.Question2Answer) m.Question2Answer q2 true
                 input [ _type "hidden"; _name (nameof m.Question2Index); _value (string m.Question2Index ) ]
             ]
             div [ _class "col-12" ] [

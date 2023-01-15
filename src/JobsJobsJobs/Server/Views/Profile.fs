@@ -117,7 +117,7 @@ let edit (m : EditProfileViewModel) continents isNew citizenId csrf =
         hr []
         p [ _class "text-muted fst-italic" ] [
             rawText "(If you want to delete your profile, or your entire account, "
-            a [ _href "/so-long/options" ] [ rawText "see your deletion options here" ]; rawText ".)"
+            a [ _href "/citizen/so-long" ] [ rawText "see your deletion options here" ]; rawText ".)"
         ]
         script [] [
             rawText """addEventListener("DOMContentLoaded", function () {"""

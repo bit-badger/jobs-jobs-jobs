@@ -74,19 +74,6 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import(/* webpackChunkName: "joblist" */ "../views/listing/MyListings.vue"),
     meta: { auth: true, title: "My Job Listings" }
   },
-  // "So Long" URLs
-  {
-    path: "/so-long/options",
-    name: "DeletionOptions",
-    component: () => import(/* webpackChunkName: "so-long" */ "../views/so-long/DeletionOptions.vue"),
-    meta: { auth: true, title: "Account Deletion Options" }
-  },
-  {
-    path: "/so-long/success",
-    name: "DeletionSuccess",
-    component: () => import(/* webpackChunkName: "so-long" */ "../views/so-long/DeletionSuccess.vue"),
-    meta: { auth: false, title: "Account Deletion Success" }
-  },
   // Success Story URLs
   {
     path: "/success-story/list",

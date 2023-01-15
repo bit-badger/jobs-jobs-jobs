@@ -289,6 +289,13 @@ module Citizen =
         return! Citizen.dashboard citizen.Value profile prfCount |> render "Dashboard" next ctx
     }
 
+    // POST: /citizen/delete
+    let delete : HttpHandler = requireUser >=> validateCsrf >=> fun next ctx -> task {
+        do! Citizens.deleteById (currentCitizenId ctx)
+        do! ctx.SignOutAsync ()
+        return! render "Account Deleted Successfully" next ctx Citizen.deleted
+    }
+
     // GET: /citizen/deny/[token]
     let deny token next ctx = task {
         let! wasDeleted = Citizens.denyAccount token
@@ -402,6 +409,10 @@ module Citizen =
             return! refreshPage () next ctx
     }
 
+    // GET: /citizen/so-long
+    let soLong : HttpHandler = requireUser >=> fun next ctx ->
+        Citizen.deletionOptions (csrf ctx) |> render "Account Deletion Options" next ctx
+
 
 /// Handlers for /api/citizen routes
 [<RequireQualifiedAccess>]
@@ -442,12 +453,6 @@ module CitizenApi =
         | None -> return! Error.notFound next ctx
     }
     
-    // DELETE: /api/citizen
-    let delete : HttpHandler = authorize >=> fun next ctx -> task {
-        do! Citizens.deleteById (currentCitizenId ctx)
-        return! ok next ctx
-    }
-
 
 /// Handlers for /api/continent routes
 [<RequireQualifiedAccess>]
@@ -589,6 +594,13 @@ module Listing =
 /// Handlers for /profile routes
 [<RequireQualifiedAccess>]
 module Profile =
+
+    // POST: /profile/delete
+    let delete : HttpHandler = requireUser >=> validateCsrf >=> fun next ctx -> task {
+        do! Profiles.deleteById (currentCitizenId ctx)
+        do! addSuccess "Profile deleted successfully" ctx
+        return! redirectToGet "/citizen/dashboard" next ctx
+    }
 
     // GET: /profile/edit
     let edit : HttpHandler = requireUser >=> fun next ctx -> task {
@@ -743,12 +755,6 @@ module ProfileApi =
         | None -> return! Error.notFound next ctx
     }
   
-    // DELETE: /api/profile
-    let delete : HttpHandler = authorize >=> fun next ctx -> task {
-        do! Profiles.deleteById (currentCitizenId ctx)
-        return! ok next ctx
-    }
-
 
 /// Handlers for /api/success routes
 [<RequireQualifiedAccess>]
@@ -811,8 +817,10 @@ let allEndpoints = [
             route  "/log-off"    Citizen.logOff
             route  "/log-on"     Citizen.logOn
             route  "/register"   Citizen.register
+            route  "/so-long"    Citizen.soLong
         ]
         POST [
+            route "/delete"   Citizen.delete
             route "/log-on"   Citizen.doLogOn
             route "/register" Citizen.doRegistration
         ]
@@ -826,7 +834,10 @@ let allEndpoints = [
             route  "/search"  Profile.search
             route  "/seeking" Profile.seeking
         ]
-        POST [ route "/save" Profile.save ]
+        POST [
+            route "/delete" Profile.delete
+            route "/save"   Profile.save
+        ]
     ]
     GET_HEAD [ route "/terms-of-service" Home.termsOfService ]
     
@@ -835,9 +846,6 @@ let allEndpoints = [
             GET_HEAD [ routef "/%O" CitizenApi.get ]
             PATCH [
                 route "/account" CitizenApi.account
-            ]
-            DELETE [
-                route ""      CitizenApi.delete
             ]
         ]
         GET_HEAD [ route "/continents" Continent.all ]
