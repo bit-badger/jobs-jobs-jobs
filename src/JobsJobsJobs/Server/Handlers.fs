@@ -663,6 +663,22 @@ module Profile =
         return! Profile.search form continents (timeZone ctx) results |> render "Profile Search" next ctx
     }
 
+    // GET: /profile/seeking
+    let seeking : HttpHandler = fun next ctx -> task {
+        let! continents = Continents.all ()
+        let form =
+            match ctx.TryBindQueryString<PublicSearchForm> () with
+            | Ok f -> f
+            | Error _ -> { ContinentId = ""; Region = ""; RemoteWork = ""; Skill = "" }
+        let! results = task {
+            if string ctx.Request.Query["searched"] = "true" then
+                let! it = Profiles.publicSearch form
+                return Some it
+            else return None
+        }
+        return! Profile.publicSearch form continents results |> render "Profile Search" next ctx
+    }
+
     // GET: /profile/[id]/view
     let view citizenId : HttpHandler = fun next ctx -> task {
         let citId = CitizenId.ofString citizenId
@@ -731,13 +747,6 @@ module ProfileApi =
     let delete : HttpHandler = authorize >=> fun next ctx -> task {
         do! Profiles.deleteById (currentCitizenId ctx)
         return! ok next ctx
-    }
-  
-    // GET: /api/profile/public-search
-    let publicSearch : HttpHandler = fun next ctx -> task {
-        let  search  = ctx.BindQueryString<PublicSearch> ()
-        let! results = Profiles.publicSearch search
-        return! json results next ctx
     }
 
 
@@ -815,6 +824,7 @@ let allEndpoints = [
             routef "/%s/view" Profile.view
             route  "/edit"    Profile.edit
             route  "/search"  Profile.search
+            route  "/seeking" Profile.seeking
         ]
         POST [ route "/save" Profile.save ]
     ]
@@ -848,8 +858,6 @@ let allEndpoints = [
                 route  ""               ProfileApi.current
                 route  "/count"         ProfileApi.count
                 routef "/%O"            ProfileApi.get
-                routef "/%O/view"       ProfileApi.view
-                route  "/public-search" ProfileApi.publicSearch
             ]
             PATCH [ route "/employment-found" ProfileApi.employmentFound ]
         ]

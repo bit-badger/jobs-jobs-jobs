@@ -483,29 +483,29 @@ module Profiles =
     }
 
     // Search profiles (public)
-    let publicSearch (search : PublicSearch) =
+    let publicSearch (search : PublicSearchForm) =
         let searches = [
-            match search.ContinentId with
-            | Some contId -> "p.data ->> 'continentId' = @continentId", [ "@continentId", Sql.string contId ]
-            | None -> ()
-            match search.Region with
-            | Some region -> "p.data ->> 'region' ILIKE @region", [ "@region", like region ]
-            | None -> ()
+            if search.ContinentId <> "" then
+                "p.data ->> 'continentId' = @continentId", [ "@continentId", Sql.string search.ContinentId ]
+            if search.Region <> "" then
+                "p.data ->> 'region' ILIKE @region", [ "@region", like search.Region ]
             if search.RemoteWork <> "" then
-                "p.data ->> 'remoteWork' = @remote", [ "@remote", jsonBool (search.RemoteWork = "yes") ]
-            match search.Skill with
-            | Some skl ->
-                "p.data -> 'skills' ->> 'description' ILIKE @description", [ "@description", like skl ]
-            | None -> ()
+                "p.data ->> 'isRemote' = @remote", [ "@remote", jsonBool (search.RemoteWork = "yes") ]
+            if search.Skill <> "" then
+                "EXISTS (
+                    SELECT 1 FROM jsonb_array_elements(p.data['skills']) x(elt)
+                     WHERE x ->> 'description' ILIKE @description)",
+                [ "@description", like search.Skill ]
         ]
         connection ()
         |> Sql.query $"
             SELECT p.*, c.data AS cont_data
               FROM {Table.Profile} p
                    INNER JOIN {Table.Continent} c ON c.id = p.data ->> 'continentId'
-             WHERE p.data ->> 'isPublic' = 'true'
-               AND p.data ->> 'isLegacy' = 'false'
+             WHERE p.data ->> 'isPubliclySearchable' = 'true'
+               AND p.data ->> 'isLegacy'             = 'false'
                {searchSql searches}"
+        |> Sql.parameters (searches |> List.collect snd)
         |> Sql.executeAsync (fun row ->
             let profile = toDocument<Profile> row
             let continent = toDocumentFrom<Continent> "cont_data" row

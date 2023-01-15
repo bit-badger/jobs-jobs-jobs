@@ -218,30 +218,19 @@ type ProfileForView =
 
 /// The parameters for a public job search
 [<CLIMutable>]
-type PublicSearch =
+type PublicSearchForm =
     {   /// Retrieve citizens from this continent
-        ContinentId : string option
+        ContinentId : string
         
         /// Retrieve citizens from this region
-        Region : string option
+        Region : string
         
         /// Text for a search within a citizen's skills
-        Skill : string option
+        Skill : string
         
         /// Whether to retrieve citizens who do or do not want remote work
         RemoteWork : string
     }
-
-/// Support functions for public searches
-module PublicSearch =
-    /// Is the search empty?
-    let isEmptySearch (search : PublicSearch) =
-        [   search.ContinentId
-            search.Region
-            search.Skill
-            if search.RemoteWork = "" then Some search.RemoteWork else None
-        ]
-        |> List.exists Option.isSome
 
 
 /// A public profile search result

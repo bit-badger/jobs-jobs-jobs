@@ -36,18 +36,6 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import(/* webpackChunkName: "help" */ "../views/HowItWorks.vue"),
     meta: { auth: false, title: "How It Works" }
   },
-  {
-    path: "/privacy-policy",
-    name: "PrivacyPolicy",
-    component: () => import(/* webpackChunkName: "legal" */ "../views/PrivacyPolicy.vue"),
-    meta: { auth: false, title: "Privacy Policy" }
-  },
-  {
-    path: "/terms-of-service",
-    name: "TermsOfService",
-    component: () => import(/* webpackChunkName: "legal" */ "../views/TermsOfService.vue"),
-    meta: { auth: false, title: "Terms of Service" }
-  },
   // Citizen URLs
   {
     path: "/citizen/account",
@@ -85,13 +73,6 @@ const routes: Array<RouteRecordRaw> = [
     name: "MyListings",
     component: () => import(/* webpackChunkName: "joblist" */ "../views/listing/MyListings.vue"),
     meta: { auth: true, title: "My Job Listings" }
-  },
-  // Profile URLs
-  {
-    path: "/profile/seeking",
-    name: "PublicSearchProfiles",
-    component: () => import(/* webpackChunkName: "seeking" */ "../views/profile/Seeking.vue"),
-    meta: { auth: false, title: "People Seeking Work" }
   },
   // "So Long" URLs
   {

@@ -127,6 +127,90 @@ let edit (m : EditProfileViewModel) continents isNew citizenId csrf =
     ]
 
 
+/// The public search page
+let publicSearch (m : PublicSearchForm) continents (results : PublicSearchResult list option) =
+    article [] [
+        h3 [ _class "pb-3" ] [ rawText "People Seeking Work" ]
+        if Option.isNone results then
+            p [] [
+                rawText "Enter one or more criteria to filter results, or just click &ldquo;Search&rdquo; to list all "
+                rawText "publicly searchable profiles."
+            ]
+        collapsePanel "Search Criteria" [
+            form [ _class "container"; _method "GET"; _action "/profile/seeking" ] [
+                input [ _type "hidden"; _name "searched"; _value "true" ]
+                div [ _class "row" ] [
+                    div [ _class "col-12 col-sm-6 col-md-4 col-lg-3" ] [
+                        continentList [] "ContinentId" continents (Some "Any") m.ContinentId false
+                    ]
+                    div [ _class "col-12 col-sm-6 col-md-4 col-lg-3" ] [
+                        textBox [ _maxlength "1000" ] (nameof m.Region) m.Region "Region" false
+                        div [ _class "form-text" ] [ rawText "(free-form text)" ]
+                    ]
+                    div [ _class "col-12 col-sm-6 col-offset-md-2 col-lg-3 col-offset-lg-0" ] [
+                        label [ _class "jjj-label" ] [ rawText "Seeking Remote Work?" ]; br []
+                        div [ _class "form-check form-check-inline" ] [
+                            input [ _type "radio"; _id "remoteNull"; _name (nameof m.RemoteWork); _value ""
+                                    _class "form-check-input"; if m.RemoteWork = "" then _checked ]
+                            label [ _class "form-check-label"; _for "remoteNull" ] [ rawText "No Selection" ]
+                        ]
+                        div [ _class "form-check form-check-inline" ] [
+                            input [ _type "radio"; _id "remoteYes"; _name (nameof m.RemoteWork); _value "yes"
+                                    _class "form-check-input"; if m.RemoteWork = "yes" then _checked ]
+                            label [ _class "form-check-label"; _for "remoteYes" ] [ rawText "Yes" ]
+                        ]
+                        div [ _class "form-check form-check-inline" ] [
+                            input [ _type "radio"; _id "remoteNo"; _name (nameof m.RemoteWork); _value "no"
+                                    _class "form-check-input"; if m.RemoteWork = "no" then _checked ]
+                            label [ _class "form-check-label"; _for "remoteNo" ] [ rawText "No" ]
+                        ]
+                    ]
+                    div [ _class "col-12 col-sm-6 col-lg-3" ] [
+                        textBox [ _maxlength "1000" ] (nameof m.Skill) m.Skill "Skill" false
+                        div [ _class "form-text" ] [ rawText "(free-form text)" ]
+                    ]
+                ]
+                div [ _class "row" ] [
+                    div [ _class "col" ] [
+                        br []
+                        button [ _type "submit"; _class "btn btn-outline-primary" ] [ rawText "Search" ]
+                    ]
+                ]
+            ]
+        ]
+        match results with
+        | Some r when List.isEmpty r -> p [ _class "pt-3" ] [ rawText "No results found for the specified criteria" ]
+        | Some r ->
+            p [ _class "py-3" ] [
+                rawText "These profiles match your search criteria. To learn more about these people, join the merry "
+                rawText "band of human resources in the "
+                a [ _href "https://noagendashow.net"; _target "_blank"; _rel "noopener" ] [ rawText "No Agenda" ]
+                rawText " tribe!"
+            ]
+            table [ _class "table table-sm table-hover" ] [
+                thead [] [
+                    tr [] [
+                        th [ _scope "col" ] [ rawText "Continent" ]
+                        th [ _scope "col"; _class "text-center" ] [ rawText "Region" ]
+                        th [ _scope "col"; _class "text-center" ] [ rawText "Remote?" ]
+                        th [ _scope "col"; _class "text-center" ] [ rawText "Skills" ]
+                    ]
+                ]
+                r |> List.map (fun profile ->
+                    tr [] [
+                        td [] [ str profile.Continent ]
+                        td [] [ str profile.Region ]
+                        td [ _class "text-center" ] [ rawText (yesOrNo profile.RemoteWork) ]
+                        profile.Skills
+                        |> List.collect (fun skill -> [ str skill; br [] ])
+                        |> td []
+                    ])
+                |> tbody []
+            ]
+        | None -> ()
+    ]
+
+
 /// Logged-on search page
 let search (m : ProfileSearchForm) continents tz (results : ProfileSearchResult list option) =
     article [] [
