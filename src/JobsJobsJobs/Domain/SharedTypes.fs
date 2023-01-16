@@ -2,7 +2,6 @@
 module JobsJobsJobs.Domain.SharedTypes
 
 open JobsJobsJobs.Domain
-open Microsoft.Extensions.Options
 open NodaTime
 
 /// The data to add or update an other contact
@@ -46,29 +45,8 @@ type AccountProfileForm =
     }
 
 
-/// The data required to register a new citizen (user)
-type CitizenRegistrationForm =
-    {   /// The first name of the new citizen
-        FirstName : string
-        
-        /// The last name of the new citizen
-        LastName : string
-        
-        /// The display name for the new citizen
-        DisplayName : string option
-        
-        /// The citizen's e-mail address
-        Email : string
-        
-        /// The citizen's password
-        Password : string
-        
-        /// Confirmation of the citizen's password
-        ConfirmPassword : string
-    }
-
-
 /// The data needed to display a listing
+[<NoComparison; NoEquality>]
 type ListingForView =
     {   /// The listing itself
         Listing : Listing
@@ -95,19 +73,6 @@ type ListingSearchForm =
         
         /// Text for a search with the job listing description
         Text : string
-    }
-
-
-/// A successful logon
-type LogOnSuccess =
-    {   /// The JSON Web Token (JWT) to use for API access
-        Jwt : string
-        
-        /// The ID of the logged-in citizen (as a string)
-        CitizenId : string
-        
-        /// The name of the logged-in citizen
-        Name : string
     }
 
 
@@ -182,6 +147,7 @@ type PublicSearchForm =
 
 
 /// A public profile search result
+[<NoComparison; NoEquality>]
 type PublicSearchResult =
     {   /// The name of the continent on which the citizen resides
         Continent : string

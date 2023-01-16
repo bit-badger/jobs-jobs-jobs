@@ -4,7 +4,7 @@ open NodaTime
 open System
 
 /// A user of Jobs, Jobs, Jobs; a citizen of Gitmo Nation
-[<CLIMutable; NoComparison; NoEquality>]
+[<NoComparison; NoEquality>]
 type Citizen =
     {   /// The ID of the user
         Id : CitizenId
@@ -60,7 +60,7 @@ module Citizen =
 
 
 /// A continent
-[<CLIMutable; NoComparison; NoEquality>]
+[<NoComparison; NoEquality>]
 type Continent =
     {   /// The ID of the continent
         Id : ContinentId
@@ -80,7 +80,7 @@ module Continent =
 
 
 /// A job listing
-[<CLIMutable; NoComparison; NoEquality>]
+[<NoComparison; NoEquality>]
 type Listing =
     {   /// The ID of the job listing
         Id : ListingId
@@ -179,7 +179,7 @@ module SecurityInfo =
 
 
 /// A job seeker profile
-[<CLIMutable; NoComparison; NoEquality>]
+[<NoComparison; NoEquality>]
 type Profile =
     {   /// The ID of the citizen to whom this profile belongs
         Id : CitizenId
@@ -243,7 +243,7 @@ module Profile =
 
 
 /// A record of success finding employment
-[<CLIMutable; NoComparison; NoEquality>]
+[<NoComparison; NoEquality>]
 type Success =
     {   /// The ID of the success report
         Id : SuccessId

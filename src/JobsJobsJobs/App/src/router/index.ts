@@ -36,13 +36,6 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import(/* webpackChunkName: "account" */ "../views/citizen/AccountProfile.vue"),
     meta: { auth: true, title: "Account Profile" }
   },
-  // Job Listing URLs
-  {
-    path: "/help-wanted",
-    name: "HelpWanted",
-    component: () => import(/* webpackChunkName: "joblist" */ "../views/listing/HelpWanted.vue"),
-    meta: { auth: true, title: "Help Wanted" }
-  },
   // Success Story URLs
   {
     path: "/success-story/list",
