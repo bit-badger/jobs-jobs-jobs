@@ -28,31 +28,3 @@ module Passwords =
         | PasswordVerificationResult.Success -> Some false
         | PasswordVerificationResult.SuccessRehashNeeded -> Some true
         | _ -> None
-
-
-open System.IdentityModel.Tokens.Jwt
-open System.Security.Claims
-open Microsoft.IdentityModel.Tokens
-open JobsJobsJobs.Domain.SharedTypes
-
-/// Create a JSON Web Token for this citizen to use for further requests to this API
-let createJwt (citizen : Citizen) (cfg : AuthOptions) =
-
-    let tokenHandler = JwtSecurityTokenHandler ()
-    let token =
-        tokenHandler.CreateToken (
-            SecurityTokenDescriptor (
-                Subject = ClaimsIdentity [|
-                    Claim (ClaimTypes.NameIdentifier, CitizenId.toString citizen.Id)
-                    Claim (ClaimTypes.Name, Citizen.name citizen)
-                    |],
-                Expires  = DateTime.UtcNow.AddHours 2.,
-                Issuer   = "https://noagendacareers.com",
-                Audience = "https://noagendacareers.com",
-                SigningCredentials = SigningCredentials (
-                    SymmetricSecurityKey (
-                        Encoding.UTF8.GetBytes cfg.ServerSecret), SecurityAlgorithms.HmacSha256Signature)
-            )
-        )
-    tokenHandler.WriteToken token
-

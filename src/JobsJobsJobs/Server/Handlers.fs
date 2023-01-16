@@ -2,20 +2,13 @@
 module JobsJobsJobs.Server.Handlers
 
 open Giraffe
+open Giraffe.Htmx
 open JobsJobsJobs.Domain
 open JobsJobsJobs.Domain.SharedTypes
 open JobsJobsJobs.Views
 open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.Logging
 
-/// Handler to return the files required for the Vue client app
-module Vue =
-
-    /// Handler that returns index.html (the Vue client app)
-    let app = htmlFile "wwwroot/index.html"
-
-
-open Giraffe.Htmx
 
 [<AutoOpen>]
 module private HtmxHelpers =
@@ -29,27 +22,15 @@ module private HtmxHelpers =
 module Error =
   
     open System.Net
-    open System.Threading.Tasks
-
-    /// URL prefixes for the Vue app
-    let vueUrls =
-        [ "/how-it-works"; "/privacy-policy"; "/terms-of-service"; "/citizen"; "/help-wanted"; "/listing"; "/profile"
-          "/so-long"; "/success-story"
-        ]
 
     /// Handler that will return a status code 404 and the text "Not Found"
-    let notFound : HttpHandler = fun next ctx -> task {
+    let notFound : HttpHandler = fun next ctx ->
         let fac  = ctx.GetService<ILoggerFactory> ()
         let log  = fac.CreateLogger "Handler"
         let path = string ctx.Request.Path
-        match [ "GET"; "HEAD" ] |> List.contains ctx.Request.Method with
-        | true when path = "/" || vueUrls |> List.exists path.StartsWith ->
-            log.LogInformation "Returning Vue app"
-            return! Vue.app next ctx
-        | _ ->
-            log.LogInformation "Returning 404"
-            return! RequestErrors.NOT_FOUND $"The URL {path} was not recognized as a valid URL" next ctx
-    }
+        log.LogInformation "Returning 404"
+        RequestErrors.NOT_FOUND $"The URL {path} was not recognized as a valid URL" next ctx
+    
     
     /// Handle unauthorized actions, redirecting to log on for GETs, otherwise returning a 401 Not Authorized response
     let notAuthorized : HttpHandler = fun next ctx ->
@@ -89,9 +70,6 @@ module Helpers =
 
     /// Get the application configuration from the request context
     let config (ctx : HttpContext) = ctx.GetService<IConfiguration> ()
-
-    /// Get the authorization configuration from the request context
-    let authConfig (ctx : HttpContext) = (ctx.GetService<IOptions<AuthOptions>> ()).Value
 
     /// Get the logger factory from the request context
     let logger (ctx : HttpContext) = ctx.GetService<ILoggerFactory> ()
@@ -418,13 +396,6 @@ module Citizen =
 [<RequireQualifiedAccess>]
 module CitizenApi =
     
-    // GET: /api/citizen/[id]
-    let get citizenId : HttpHandler = authorize >=> fun next ctx -> task {
-        match! Citizens.findById (CitizenId citizenId) with
-        | Some citizen -> return! json { citizen with PasswordHash = "" } next ctx
-        | None -> return! Error.notFound next ctx
-    }
-    
     // PATCH: /api/citizen/account
     let account : HttpHandler = authorize >=> fun next ctx -> task {
         let! form = ctx.BindJsonAsync<AccountProfileForm> ()
@@ -490,62 +461,100 @@ module Home =
 [<RequireQualifiedAccess>]
 module Listing =
     
+    /// Parse the string we receive from JSON into a NodaTime local date
+    let private parseDate = DateTime.Parse >> LocalDate.FromDateTime
+
+    // GET: /listing/[id]/edit
+    let edit listId : HttpHandler = requireUser >=> fun next ctx -> task {
+        let citizenId = currentCitizenId ctx
+        let! theListing = task {
+            match listId with
+            | "new" -> return Some { Listing.empty with CitizenId = citizenId }
+            | _ -> return! Listings.findById (ListingId.ofString listId)
+        }
+        match theListing with
+        | Some listing when listing.CitizenId = citizenId ->
+            let! continents = Continents.all ()
+            return!
+                Listing.edit (EditListingForm.fromListing listing listId) continents (listId = "new") (csrf ctx)
+                |> render $"""{if listId = "new" then "Add a" else "Edit"} Job Listing""" next ctx
+        | Some _ -> return! Error.notAuthorized next ctx
+        | None -> return! Error.notFound next ctx
+    }
+
+    // GET: /listing/[id]/expire
+    let expire listingId : HttpHandler = requireUser >=> fun next ctx -> task {
+        match! Listings.findById (ListingId listingId) with
+        | Some listing when listing.CitizenId = currentCitizenId ctx ->
+            if listing.IsExpired then
+                do! addError $"The listing &ldquo;{listing.Title}&rdquo; is already expired" ctx
+                return! redirectToGet "/listings/mine" next ctx
+            else
+                let form = { Id = ListingId.toString listing.Id; FromHere = false; SuccessStory = "" }
+                return! Listing.expire form listing (csrf ctx) |> render "Expire Job Listing" next ctx
+        | Some _ -> return! Error.notAuthorized next ctx
+        | None -> return! Error.notFound next ctx
+    }
+
+    // POST: /listing/expire
+    let doExpire : HttpHandler = requireUser >=> validateCsrf >=> fun next ctx -> task {
+        let  citizenId = currentCitizenId ctx
+        let  now       = now ctx
+        let! form      = ctx.BindFormAsync<ExpireListingForm> ()
+        match! Listings.findById (ListingId.ofString form.Id) with
+        | Some listing when listing.CitizenId = citizenId ->
+            if listing.IsExpired then
+                return! RequestErrors.BAD_REQUEST "Request is already expired" next ctx
+            else
+                do! Listings.save
+                        { listing with
+                            IsExpired     = true
+                            WasFilledHere = Some form.FromHere
+                            UpdatedOn     = now
+                        }
+                if form.SuccessStory <> "" then
+                    do! Successes.save
+                            {   Id         = SuccessId.create()
+                                CitizenId  = citizenId
+                                RecordedOn = now
+                                IsFromHere = form.FromHere
+                                Source     = "listing"
+                                Story      = (Text >> Some) form.SuccessStory
+                            }
+                let extraMsg = if form.SuccessStory <> "" then " and success story recorded" else ""
+                do! addSuccess $"Job listing expired{extraMsg} successfully" ctx
+                return! redirectToGet "/listings/mine" next ctx
+        | Some _ -> return! Error.notAuthorized next ctx
+        | None -> return! Error.notFound next ctx
+    }
+
     // GET: /listings/mine
     let mine : HttpHandler = requireUser >=> fun next ctx -> task {
         let! listings = Listings.findByCitizen (currentCitizenId ctx)
         return! Listing.mine listings (timeZone ctx) |> render "My Job Listings" next ctx
     }
 
-
-/// Handlers for /api/listing[s] routes
-[<RequireQualifiedAccess>]
-module ListingApi =
-
-    /// Parse the string we receive from JSON into a NodaTime local date
-    let private parseDate = DateTime.Parse >> LocalDate.FromDateTime
-
-    // GET: /api/listing/[id]
-    let get listingId : HttpHandler = authorize >=> fun next ctx -> task {
-        match! Listings.findById (ListingId listingId) with
-        | Some listing -> return! json listing next ctx
-        | None -> return! Error.notFound next ctx
-    }
-  
-    // GET: /api/listing/view/[id]
-    let view listingId : HttpHandler = authorize >=> fun next ctx -> task {
-        match! Listings.findByIdForView (ListingId listingId) with
-        | Some listing -> return! json listing next ctx
-        | None -> return! Error.notFound next ctx
-    }
-
-    // POST: /listings
-    let add : HttpHandler = authorize >=> fun next ctx -> task {
-        let! form = ctx.BindJsonAsync<ListingForm> ()
-        let  now  = now ctx
-        do! Listings.save {
-            Id            = ListingId.create ()
-            CitizenId     = currentCitizenId ctx
-            CreatedOn     = now
-            Title         = form.Title
-            ContinentId   = ContinentId.ofString form.ContinentId
-            Region        = form.Region
-            IsRemote      = form.RemoteWork
-            IsExpired     = false
-            UpdatedOn     = now
-            Text          = Text form.Text
-            NeededBy      = (form.NeededBy |> Option.map parseDate)
-            WasFilledHere = None
-            IsLegacy      = false
+    // POST: /listing/save
+    let save : HttpHandler = requireUser >=> validateCsrf >=> fun next ctx -> task {
+        let  citizenId  = currentCitizenId ctx
+        let  now        = now ctx
+        let! form       = ctx.BindFormAsync<EditListingForm> ()
+        let! theListing = task {
+            match form.Id with
+            | "new" ->
+                return Some
+                        { Listing.empty with
+                            Id            = ListingId.create ()
+                            CitizenId     = currentCitizenId ctx
+                            CreatedOn     = now
+                            IsExpired     = false
+                            WasFilledHere = None
+                            IsLegacy      = false
+                        }
+            | _ -> return! Listings.findById (ListingId.ofString form.Id)
         }
-        return! ok next ctx
-    }
-
-    // PUT: /api/listing/[id]
-    let update listingId : HttpHandler = authorize >=> fun next ctx -> task {
-        match! Listings.findById (ListingId listingId) with
-        | Some listing when listing.CitizenId <> (currentCitizenId ctx) -> return! Error.notAuthorized next ctx
-        | Some listing ->
-            let! form = ctx.BindJsonAsync<ListingForm> ()
+        match theListing with
+        | Some listing when listing.CitizenId = citizenId ->
             do! Listings.save
                     { listing with
                         Title       = form.Title
@@ -553,40 +562,27 @@ module ListingApi =
                         Region      = form.Region
                         IsRemote    = form.RemoteWork
                         Text        = Text form.Text
-                        NeededBy    = form.NeededBy |> Option.map parseDate
-                        UpdatedOn   = now ctx
+                        NeededBy    = noneIfEmpty form.NeededBy |> Option.map parseDate
+                        UpdatedOn   = now
                     }
-            return! ok next ctx
+            do! addSuccess $"""Job listing {if form.Id = "new" then "add" else "updat"}ed successfully""" ctx
+            return! redirectToGet $"/listing/{ListingId.toString listing.Id}/edit" next ctx
+        | Some _ -> return! Error.notAuthorized next ctx
         | None -> return! Error.notFound next ctx
-      }
-  
-    // PATCH: /api/listing/[id]
-    let expire listingId : HttpHandler = authorize >=> fun next ctx -> task {
-        let now = now ctx
-        match! Listings.findById (ListingId listingId) with
-        | Some listing when listing.CitizenId <> (currentCitizenId ctx) -> return! Error.notAuthorized next ctx
-        | Some listing ->
-            let! form = ctx.BindJsonAsync<ListingExpireForm> ()
-            do! Listings.save
-                    { listing with
-                        IsExpired     = true
-                        WasFilledHere = Some form.FromHere
-                        UpdatedOn     = now
-                    }
-            match form.SuccessStory with
-            | Some storyText ->
-                do! Successes.save
-                        { Id         = SuccessId.create()
-                          CitizenId  = currentCitizenId ctx
-                          RecordedOn = now
-                          IsFromHere = form.FromHere
-                          Source     = "listing"
-                          Story      = (Text >> Some) storyText
-                          }
-            | None -> ()
-            return! ok next ctx
+
+    }
+
+    // GET: /listing/[id]/view
+    let view listingId : HttpHandler = requireUser >=> fun next ctx -> task {
+        match! Listings.findByIdForView (ListingId listingId) with
+        | Some listing -> return! Listing.view listing |> render $"{listing.Listing.Title} | Job Listing" next ctx
         | None -> return! Error.notFound next ctx
     }
+
+
+/// Handlers for /api/listing[s] routes
+[<RequireQualifiedAccess>]
+module ListingApi =
 
     // GET: /api/listing/search
     let search : HttpHandler = authorize >=> fun next ctx -> task {
@@ -698,7 +694,7 @@ module Profile =
 
     // GET: /profile/[id]/view
     let view citizenId : HttpHandler = fun next ctx -> task {
-        let citId = CitizenId.ofString citizenId
+        let citId = CitizenId citizenId
         match! Citizens.findById citId with
         | Some citizen ->
             match! Profiles.findById citId with
@@ -722,35 +718,6 @@ module Profile =
 [<RequireQualifiedAccess>]
 module ProfileApi =
 
-    // GET: /api/profile
-    //      This returns the current citizen's profile, or a 204 if it is not found (a citizen not having a profile yet
-    //      is not an error). The "get" handler returns a 404 if a profile is not found.
-    let current : HttpHandler = authorize >=> fun next ctx -> task {
-        match! Profiles.findById (currentCitizenId ctx) with
-        | Some profile -> return! json profile next ctx
-        | None -> return! Successful.NO_CONTENT next ctx
-    }
-  
-    // GET: /api/profile/get/[id]
-    let get citizenId : HttpHandler = authorize >=> fun next ctx -> task {
-        match! Profiles.findById (CitizenId citizenId) with
-        | Some profile -> return! json profile next ctx
-        | None -> return! Error.notFound next ctx
-    }
-
-    // GET: /api/profile/view/[id]
-    let view citizenId : HttpHandler = authorize >=> fun next ctx -> task {
-        match! Profiles.findByIdForView (CitizenId citizenId) with
-        | Some profile -> return! json profile next ctx
-        | None -> return! Error.notFound next ctx
-    }
-  
-    // GET: /api/profile/count
-    let count : HttpHandler = authorize >=> fun next ctx -> task {
-        let! theCount = Profiles.count ()
-        return! json {| Count = theCount |} next ctx
-    }
-  
     // PATCH: /api/profile/employment-found
     let employmentFound : HttpHandler = authorize >=> fun next ctx -> task {
         match! Profiles.findById (currentCitizenId ctx) with
@@ -833,13 +800,20 @@ let allEndpoints = [
     GET_HEAD [ route "/how-it-works" Home.howItWorks ]
     subRoute "/listing" [
         GET_HEAD [
-            route  "s/mine"   Listing.mine
+            route  "s/mine"     Listing.mine
+            routef "/%s/edit"   Listing.edit
+            routef "/%O/expire" Listing.expire
+            routef "/%O/view"   Listing.view
+        ]
+        POST [
+            route "/expire" Listing.doExpire
+            route "/save"   Listing.save
         ]
     ]
     GET_HEAD [ route "/privacy-policy" Home.privacyPolicy ]
     subRoute "/profile" [
         GET_HEAD [
-            routef "/%s/view" Profile.view
+            routef "/%O/view" Profile.view
             route  "/edit"    Profile.edit
             route  "/search"  Profile.search
             route  "/seeking" Profile.seeking
@@ -853,7 +827,6 @@ let allEndpoints = [
     
     subRoute "/api" [
         subRoute "/citizen" [
-            GET_HEAD [ routef "/%O" CitizenApi.get ]
             PATCH [
                 route "/account" CitizenApi.account
             ]
@@ -861,21 +834,11 @@ let allEndpoints = [
         GET_HEAD [ route "/continents" Continent.all ]
         subRoute "/listing" [
             GET_HEAD [
-                routef "/%O"      ListingApi.get
                 route  "/search"  ListingApi.search
-                routef "/%O/view" ListingApi.view
             ]
-            PATCH [ routef "/%O" ListingApi.expire ]
-            POST [ route "s" ListingApi.add ]
-            PUT [ routef "/%O" ListingApi.update ]
         ]
         POST [ route "/markdown-preview" Api.markdownPreview ]
         subRoute "/profile" [
-            GET_HEAD [
-                route  ""               ProfileApi.current
-                route  "/count"         ProfileApi.count
-                routef "/%O"            ProfileApi.get
-            ]
             PATCH [ route "/employment-found" ProfileApi.employmentFound ]
         ]
         subRoute "/success" [

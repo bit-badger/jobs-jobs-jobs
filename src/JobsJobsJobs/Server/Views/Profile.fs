@@ -49,7 +49,7 @@ let edit (m : EditProfileViewModel) continents isNew citizenId csrf =
         form [ _class "row g-3"; _action "/profile/save"; _hxPost "/profile/save" ] [
             antiForgery csrf
             div [ _class "col-12" ] [
-                checkBox (nameof m.IsSeekingEmployment) m.IsSeekingEmployment "I am currently seeking employment"
+                checkBox [] (nameof m.IsSeekingEmployment) m.IsSeekingEmployment "I am currently seeking employment"
                 if m.IsSeekingEmployment then
                     p [] [
                         em [] [
@@ -67,10 +67,10 @@ let edit (m : EditProfileViewModel) continents isNew citizenId csrf =
             ]
             markdownEditor [ _required ] (nameof m.Biography) m.Biography "Professional Biography"
             div [ _class "col-12 col-offset-md-2 col-md-4" ] [
-                checkBox (nameof m.RemoteWork) m.RemoteWork "I am looking for remote work"
+                checkBox [] (nameof m.RemoteWork) m.RemoteWork "I am looking for remote work"
             ]
             div [ _class "col-12 col-md-4" ] [
-                checkBox (nameof m.FullTime) m.FullTime "I am looking for full-time work"
+                checkBox [] (nameof m.FullTime) m.FullTime "I am looking for full-time work"
             ]
             div [ _class "col-12" ] [
                 hr []
@@ -95,11 +95,11 @@ let edit (m : EditProfileViewModel) continents isNew citizenId csrf =
             ]
             markdownEditor [] (nameof m.Experience) (defaultArg m.Experience "") "Experience"
             div [ _class "col-12 col-xl-6" ] [
-                checkBox (nameof m.IsPubliclySearchable) m.IsPubliclySearchable
+                checkBox [] (nameof m.IsPubliclySearchable) m.IsPubliclySearchable
                          "Allow my profile to be searched publicly"
             ]
             div [ _class "col-12 col-xl-6" ] [
-                checkBox (nameof m.IsPubliclyLinkable) m.IsPubliclyLinkable
+                checkBox [] (nameof m.IsPubliclyLinkable) m.IsPubliclyLinkable
                          "Show my profile to anyone who has the direct link to it"
             ]
             div [ _class "col-12" ] [
@@ -312,7 +312,7 @@ let view (citizen : Citizen) (profile : Profile) (continentName : string) pageTi
             rawText (if profile.IsRemote then "I" else "Not i"); rawText "nterested in remote opportunities"
         ]
         hr []
-        div [] [ rawText (MarkdownString.toHtml profile.Biography) ]
+        div [] [ md2html profile.Biography ]
         if not (List.isEmpty profile.Skills) then
             hr []
             h4 [ _class "pb-3" ] [ rawText "Skills" ]
@@ -327,10 +327,7 @@ let view (citizen : Citizen) (profile : Profile) (continentName : string) pageTi
                 ])
             |> ul []
         match profile.Experience with
-        | Some exp ->
-            hr []
-            h4 [ _class "pb-3" ] [ rawText "Experience / Employment History" ]
-            div [] [ rawText (MarkdownString.toHtml exp) ]
+        | Some exp -> hr []; h4 [ _class "pb-3" ] [ rawText "Experience / Employment History" ]; div [] [ md2html exp ]
         | None -> ()
         if Option.isSome currentId && currentId.Value = citizen.Id then
             br []; br []

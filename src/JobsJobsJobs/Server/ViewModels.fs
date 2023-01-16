@@ -24,6 +24,52 @@ module SkillForm =
         { Skill.Description = form.Description; Notes = if form.Notes = "" then None else Some form.Notes }
 
 
+/// The data required to add or edit a job listing
+[<CLIMutable; NoComparison; NoEquality>]
+type EditListingForm =
+    {   /// The ID of the listing
+        Id : string
+        
+        /// The listing title
+        Title : string
+        
+        /// The ID of the continent on which this opportunity exists
+        ContinentId : string
+        
+        /// The region in which this opportunity exists
+        Region : string
+        
+        /// Whether this is a remote work opportunity
+        RemoteWork : bool
+        
+        /// The text of the job listing
+        Text : string
+        
+        /// The date by which this job listing is needed
+        NeededBy : string
+    }
+
+/// Support functions to support listings
+module EditListingForm =
+
+    open NodaTime.Text
+
+    /// Create a listing form from an existing listing
+    let fromListing (listing : Listing) theId =
+        let neededBy =
+            match listing.NeededBy with
+            | Some dt -> (LocalDatePattern.CreateWithCurrentCulture "yyyy-MM-dd").Format dt
+            | None -> ""
+        {   Id          = theId
+            Title       = listing.Title
+            ContinentId = ContinentId.toString listing.ContinentId
+            Region      = listing.Region
+            RemoteWork  = listing.IsRemote
+            Text        = MarkdownString.toString listing.Text
+            NeededBy    = neededBy
+        }
+
+
 /// The data required to update a profile
 [<CLIMutable; NoComparison; NoEquality>]
 type EditProfileViewModel =
@@ -88,6 +134,20 @@ module EditProfileViewModel =
             IsPubliclySearchable = profile.IsPubliclySearchable
             IsPubliclyLinkable   = profile.IsPubliclyLinkable
         }
+
+
+/// The form submitted to expire a listing
+[<CLIMutable; NoComparison; NoEquality>]
+type ExpireListingForm =
+    {   /// The ID of the listing to expire
+        Id : string
+        
+        /// Whether the job was filled from here
+        FromHere : bool
+        
+        /// The success story written by the user
+        SuccessStory : string
+    }
 
 
 /// View model for the log on page

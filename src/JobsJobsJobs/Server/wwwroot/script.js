@@ -131,6 +131,23 @@ this.jjj = {
   },
 
   /**
+   * Script for listing pages
+   */
+  listing: {
+    
+    /**
+     * Show or hide the success story prompt based on whether a job was filled here
+     */
+    toggleFromHere() {
+      /** @type {HTMLInputElement} */
+      const isFromHere = document.getElementById("FromHere")
+      const display = isFromHere.checked ? "unset" : "none"
+      document.getElementById("successRow").style.display = display
+      document.getElementById("SuccessStoryEditRow").style.display = display
+    }
+  },
+
+  /**
    * Script for profile pages
    */
   profile: {

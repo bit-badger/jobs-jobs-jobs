@@ -331,13 +331,17 @@ module Listings =
     
     /// The SQL to select a listing view
     let viewSql =
-        $"SELECT l.*, c.data AS cont_data
+        $"SELECT l.*, c.data ->> 'name' AS continent_name, u.data AS cit_data
             FROM {Table.Listing} l
-                 INNER JOIN {Table.Continent} c ON c.id = l.data ->> 'continentId'"
+                 INNER JOIN {Table.Continent} c ON c.id = l.data ->> 'continentId'
+                 INNER JOIN {Table.Citizen}   u ON u.id = l.data ->> 'citizenId'"
     
     /// Map a result for a listing view
     let private toListingForView row =
-        { Listing = toDocument<Listing> row; Continent = toDocumentFrom<Continent> "cont_data" row }
+        {   Listing       = toDocument<Listing> row
+            ContinentName = row.string "continent_name"
+            ListedBy      = Citizen.name (toDocumentFrom<Citizen> "cit_data" row)
+        }
     
     /// Find all job listings posted by the given citizen
     let findByCitizen citizenId =
@@ -358,7 +362,7 @@ module Listings =
     let findByIdForView listingId = backgroundTask {
         let! tryListing =
             connection ()
-            |> Sql.query $"{viewSql} WHERE id = @id AND l.data ->> 'isLegacy' = 'false'"
+            |> Sql.query $"{viewSql} WHERE l.id = @id AND l.data ->> 'isLegacy' = 'false'"
             |> Sql.parameters [ "@id", Sql.string (ListingId.toString listingId) ]
             |> Sql.executeAsync toListingForView
         return List.tryHead tryListing

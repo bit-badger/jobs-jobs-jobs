@@ -43,24 +43,6 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import(/* webpackChunkName: "joblist" */ "../views/listing/HelpWanted.vue"),
     meta: { auth: true, title: "Help Wanted" }
   },
-  {
-    path: "/listing/:id/edit",
-    name: "EditListing",
-    component: () => import(/* webpackChunkName: "jobedit" */ "../views/listing/ListingEdit.vue"),
-    meta: { auth: true, title: "Edit Job Listing" }
-  },
-  {
-    path: "/listing/:id/expire",
-    name: "ExpireListing",
-    component: () => import(/* webpackChunkName: "jobedit" */ "../views/listing/ListingExpire.vue"),
-    meta: { auth: true, title: "Expire Job Listing" }
-  },
-  {
-    path: "/listing/:id/view",
-    name: "ViewListing",
-    component: () => import(/* webpackChunkName: "joblist" */ "../views/listing/ListingView.vue"),
-    meta: { auth: true, title: "Loading Job Listing..." }
-  },
   // Success Story URLs
   {
     path: "/success-story/list",

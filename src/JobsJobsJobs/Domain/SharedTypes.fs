@@ -68,48 +68,16 @@ type CitizenRegistrationForm =
     }
 
 
-/// The data required to add or edit a job listing
-type ListingForm =
-    {   /// The ID of the listing
-        Id : string
-        
-        /// The listing title
-        Title : string
-        
-        /// The ID of the continent on which this opportunity exists
-        ContinentId : string
-        
-        /// The region in which this opportunity exists
-        Region : string
-        
-        /// Whether this is a remote work opportunity
-        RemoteWork : bool
-        
-        /// The text of the job listing
-        Text : string
-        
-        /// The date by which this job listing is needed
-        NeededBy : string option
-    }
-
-
 /// The data needed to display a listing
 type ListingForView =
     {   /// The listing itself
         Listing : Listing
         
-        /// The continent for that listing
-        Continent : Continent
-    }
+        /// The name of the continent for the listing
+        ContinentName : string
 
-
-/// The form submitted to expire a listing
-type ListingExpireForm =
-    {   /// Whether the job was filled from here
-        FromHere : bool
-        
-        /// The success story written by the user
-        SuccessStory : string option
+        /// The display name of the citizen who owns the listing
+        ListedBy : string
     }
 
 
@@ -130,16 +98,6 @@ type ListingSearch =
     }
 
 
-/// The fields needed to log on to Jobs, Jobs, Jobs
-type LogOnForm =
-    {   /// The e-mail address for the citizen
-        Email : string
-        
-        /// The password provided by the user
-        Password : string
-    }
-
-
 /// A successful logon
 type LogOnSuccess =
     {   /// The JSON Web Token (JWT) to use for API access
@@ -151,16 +109,6 @@ type LogOnSuccess =
         /// The name of the logged-in citizen
         Name : string
     }
-
-
-/// The authorization options for Jobs, Jobs, Jobs
-type AuthOptions () =
-    
-    /// The secret with which the server signs the JWTs it issues once a user logs on
-    member val ServerSecret = "" with get, set
-    
-    interface IOptions<AuthOptions> with
-        override this.Value = this
 
 
 /// The various ways profiles can be searched

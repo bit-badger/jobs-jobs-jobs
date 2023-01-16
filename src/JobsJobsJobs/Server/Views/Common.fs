@@ -27,10 +27,12 @@ let textBox attrs name value fieldLabel isRequired =
     ]
 
 /// Create a checkbox that will post "true" if checked
-let checkBox name isChecked checkLabel =
+let checkBox attrs name isChecked checkLabel =
     div [ _class "form-check" ] [
-        input [ _type "checkbox"; _id name; _name name; _class "form-check-input"; _value "true"
-                if isChecked then _checked ]
+        List.append attrs
+            [ _type "checkbox"; _id name; _name name; _class "form-check-input"; _value "true"
+              if isChecked then _checked ]
+        |> input
         label [ _class "form-check-label"; _for name ] [ str checkLabel ]
     ]
 
@@ -49,7 +51,7 @@ let continentList attrs name (continents : Continent list) emptyLabel selectedVa
 
 /// Create a Markdown editor
 let markdownEditor attrs name value editorLabel =
-    div [ _class "col-12" ] [
+    div [ _class "col-12"; _id $"{name}EditRow" ] [
         nav [ _class "nav nav-pills pb-1" ] [
             button [ _type "button"; _id $"{name}EditButton"; _class "btn btn-primary btn-sm rounded-pill" ] [
                 rawText "Markdown"
@@ -93,17 +95,22 @@ let collapsePanel header content =
 let yesOrNo value =
     if value then "Yes" else "No"
 
+/// Markdown as a raw HTML text node
+let md2html value =
+    rawText (MarkdownString.toHtml value)
+
+
 open NodaTime
 open NodaTime.Text
 
 /// Generate a full date in the citizen's local time zone
 let fullDate (value : Instant) tz =
     (ZonedDateTimePattern.CreateWithCurrentCulture ("MMMM d, yyyy", DateTimeZoneProviders.Tzdb))
-        .Format(value.InZone(DateTimeZoneProviders.Tzdb[tz]))
+        .Format(value.InZone DateTimeZoneProviders.Tzdb[tz])
 
 /// Generate a full date/time in the citizen's local time
 let fullDateTime (value : Instant) tz =
     let dtPattern   = ZonedDateTimePattern.CreateWithCurrentCulture ("MMMM d, yyyy h:mm", DateTimeZoneProviders.Tzdb)
     let amPmPattern = ZonedDateTimePattern.CreateWithCurrentCulture ("tt", DateTimeZoneProviders.Tzdb)
-    let tzValue     = value.InZone(DateTimeZoneProviders.Tzdb[tz])
-    $"{dtPattern.Format(tzValue)} {amPmPattern.Format(tzValue).ToLowerInvariant()}"
+    let tzValue     = value.InZone DateTimeZoneProviders.Tzdb[tz]
+    $"{dtPattern.Format(tzValue)}{amPmPattern.Format(tzValue).ToLowerInvariant()}"
