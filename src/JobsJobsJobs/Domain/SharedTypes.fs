@@ -82,19 +82,19 @@ type ListingForView =
 
 
 /// The various ways job listings can be searched
-[<CLIMutable>]
-type ListingSearch =
+[<CLIMutable; NoComparison; NoEquality>]
+type ListingSearchForm =
     {   /// Retrieve job listings for this continent
-        ContinentId : string option
+        ContinentId : string
         
         /// Text for a search within a region
-        Region : string option
+        Region : string
         
         /// Whether to retrieve job listings for remote work
         RemoteWork : string
         
         /// Text for a search with the job listing description
-        Text : string option
+        Text : string
     }
 
 

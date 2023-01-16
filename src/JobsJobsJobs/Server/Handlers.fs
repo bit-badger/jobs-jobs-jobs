@@ -457,7 +457,7 @@ module Home =
         renderHandler "Terms of Service" Home.termsOfService
 
 
-/// Handlers for /listing[s] routes
+/// Handlers for /listing[s] routes (and /help-wanted)
 [<RequireQualifiedAccess>]
 module Listing =
     
@@ -572,6 +572,22 @@ module Listing =
 
     }
 
+    // GET: /help-wanted
+    let search : HttpHandler = requireUser >=> fun next ctx -> task {
+        let! continents = Continents.all ()
+        let form =
+            match ctx.TryBindQueryString<ListingSearchForm> () with
+            | Ok f -> f
+            | Error _ -> { ContinentId = ""; Region = ""; RemoteWork = ""; Text = "" }
+        let! results = task {
+            if string ctx.Request.Query["searched"] = "true" then
+                let! it = Listings.search form
+                return Some it
+            else return None
+        }
+        return! Listing.search form continents results |> render "Help Wanted" next ctx
+    }
+
     // GET: /listing/[id]/view
     let view listingId : HttpHandler = requireUser >=> fun next ctx -> task {
         match! Listings.findByIdForView (ListingId listingId) with
@@ -579,18 +595,6 @@ module Listing =
         | None -> return! Error.notFound next ctx
     }
 
-
-/// Handlers for /api/listing[s] routes
-[<RequireQualifiedAccess>]
-module ListingApi =
-
-    // GET: /api/listing/search
-    let search : HttpHandler = authorize >=> fun next ctx -> task {
-        let  search  = ctx.BindQueryString<ListingSearch> ()
-        let! results = Listings.search search
-        return! json results next ctx
-    }
-  
 
 /// Handlers for /profile routes
 [<RequireQualifiedAccess>]
@@ -780,7 +784,13 @@ open Giraffe.EndpointRouting
 
 /// All available endpoints for the application
 let allEndpoints = [
-    GET_HEAD [ route "/" Home.home ]
+    GET_HEAD [
+        route "/"                 Home.home
+        route "/help-wanted"      Listing.search
+        route "/how-it-works"     Home.howItWorks
+        route "/privacy-policy"   Home.privacyPolicy
+        route "/terms-of-service" Home.termsOfService
+    ]
     subRoute "/citizen" [
         GET_HEAD [
             routef "/confirm/%s" Citizen.confirm
@@ -797,7 +807,6 @@ let allEndpoints = [
             route "/register" Citizen.doRegistration
         ]
     ]
-    GET_HEAD [ route "/how-it-works" Home.howItWorks ]
     subRoute "/listing" [
         GET_HEAD [
             route  "s/mine"     Listing.mine
@@ -810,7 +819,6 @@ let allEndpoints = [
             route "/save"   Listing.save
         ]
     ]
-    GET_HEAD [ route "/privacy-policy" Home.privacyPolicy ]
     subRoute "/profile" [
         GET_HEAD [
             routef "/%O/view" Profile.view
@@ -823,7 +831,6 @@ let allEndpoints = [
             route "/save"   Profile.save
         ]
     ]
-    GET_HEAD [ route "/terms-of-service" Home.termsOfService ]
     
     subRoute "/api" [
         subRoute "/citizen" [
@@ -832,11 +839,6 @@ let allEndpoints = [
             ]
         ]
         GET_HEAD [ route "/continents" Continent.all ]
-        subRoute "/listing" [
-            GET_HEAD [
-                route  "/search"  ListingApi.search
-            ]
-        ]
         POST [ route "/markdown-preview" Api.markdownPreview ]
         subRoute "/profile" [
             PATCH [ route "/employment-found" ProfileApi.employmentFound ]

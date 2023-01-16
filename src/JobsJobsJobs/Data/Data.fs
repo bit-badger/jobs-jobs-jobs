@@ -373,19 +373,16 @@ module Listings =
         connection () |> saveDocument Table.Listing (ListingId.toString listing.Id) <| mkDoc listing
     
     /// Search job listings
-    let search (search : ListingSearch) =
+    let search (search : ListingSearchForm) =
         let searches = [
-            match search.ContinentId with
-            | Some contId -> "l.data ->> 'continentId' = @continentId", [ "@continentId", Sql.string contId ]
-            | None -> ()
-            match search.Region with
-            | Some region -> "l.data ->> 'region' ILIKE @region", [ "@region", like region ]
-            | None -> ()
+            if search.ContinentId <> "" then
+                "l.data ->> 'continentId' = @continentId", [ "@continentId", Sql.string search.ContinentId ]
+            if search.Region <> "" then
+                "l.data ->> 'region' ILIKE @region", [ "@region", like search.Region ]
             if search.RemoteWork <> "" then
                 "l.data ->> 'isRemote' = @remote", [ "@remote", jsonBool (search.RemoteWork = "yes") ]
-            match search.Text with
-            | Some text -> "l.data ->> 'text' ILIKE @text", [ "@text", like text ]
-            | None -> ()
+            if search.Text <> "" then
+                "l.data ->> 'text' ILIKE @text", [ "@text", like search.Text ]
         ]
         connection ()
         |> Sql.query $"

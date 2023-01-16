@@ -133,6 +133,89 @@ let mine (listings : ListingForView list) tz =
 
 open NodaTime.Text
 
+/// Format the needed by date
+let private neededBy dt = 
+    (LocalDatePattern.CreateWithCurrentCulture "MMMM d, yyyy").Format dt
+
+let search (m : ListingSearchForm) continents (listings : ListingForView list option) =
+    article [] [
+        h3 [ _class "pb-3" ] [ rawText "Help Wanted" ]
+        if Option.isNone listings then
+            p [] [
+                rawText "Enter relevant criteria to find results, or just click &ldquo;Search&rdquo; to see all "
+                rawText "current job listings."
+            ]
+        collapsePanel "Search Criteria" [
+            form [ _class "container"; _method "GET"; _action "/help-wanted" ] [
+                input [ _type "hidden"; _name "searched"; _value "true" ]
+                div [ _class "row" ] [
+                    div [ _class "col-12 col-sm-6 col-md-4 col-lg-3" ] [
+                        continentList [] "ContinentId" continents (Some "Any") m.ContinentId false
+                    ]
+                    div [ _class "col-12 col-sm-6 col-md-4 col-lg-3" ] [
+                        textBox [ _maxlength "1000" ] (nameof m.Region) m.Region "Region" false
+                        div [ _class "form-text" ] [ rawText "(free-form text)" ]
+                    ]
+                    div [ _class "col-12 col-sm-6 col-offset-md-2 col-lg-3 col-offset-lg-0" ] [
+                        label [ _class "jjj-label" ] [ rawText "Seeking Remote Work?" ]; br []
+                        div [ _class "form-check form-check-inline" ] [
+                            input [ _type "radio"; _id "remoteNull"; _name (nameof m.RemoteWork); _value ""
+                                    _class "form-check-input"; if m.RemoteWork = "" then _checked ]
+                            label [ _class "form-check-label"; _for "remoteNull" ] [ rawText "No Selection" ]
+                        ]
+                        div [ _class "form-check form-check-inline" ] [
+                            input [ _type "radio"; _id "remoteYes"; _name (nameof m.RemoteWork); _value "yes"
+                                    _class "form-check-input"; if m.RemoteWork = "yes" then _checked ]
+                            label [ _class "form-check-label"; _for "remoteYes" ] [ rawText "Yes" ]
+                        ]
+                        div [ _class "form-check form-check-inline" ] [
+                            input [ _type "radio"; _id "remoteNo"; _name (nameof m.RemoteWork); _value "no"
+                                    _class "form-check-input"; if m.RemoteWork = "no" then _checked ]
+                            label [ _class "form-check-label"; _for "remoteNo" ] [ rawText "No" ]
+                        ]
+                    ]
+                    div [ _class "col-12 col-sm-6 col-lg-3" ] [
+                        textBox [ _maxlength "1000" ] (nameof m.Text) m.Text "Job Listing Text" false
+                        div [ _class "form-text" ] [ rawText "(free-form text)" ]
+                    ]
+                ]
+                div [ _class "row" ] [
+                    div [ _class "col" ] [
+                        br []
+                        button [ _type "submit"; _class "btn btn-outline-primary" ] [ rawText "Search" ]
+                    ]
+                ]
+            ]
+        ]
+        match listings with
+        | Some r when List.isEmpty r ->
+            p [ _class "pt-3" ] [ rawText "No job listings found for the specified criteria" ]
+        | Some r ->
+            table [ _class "table table-sm table-hover pt-3" ] [
+                thead [] [
+                    tr [] [
+                        th [ _scope "col" ] [ rawText "Listing" ]
+                        th [ _scope "col" ] [ rawText "Title" ]
+                        th [ _scope "col" ] [ rawText "Location" ]
+                        th [ _scope "col"; _class "text-center" ] [ rawText "Remote?" ]
+                        th [ _scope "col"; _class "text-center" ] [ rawText "Needed By" ]
+                    ]
+                ]
+                r |> List.map (fun it ->
+                    tr [] [
+                        td [] [ a [ _href $"/listing/{ListingId.toString it.Listing.Id}/view" ] [ rawText "View" ] ]
+                        td [] [ str it.Listing.Title ]
+                        td [] [ str it.ContinentName; rawText " / "; str it.Listing.Region ]
+                        td [ _class "text-center" ] [ str (yesOrNo it.Listing.IsRemote) ]
+                        td [ _class "text-center" ] [
+                            match it.Listing.NeededBy with Some needed -> str (neededBy needed) | None -> rawText "N/A"
+                        ]
+                    ])
+                |> tbody []
+            ]
+        | None -> ()
+    ]
+
 /// The job listing view page
 let view (it : ListingForView) =
     article [] [
@@ -150,9 +233,8 @@ let view (it : ListingForView) =
         p [] [
             match it.Listing.NeededBy with
             | Some needed ->
-                let format dt = 
-                    (LocalDatePattern.CreateWithCurrentCulture "MMMM d, yyyy").Format(dt).ToUpperInvariant ()
-                strong [] [ em [] [ rawText "NEEDED BY "; str (format needed) ] ]; rawText " &bull; "
+                strong [] [ em [] [ rawText "NEEDED BY "; str ((neededBy needed).ToUpperInvariant ()) ] ]
+                rawText " &bull; "
             | None -> ()
             rawText "Listed by "; str it.ListedBy //<!-- a :href="profileUrl" target="_blank" -->{{citizenName(citizen)}}<!-- /a -->
         ]
