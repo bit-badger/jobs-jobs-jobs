@@ -130,7 +130,7 @@ type ProfileForView =
 
 
 /// The parameters for a public job search
-[<CLIMutable>]
+[<CLIMutable; NoComparison; NoEquality>]
 type PublicSearchForm =
     {   /// Retrieve citizens from this continent
         ContinentId : string
@@ -163,20 +163,8 @@ type PublicSearchResult =
     }
 
 
-/// The data required to provide a success story
-type StoryForm =
-    {   /// The ID of this story
-        Id : string
-        
-        /// Whether the employment was obtained from Jobs, Jobs, Jobs
-        FromHere : bool
-        
-        /// The success story
-        Story : string
-    }
-
-
 /// An entry in the list of success stories
+[<NoComparison; NoEquality>]
 type StoryEntry =
     {   /// The ID of this success story
         Id : SuccessId

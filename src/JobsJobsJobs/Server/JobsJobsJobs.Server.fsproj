@@ -17,6 +17,7 @@
     <Compile Include="Views\Home.fs" />
     <Compile Include="Views\Listing.fs" />
     <Compile Include="Views\Profile.fs" />
+    <Compile Include="Views\Success.fs" />
     <Compile Include="Handlers.fs" />
     <Compile Include="App.fs" />
   </ItemGroup>

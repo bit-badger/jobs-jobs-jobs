@@ -264,7 +264,7 @@ module Citizen =
         let! citizen   = Citizens.findById citizenId
         let! profile   = Profiles.findById citizenId
         let! prfCount  = Profiles.count ()
-        return! Citizen.dashboard citizen.Value profile prfCount |> render "Dashboard" next ctx
+        return! Citizen.dashboard citizen.Value profile prfCount (timeZone ctx) |> render "Dashboard" next ctx
     }
 
     // POST: /citizen/delete
@@ -424,17 +424,6 @@ module CitizenApi =
         | None -> return! Error.notFound next ctx
     }
     
-
-/// Handlers for /api/continent routes
-[<RequireQualifiedAccess>]
-module Continent =
-  
-    // GET: /api/continent/all
-    let all : HttpHandler = fun next ctx -> task {
-        let! continents = Continents.all ()
-        return! json continents next ctx
-    }
-
 
 /// Handlers for the home page, legal stuff, and help
 [<RequireQualifiedAccess>]
@@ -718,64 +707,74 @@ module Profile =
     }
   
 
-/// Handlers for /api/profile routes
-[<RequireQualifiedAccess>]
-module ProfileApi =
-
-    // PATCH: /api/profile/employment-found
-    let employmentFound : HttpHandler = authorize >=> fun next ctx -> task {
-        match! Profiles.findById (currentCitizenId ctx) with
-        | Some profile ->
-            do! Profiles.save { profile with IsSeekingEmployment = false }
-            return! ok next ctx
-        | None -> return! Error.notFound next ctx
-    }
-  
-
-/// Handlers for /api/success routes
+/// Handlers for /success-stor[y|ies] routes
 [<RequireQualifiedAccess>]
 module Success =
 
-    // GET: /api/success/[id]
-    let get successId : HttpHandler = authorize >=> fun next ctx -> task {
-        match! Successes.findById (SuccessId successId) with
-        | Some story -> return! json story next ctx
+    // GET: /success-story/[id]/edit
+    let edit successId : HttpHandler = requireUser >=> fun next ctx -> task {
+        let  citizenId  = currentCitizenId ctx
+        let  isNew      = successId = "new"
+        let! theSuccess = task {
+            if isNew then return Some { Success.empty with CitizenId = citizenId }
+            else return! Successes.findById (SuccessId.ofString successId)
+        }
+        match theSuccess with
+        | Some success when success.CitizenId = citizenId ->
+            let pgTitle = $"""{if isNew then "Tell Your" else "Edit"} Success Story"""
+            return!
+                Success.edit (EditSuccessForm.fromSuccess success) (success.Id = SuccessId Guid.Empty) pgTitle
+                             (csrf ctx)
+                |> render pgTitle next ctx
+        | Some _ -> return! Error.notAuthorized next ctx
         | None -> return! Error.notFound next ctx
     }
 
-    // GET: /api/success/list
-    let all : HttpHandler = authorize >=> fun next ctx -> task {
+    // GET: /success-stories
+    let list : HttpHandler = requireUser >=> fun next ctx -> task {
         let! stories = Successes.all ()
-        return! json stories next ctx
+        return! Success.list stories (currentCitizenId ctx) (timeZone ctx) |> render "Success Stories" next ctx
     }
   
-    // POST: /api/success/save
-    let save : HttpHandler = authorize >=> fun next ctx -> task {
-        let  citizenId = currentCitizenId ctx
-        let! form      = ctx.BindJsonAsync<StoryForm> ()
-        let! success = task {
-            match form.Id with
-            | "new" ->
-                return Some { Id         = SuccessId.create ()
-                              CitizenId  = citizenId
-                              RecordedOn = now ctx
-                              IsFromHere = form.FromHere
-                              Source     = "profile"
-                              Story      = noneIfEmpty form.Story |> Option.map Text
-                              }
-            | successId ->
-                match! Successes.findById (SuccessId.ofString successId) with
-                | Some story when story.CitizenId = citizenId ->
-                    return Some { story with
-                                    IsFromHere = form.FromHere
-                                    Story    = noneIfEmpty form.Story |> Option.map Text
-                                }
-                | Some _ | None -> return None
+    // GET: /success-story/[id]/view
+    let view successId : HttpHandler = requireUser >=> fun next ctx -> task {
+        match! Successes.findById (SuccessId successId) with
+        | Some success ->
+            match! Citizens.findById success.CitizenId with
+            | Some citizen ->
+                return! Success.view success (Citizen.name citizen) (timeZone ctx) |> render "Success Story" next ctx
+            | None -> return! Error.notFound next ctx
+        | None -> return! Error.notFound next ctx
+    }
+
+    // POST: /success-story/save
+    let save : HttpHandler = requireUser >=> validateCsrf >=> fun next ctx -> task {
+        let  citizenId  = currentCitizenId ctx
+        let! form       = ctx.BindFormAsync<EditSuccessForm> ()
+        let  isNew      = form.Id = ShortGuid.fromGuid Guid.Empty
+        let! theSuccess = task {
+            if isNew then
+                return Some
+                        { Success.empty with
+                            Id         = SuccessId.create ()
+                            CitizenId  = citizenId
+                            RecordedOn = now ctx
+                            Source     = "profile"
+                        }
+            else return! Successes.findById (SuccessId.ofString form.Id)
         }
-        match success with
-        | Some story ->
-            do! Successes.save story
-            return! ok next ctx
+        match theSuccess with
+        | Some story when story.CitizenId = citizenId ->
+            do! Successes.save
+                    { story with IsFromHere = form.FromHere; Story = noneIfEmpty form.Story |> Option.map Text }
+            if isNew then
+                match! Profiles.findById citizenId with
+                | Some profile -> do! Profiles.save { profile with IsSeekingEmployment = false }
+                | None -> ()
+            let extraMsg = if isNew then " and seeking employment flag cleared" else ""
+            do! addSuccess $"Success story saved{extraMsg} successfully" ctx
+            return! redirectToGet "/success-stories" next ctx
+        | Some _ -> return! Error.notAuthorized next ctx
         | None -> return! Error.notFound next ctx
     }
 
@@ -831,6 +830,14 @@ let allEndpoints = [
             route "/save"   Profile.save
         ]
     ]
+    subRoute "/success-stor" [
+        GET_HEAD [
+            route  "ies"       Success.list
+            routef "y/%s/edit" Success.edit
+            routef "y/%O/view" Success.view
+        ]
+        POST [ route "y/save" Success.save ]
+    ]
     
     subRoute "/api" [
         subRoute "/citizen" [
@@ -838,17 +845,6 @@ let allEndpoints = [
                 route "/account" CitizenApi.account
             ]
         ]
-        GET_HEAD [ route "/continents" Continent.all ]
         POST [ route "/markdown-preview" Api.markdownPreview ]
-        subRoute "/profile" [
-            PATCH [ route "/employment-found" ProfileApi.employmentFound ]
-        ]
-        subRoute "/success" [
-            GET_HEAD [
-                routef "/%O" Success.get
-                route  "es"  Success.all
-            ]
-            POST [ route "" Success.save ]
-        ]
     ]
 ]

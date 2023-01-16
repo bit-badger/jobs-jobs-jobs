@@ -136,6 +136,30 @@ module EditProfileViewModel =
         }
 
 
+/// The data required to provide a success story
+[<CLIMutable; NoComparison; NoEquality>]
+type EditSuccessForm =
+    {   /// The ID of this success story
+        Id : string
+        
+        /// Whether the employment was obtained from Jobs, Jobs, Jobs
+        FromHere : bool
+        
+        /// The success story
+        Story : string
+    }
+
+/// Support functions for success edit forms
+module EditSuccessForm =
+
+    /// Create an edit form from a success story
+    let fromSuccess (success : Success) =
+        {   Id       = SuccessId.toString success.Id
+            FromHere = success.IsFromHere
+            Story    = success.Story |> Option.map MarkdownString.toString |> Option.defaultValue ""
+        }
+
+
 /// The form submitted to expire a listing
 [<CLIMutable; NoComparison; NoEquality>]
 type ExpireListingForm =

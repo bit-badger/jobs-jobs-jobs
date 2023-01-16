@@ -57,10 +57,10 @@ let private links ctx =
         ] [ i [ _class $"mdi mdi-{icon}"; _ariaHidden "true" ] []; rawText text ]
     nav [ _class "jjj-nav" ] [
         if ctx.IsLoggedOn then
-            navLink "/citizen/dashboard"  "view-dashboard-variant"             "Dashboard"
-            navLink "/help-wanted"        "newspaper-variant-multiple-outline" "Help Wanted!"
-            navLink "/profile/search"     "view-list-outline"                  "Employment Profiles"
-            navLink "/success-story/list" "thumb-up"                           "Success Stories"
+            navLink "/citizen/dashboard" "view-dashboard-variant"             "Dashboard"
+            navLink "/help-wanted"       "newspaper-variant-multiple-outline" "Help Wanted!"
+            navLink "/profile/search"    "view-list-outline"                  "Employment Profiles"
+            navLink "/success-stories"   "thumb-up"                           "Success Stories"
             div [ _class "separator" ] []
             navLink "/citizen/account" "account-edit" "My Account"
             navLink "/listings/mine"   "sign-text"    "My Job Listings"

@@ -23,7 +23,7 @@ let confirmAccount isConfirmed =
     ]
 
 /// The citizen's dashboard page
-let dashboard (citizen : Citizen) (profile : Profile option) profileCount =
+let dashboard (citizen : Citizen) (profile : Profile option) profileCount tz =
     article [ _class "container" ] [
         h3 [ _class "pb-4" ] [ rawText "ITM, "; str citizen.FirstName; rawText "!" ]
         div [ _class "row row-cols-1 row-cols-md-2" ] [
@@ -34,7 +34,7 @@ let dashboard (citizen : Citizen) (profile : Profile option) profileCount =
                         match profile with
                         | Some prfl ->
                             h6 [ _class "card-subtitle mb-3 text-muted fst-italic" ] [
-                                rawText "Last updated "; (* full-date-time :date="profile.lastUpdatedOn" *)
+                                rawText "Last updated "; str (fullDateTime prfl.LastUpdatedOn tz)
                             ]
                             p [ _class "card-text" ] [
                                 rawText "Your profile currently lists "; str $"{List.length prfl.Skills}"
