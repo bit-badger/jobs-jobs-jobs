@@ -101,6 +101,28 @@ let yesOrNo value =
 let md2html value =
     rawText (MarkdownString.toHtml value)
 
+/// Display a citizen's contact information
+let contactInfo citizen isPublic =
+    citizen.OtherContacts
+    |> List.filter (fun it -> (isPublic && it.IsPublic) || not isPublic)
+    |> List.collect (fun contact ->
+        match contact.ContactType with
+        | Website ->
+            [   i [ _class "mdi mdi-sm mdi-web" ] []; rawText " "
+                a [ _href contact.Value; _target "_blank"; _rel "noopener"; _class "me-4" ] [
+                    str (defaultArg contact.Name "Website")
+                ]
+            ]
+        | Email ->
+            [   i [ _class "mdi mdi-sm mdi-email-outline" ] []; rawText " "
+                a [ _href $"mailto:{contact.Value}"; _class "me-4" ] [ str (defaultArg contact.Name "E-mail") ]
+            ]
+        | Phone ->
+            [   span [ _class "me-4" ] [
+                    i [ _class "mdi mdi-sm mdi-phone" ] []; rawText " "; str contact.Value
+                    match contact.Name with Some name -> str $" ({name})" | None -> ()
+                ]
+            ])
 
 open NodaTime
 open NodaTime.Text

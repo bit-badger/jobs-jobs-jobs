@@ -21,9 +21,12 @@ let contactEdit (contacts : OtherContactForm array) =
                 div [ _class "form-floating" ] [
                     select [ _id $"contactType{idx}"; _name $"Contacts[{idx}].ContactType"; _class "form-control"
                              _value contact.ContactType; _placeholder "Type"; _required ] [
-                        option [ _value "Website" ] [ rawText "Website" ]
-                        option [ _value "Email" ] [ rawText "E-mail Address" ]
-                        option [ _value "Phone" ] [ rawText "Phone Number" ]
+                        let optionFor value label =
+                            let typ = ContactType.toString value
+                            option [ _value typ; if contact.ContactType = typ then _selected ] [ rawText label ]
+                        optionFor Website "Website"
+                        optionFor Email   "E-mail Address"
+                        optionFor Phone   "Phone Number"
                     ]
                     label [ _class "jjj-required"; _for $"contactType{idx}" ] [ rawText "Type" ]
                 ]

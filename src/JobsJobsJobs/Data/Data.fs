@@ -340,7 +340,7 @@ module Listings =
     let private toListingForView row =
         {   Listing       = toDocument<Listing> row
             ContinentName = row.string "continent_name"
-            ListedBy      = Citizen.name (toDocumentFrom<Citizen> "cit_data" row)
+            Citizen       = toDocumentFrom<Citizen> "cit_data" row
         }
     
     /// Find all job listings posted by the given citizen

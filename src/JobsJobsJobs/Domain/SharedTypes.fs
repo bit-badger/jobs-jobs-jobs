@@ -13,8 +13,8 @@ type ListingForView =
         /// The name of the continent for the listing
         ContinentName : string
 
-        /// The display name of the citizen who owns the listing
-        ListedBy : string
+        /// The citizen who owns the listing
+        Citizen : Citizen
     }
 
 

@@ -716,9 +716,7 @@ module Profile =
                     let! continent     = Continents.findById profile.ContinentId
                     let  continentName = match continent with Some c -> c.Name | None -> "not found"
                     let  title         = $"Employment Profile for {Citizen.name citizen}"
-                    return!
-                        Profile.view citizen profile continentName title currentCitizen
-                        |> render title next ctx
+                    return! Profile.view citizen profile continentName currentCitizen |> render title next ctx
             | None -> return! Error.notFound next ctx
         | None -> return! Error.notFound next ctx
     }

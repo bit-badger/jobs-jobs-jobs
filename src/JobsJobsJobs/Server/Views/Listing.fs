@@ -234,7 +234,8 @@ let view (it : ListingForView) =
                 strong [] [ em [] [ rawText "NEEDED BY "; str ((neededBy needed).ToUpperInvariant ()) ] ]
                 rawText " &bull; "
             | None -> ()
-            rawText "Listed by "; str it.ListedBy //<!-- a :href="profileUrl" target="_blank" -->{{citizenName(citizen)}}<!-- /a -->
+            rawText "Listed by "; strong [ _class "me-4" ] [ str (Citizen.name it.Citizen) ]; br []
+            span [ _class "ms-3" ] []; yield! contactInfo it.Citizen false
         ]
         hr []
         div [] [ md2html it.Listing.Text ]

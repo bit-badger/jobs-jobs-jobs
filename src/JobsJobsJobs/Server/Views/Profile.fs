@@ -290,18 +290,18 @@ let search (m : ProfileSearchForm) continents tz (results : ProfileSearchResult 
 
 
 /// Profile view template
-let view (citizen : Citizen) (profile : Profile) (continentName : string) pageTitle currentId =
+let view (citizen : Citizen) (profile : Profile) (continentName : string) currentId =
     article [] [
-        h3 [ _class "pb-3" ] [ str pageTitle ]
         h2 [] [
-            // TODO: link to preferred profile
-            a [ _href "#"; _target "_blank"; _rel "noopener" ] [ str (Citizen.name citizen) ]
+            str (Citizen.name citizen)
             if profile.IsSeekingEmployment then
                 span [ _class "jjj-heading-label" ] [
                     rawText "&nbsp; &nbsp;"; span [ _class "badge bg-dark" ] [ rawText "Currently Seeking Employment" ]
                 ]
         ]
-        h4 [ _class "pb-3" ] [ str $"{continentName}, {profile.Region}" ]
+        h4 [] [ str $"{continentName}, {profile.Region}" ]
+        contactInfo citizen (Option.isNone currentId)
+        |> div [ _class "pb-3" ]
         p [] [
             rawText (if profile.IsFullTime then "I" else "Not i"); rawText "nterested in full-time employment"
             rawText " &bull; "
