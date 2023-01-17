@@ -130,6 +130,89 @@ this.jjj = {
     editDiv.classList.add("jjj-shown")
   },
 
+  citizen: {
+
+    /**
+     * The next index for a newly-added contact
+     * @type {number}
+     */
+    nextIndex: 0,
+
+    /**
+     * Add a contact to the account form
+     */
+    addContact() {
+      const next = this.nextIndex
+      
+      /** @type {HTMLTemplateElement} */
+      const newContactTemplate = document.getElementById("newContact")
+      /** @type {HTMLDivElement} */
+      const newContact = newContactTemplate.content.firstElementChild.cloneNode(true)
+      newContact.setAttribute("id", `contactRow${next}`)
+
+      const cols = newContact.children
+      // Button column
+      cols[0].querySelector("button").setAttribute("onclick", `jjj.citizen.removeContact(${next})`)
+      // Contact Type column
+      const typeField = cols[1].querySelector("select")
+      typeField.setAttribute("id", `contactType${next}`)
+      typeField.setAttribute("name", `Contacts[${this.nextIndex}].ContactType`)
+      cols[1].querySelector("label").setAttribute("for", `contactType${next}`)
+      // Name column
+      const nameField = cols[2].querySelector("input")
+      nameField.setAttribute("id", `contactName${next}`)
+      nameField.setAttribute("name", `Contacts[${this.nextIndex}].Name`)
+      cols[2].querySelector("label").setAttribute("for", `contactName${next}`)
+      if (next > 0) cols[2].querySelector("div.form-text").remove()
+      // Value column
+      const valueField = cols[3].querySelector("input")
+      valueField.setAttribute("id", `contactValue${next}`)
+      valueField.setAttribute("name", `Contacts[${this.nextIndex}].Value`)
+      cols[3].querySelector("label").setAttribute("for", `contactName${next}`)
+      if (next > 0) cols[3].querySelector("div.form-text").remove()
+      // Is Public column
+      const isPublicField = cols[4].querySelector("input")
+      isPublicField.setAttribute("id", `contactIsPublic${next}`)
+      isPublicField.setAttribute("name", `Contacts[${this.nextIndex}].IsPublic`)
+      cols[4].querySelector("label").setAttribute("for", `contactIsPublic${next}`)
+
+      // Add the row
+      const contacts = document.querySelectorAll("div[id^=contactRow]")
+      const sibling = contacts.length > 0 ? contacts[contacts.length - 1] : newContactTemplate
+      sibling.insertAdjacentElement('afterend', newContact)
+
+      this.nextIndex++
+    },
+
+    /**
+     * Remove a contact row from the profile form
+     * @param {number} idx The index of the contact row to remove
+     */
+    removeContact(idx) {
+      document.getElementById(`contactRow${idx}`).remove()
+    },
+
+    /**
+     * Register a comparison validation between a password and a "confirm password" field
+     * @param {string} pwId The ID for the password field
+     * @param {string} confirmId The ID for the "confirm password" field
+     * @param {boolean} isRequired Whether these fields are required
+     */
+    validatePasswords(pwId, confirmId, isRequired) {
+      const pw = document.getElementById(pwId)
+      const pwConfirm = document.getElementById(confirmId)
+      pwConfirm.addEventListener("input", () => {
+          if (!pw.validity.valid) {
+              pwConfirm.setCustomValidity("")
+          } else if ((!pwConfirm.validity.valueMissing || !isRequired) && pw.value !== pwConfirm.value) {
+              pwConfirm.setCustomValidity("Confirmation password does not match")
+          } else {
+              pwConfirm.setCustomValidity("")
+          }
+      })
+    }
+  },
+
   /**
    * Script for listing pages
    */
@@ -172,7 +255,7 @@ this.jjj = {
 
       const cols = newSkill.children
       // Button column
-      cols[0].querySelector("button").setAttribute("onclick", `jjj.profile.removeSkill('${next}')`)
+      cols[0].querySelector("button").setAttribute("onclick", `jjj.profile.removeSkill(${next})`)
       // Skill column
       const skillField = cols[1].querySelector("input")
       skillField.setAttribute("id", `skillDesc${next}`)
@@ -196,10 +279,10 @@ this.jjj = {
 
     /**
      * Remove a skill row from the profile form
-     * @param {number} id The ID of the skill row to remove
+     * @param {number} idx The index of the skill row to remove
      */
-    removeSkill(id) {
-      document.getElementById(`skillRow${id}`).remove()
+    removeSkill(idx) {
+      document.getElementById(`skillRow${idx}`).remove()
     }
   }
 }

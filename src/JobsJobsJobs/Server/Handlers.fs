@@ -251,7 +251,16 @@ module Citizen =
                     |> Array.ofSeq
                 challenges <- Some qAndA
                 qAndA
-        
+    
+    // GET: /citizen/account
+    let account : HttpHandler = fun next ctx -> task {
+        match! Citizens.findById (currentCitizenId ctx) with
+        | Some citizen ->
+            return!
+                Citizen.account (AccountProfileForm.fromCitizen citizen) (csrf ctx) |> render "Account Profile" next ctx
+        | None -> return! Error.notFound next ctx
+    }
+
     // GET: /citizen/confirm/[token]
     let confirm token next ctx = task {
         let! isConfirmed = Citizens.confirmAccount token
@@ -387,43 +396,51 @@ module Citizen =
             return! refreshPage () next ctx
     }
 
+    // POST: /citizen/save-account
+    let saveAccount : HttpHandler = requireUser >=> validateCsrf >=> fun next ctx -> task {
+        let! theForm   = ctx.BindFormAsync<AccountProfileForm> ()
+        let  form      = { theForm with Contacts = theForm.Contacts |> Array.filter (box >> isNull >> not) }
+        let  errors    = [
+            if form.FirstName = "" then "First Name is required"
+            if form.LastName  = "" then "Last Name is required"
+            if form.NewPassword <> form.NewPassword then "New passwords do not match"
+            if form.Contacts |> Array.exists (fun c -> c.ContactType = "") then "All Contact Types are required"
+            if form.Contacts |> Array.exists (fun c -> c.Value = "") then "All Contacts are required"
+        ]
+        if List.isEmpty errors then
+            match! Citizens.findById (currentCitizenId ctx) with
+            | Some citizen ->
+                let password =
+                    if form.NewPassword = "" then citizen.PasswordHash
+                    else Auth.Passwords.hash citizen form.NewPassword
+                do! Citizens.save
+                        { citizen with
+                            FirstName     = form.FirstName
+                            LastName      = form.LastName
+                            DisplayName   = noneIfEmpty form.DisplayName
+                            PasswordHash  = password
+                            OtherContacts = form.Contacts
+                                            |> Array.map (fun c ->
+                                                {   OtherContact.Name = noneIfEmpty c.Name
+                                                    ContactType       = ContactType.parse c.ContactType
+                                                    Value             = c.Value
+                                                    IsPublic          = c.IsPublic
+                                                })
+                                            |> List.ofArray
+                            }
+                let extraMsg = if form.NewPassword = "" then "" else " and password changed"
+                do! addSuccess $"Account profile updated{extraMsg} successfully" ctx
+                return! redirectToGet "/citizen/account" next ctx
+            | None -> return! Error.notFound next ctx
+        else
+            do! addErrors errors ctx
+            return! Citizen.account form (csrf ctx) |> render "Account Profile" next ctx
+    }
+
     // GET: /citizen/so-long
     let soLong : HttpHandler = requireUser >=> fun next ctx ->
         Citizen.deletionOptions (csrf ctx) |> render "Account Deletion Options" next ctx
 
-
-/// Handlers for /api/citizen routes
-[<RequireQualifiedAccess>]
-module CitizenApi =
-    
-    // PATCH: /api/citizen/account
-    let account : HttpHandler = authorize >=> fun next ctx -> task {
-        let! form = ctx.BindJsonAsync<AccountProfileForm> ()
-        match! Citizens.findById (currentCitizenId ctx) with
-        | Some citizen ->
-            let password =
-                if defaultArg form.NewPassword "" = "" then citizen.PasswordHash
-                else Auth.Passwords.hash citizen form.NewPassword.Value
-            do! Citizens.save
-                    { citizen with
-                        FirstName     = form.FirstName
-                        LastName      = form.LastName
-                        DisplayName   = noneIfBlank form.DisplayName
-                        PasswordHash  = password
-                        OtherContacts = form.Contacts
-                                        |> List.map (fun c -> {
-                                            Id          = if c.Id.StartsWith "new" then OtherContactId.create ()
-                                                          else OtherContactId.ofString c.Id
-                                            ContactType = ContactType.parse c.ContactType
-                                            Name        = noneIfBlank c.Name
-                                            Value       = c.Value
-                                            IsPublic    = c.IsPublic
-                                        })
-                         }
-            return! ok next ctx
-        | None -> return! Error.notFound next ctx
-    }
-    
 
 /// Handlers for the home page, legal stuff, and help
 [<RequireQualifiedAccess>]
@@ -792,6 +809,7 @@ let allEndpoints = [
     ]
     subRoute "/citizen" [
         GET_HEAD [
+            route  "/account"    Citizen.account
             routef "/confirm/%s" Citizen.confirm
             route  "/dashboard"  Citizen.dashboard
             routef "/deny/%s"    Citizen.deny
@@ -801,9 +819,10 @@ let allEndpoints = [
             route  "/so-long"    Citizen.soLong
         ]
         POST [
-            route "/delete"   Citizen.delete
-            route "/log-on"   Citizen.doLogOn
-            route "/register" Citizen.doRegistration
+            route "/delete"       Citizen.delete
+            route "/log-on"       Citizen.doLogOn
+            route "/register"     Citizen.doRegistration
+            route "/save-account" Citizen.saveAccount
         ]
     ]
     subRoute "/listing" [
@@ -838,13 +857,7 @@ let allEndpoints = [
         ]
         POST [ route "y/save" Success.save ]
     ]
-    
     subRoute "/api" [
-        subRoute "/citizen" [
-            PATCH [
-                route "/account" CitizenApi.account
-            ]
-        ]
         POST [ route "/markdown-preview" Api.markdownPreview ]
     ]
 ]

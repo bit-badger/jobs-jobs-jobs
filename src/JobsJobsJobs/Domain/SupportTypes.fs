@@ -78,22 +78,6 @@ module MarkdownString =
     let toString = function Text text -> text
 
 
-/// The ID of an other contact
-type OtherContactId = OtherContactId of Guid
-
-/// Support functions for other contact IDs
-module OtherContactId =
-    
-    /// Create a new job listing ID
-    let create () = (Guid.NewGuid >> OtherContactId) ()
-    
-    /// A string representation of a listing ID
-    let toString = function OtherContactId it -> ShortGuid.fromGuid it
-    
-    /// Parse a string into a listing ID
-    let ofString = ShortGuid.toGuid >> OtherContactId
-
-
 /// Types of contacts supported by Jobs, Jobs, Jobs
 type ContactType =
     /// E-mail addresses
@@ -124,10 +108,7 @@ module ContactType =
 
 /// Another way to contact a citizen from this site 
 type OtherContact =
-    {   /// The ID of the contact
-        Id : OtherContactId
-        
-        /// The type of contact
+    {   /// The type of contact
         ContactType : ContactType
         
         /// The name of the contact (Email, No Agenda Social, LinkedIn, etc.) 

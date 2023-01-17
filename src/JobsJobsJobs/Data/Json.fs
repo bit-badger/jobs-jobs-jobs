@@ -18,13 +18,12 @@ open NodaTime.Serialization.SystemTextJson
 /// JsonSerializer options that use the custom converters
 let options =
     let opts = JsonSerializerOptions ()
-    [   WrappedJsonConverter (CitizenId.ofString,      CitizenId.toString) :> JsonConverter
-        WrappedJsonConverter (ContactType.parse,       ContactType.toString)
-        WrappedJsonConverter (ContinentId.ofString,    ContinentId.toString)
-        WrappedJsonConverter (ListingId.ofString,      ListingId.toString)
-        WrappedJsonConverter (Text,                    MarkdownString.toString)
-        WrappedJsonConverter (OtherContactId.ofString, OtherContactId.toString)
-        WrappedJsonConverter (SuccessId.ofString,      SuccessId.toString)
+    [   WrappedJsonConverter (CitizenId.ofString,   CitizenId.toString) :> JsonConverter
+        WrappedJsonConverter (ContactType.parse,    ContactType.toString)
+        WrappedJsonConverter (ContinentId.ofString, ContinentId.toString)
+        WrappedJsonConverter (ListingId.ofString,   ListingId.toString)
+        WrappedJsonConverter (Text,                 MarkdownString.toString)
+        WrappedJsonConverter (SuccessId.ofString,   SuccessId.toString)
         JsonFSharpConverter    ()
     ]
     |> List.iter opts.Converters.Add

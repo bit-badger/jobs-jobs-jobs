@@ -49,6 +49,12 @@ let continentList attrs name (continents : Continent list) emptyLabel selectedVa
         label [ _class (if isRequired then "jjj-required" else "jjj-label"); _for name ] [ rawText "Continent" ]
     ]
 
+/// Register JavaScript code to run in the DOMContentLoaded event on the page
+let jsOnLoad js =
+    script [] [
+        rawText """document.addEventListener("DOMContentLoaded", function () { """; rawText js; rawText " })"
+    ]
+
 /// Create a Markdown editor
 let markdownEditor attrs name value editorLabel =
     div [ _class "col-12"; _id $"{name}EditRow" ] [
@@ -71,11 +77,7 @@ let markdownEditor attrs name value editorLabel =
             ]
             label [ _for name ] [ rawText editorLabel ]
         ]
-        script [] [
-            rawText """document.addEventListener("DOMContentLoaded", function () {"""
-            rawText $" jjj.markdownOnLoad('{name}') "
-            rawText "})"
-        ]
+        jsOnLoad $"jjj.markdownOnLoad('{name}')"
     ]
 
 /// Wrap content in a collapsing panel

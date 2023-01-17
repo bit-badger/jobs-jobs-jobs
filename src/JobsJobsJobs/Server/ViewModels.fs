@@ -3,6 +3,70 @@ module JobsJobsJobs.ViewModels
 
 open JobsJobsJobs.Domain
 
+/// The data to add or update an other contact
+[<CLIMutable; NoComparison; NoEquality>]
+type OtherContactForm =
+    {   /// The type of the contact
+        ContactType : string
+        
+        /// The name of the contact
+        Name : string
+        
+        /// The value of the contact (URL, e-mail address, phone, etc.)
+        Value : string
+        
+        /// Whether this contact is displayed for public employment profiles and job listings
+        IsPublic : bool
+    }
+
+/// Support functions for the contact form
+module OtherContactForm =
+
+    /// Create a contact form from a contact
+    let fromContact (contact : OtherContact) =
+        {   ContactType = ContactType.toString contact.ContactType
+            Name        = defaultArg contact.Name ""
+            Value       = contact.Value
+            IsPublic    = contact.IsPublic
+        }
+
+
+/// The data available to update an account profile
+[<CLIMutable; NoComparison; NoEquality>]
+type AccountProfileForm =
+    {   /// The first name of the citizen
+        FirstName : string
+        
+        /// The last name of the citizen
+        LastName : string
+        
+        /// The display name for the citizen
+        DisplayName : string
+        
+        /// The citizen's new password
+        NewPassword : string
+        
+        /// Confirmation of the citizen's new password
+        NewPasswordConfirm : string
+        
+        /// The contacts for this profile
+        Contacts : OtherContactForm array
+    }
+
+/// Support functions for the account profile form
+module AccountProfileForm =
+
+    /// Create an account profile form from a citizen
+    let fromCitizen (citizen : Citizen) =
+        {   FirstName          = citizen.FirstName
+            LastName           = citizen.LastName
+            DisplayName        = defaultArg citizen.DisplayName ""
+            NewPassword        = ""
+            NewPasswordConfirm = ""
+            Contacts           = citizen.OtherContacts |> List.map OtherContactForm.fromContact |> Array.ofList
+        }
+
+
 /// The fields required for a skill
 [<CLIMutable; NoComparison; NoEquality>]
 type SkillForm =

@@ -7,6 +7,116 @@ open Giraffe.ViewEngine.Htmx
 open JobsJobsJobs.Domain
 open JobsJobsJobs.ViewModels
 
+/// The form to add or edit a means of contact
+let contactEdit (contacts : OtherContactForm array) =
+    let mapToInputs (idx : int) (contact : OtherContactForm) =
+        div [ _id $"contactRow{idx}"; _class "row pb-3" ] [
+            div [ _class "col-2 col-md-1" ] [
+                button [ _type "button"; _class "btn btn-sm btn-outline-danger rounded-pill mt-3"; _title "Delete"
+                         _onclick $"jjj.citizen.removeContact({idx})" ] [
+                    rawText " &minus; "
+                ]
+            ]
+            div [ _class "col-10 col-md-4 col-xl-3" ] [
+                div [ _class "form-floating" ] [
+                    select [ _id $"contactType{idx}"; _name $"Contacts[{idx}].ContactType"; _class "form-control"
+                             _value contact.ContactType; _placeholder "Type"; _required ] [
+                        option [ _value "Website" ] [ rawText "Website" ]
+                        option [ _value "Email" ] [ rawText "E-mail Address" ]
+                        option [ _value "Phone" ] [ rawText "Phone Number" ]
+                    ]
+                    label [ _class "jjj-required"; _for $"contactType{idx}" ] [ rawText "Type" ]
+                ]
+            ]
+            div [ _class "col-12 col-md-4 col-xl-3" ] [
+                div [ _class "form-floating" ] [
+                    input [ _type "text"; _id $"contactName{idx}"; _name $"Contacts[{idx}].Name"; _class "form-control"
+                            _maxlength "1000"; _value contact.Name; _placeholder "Name" ]
+                    label [ _class "jjj-label"; _for $"contactName{idx}" ] [ rawText "Name" ]
+                ]
+                if idx < 1 then
+                    div [ _class "form-text" ] [ rawText "Optional; will link sites and e-mail, qualify phone numbers" ]
+            ]
+            div [ _class "col-12 col-md-7 offset-md-1 col-xl-4 offset-xl-0" ] [
+                div [ _class "form-floating" ] [
+                    input [ _type "text"; _id $"contactValue{idx}"; _name $"Contacts[{idx}].Value"
+                            _class "form-control"; _maxlength "1000"; _value contact.Value; _placeholder "Contact"
+                            _required ]
+                    label [ _class "jjj-required"; _for "contactValue{idx}" ] [ rawText "Contact" ]
+                ]
+                if idx < 1 then div [ _class "form-text"] [ rawText "The URL, e-mail address, or phone number" ]
+            ]
+            div [ _class "col-12 col-md-3 offset-md-1 col-xl-1 offset-xl-0" ] [
+                div [ _class "form-check mt-3" ] [
+                    input [ _type "checkbox"; _id $"contactIsPublic{idx}"; _name $"Contacts[{idx}].IsPublic";
+                            _class "form-check-input"; _value "true"; if contact.IsPublic then _checked ]
+                    label [ _class "form-check-label"; _for $"contactIsPublic{idx}" ] [ rawText "Public" ]
+                ]
+            ]
+        ]
+    template [ _id "newContact" ] [
+        mapToInputs -1 { ContactType = "Website"; Name = ""; Value = ""; IsPublic = false }
+    ]
+    :: (contacts |> Array.mapi mapToInputs |> List.ofArray)
+
+/// The account edit page
+let account (m : AccountProfileForm) csrf =
+    article [] [
+        h3 [ _class "pb-3" ] [ rawText "Account Profile" ]
+        p [] [
+            rawText "This information is visible to all fellow logged-on citizens. For publicly-visible employment "
+            rawText "profiles and job listings, the &ldquo;Display Name&rdquo; fields and any public contacts will be "
+            rawText "displayed."
+        ]
+        form [ _class "row g-3"; _method "POST"; _action "/citizen/save-account" ] [
+            antiForgery csrf
+            div [ _class "col-6 col-xl-4" ] [
+                textBox [ _type "text"; _autofocus ] (nameof m.FirstName) m.FirstName "First Name" true
+            ]
+            div [ _class "col-6 col-xl-4" ] [
+                textBox [ _type "text" ] (nameof m.LastName) m.LastName "Last Name" true
+            ]
+            div [ _class "col-6 col-xl-4" ] [
+                textBox [ _type "text" ] (nameof m.DisplayName) m.DisplayName "Display Name" false
+                div [ _class "form-text" ] [ em [] [ rawText "Optional; overrides first/last for display" ] ]
+            ]
+            div [ _class "col-6 col-xl-4" ] [
+                textBox [ _type "password"; _minlength "8" ] (nameof m.NewPassword) "" "New Password" false
+                div [ _class "form-text" ] [ rawText "Leave blank to keep your current password" ]
+            ]
+            div [ _class "col-6 col-xl-4" ] [
+                textBox [ _type "password"; _minlength "8" ] (nameof m.NewPasswordConfirm) "" "Confirm New Password"
+                        false
+                div [ _class "form-text" ] [ rawText "Leave blank to keep your current password" ]
+            ]
+            div [ _class "col-12" ] [
+                hr []
+                h4 [ _class "pb-2" ] [
+                    rawText "Ways to Be Contacted &nbsp; "
+                    button [ _type "button"; _class "btn btn-sm btn-outline-primary rounded-pill"
+                             _onclick "jjj.citizen.addContact()" ] [
+                        rawText "Add a Contact Method"
+                    ]
+                ]
+            ]
+            yield! contactEdit m.Contacts
+            div [ _class "col-12" ] [
+                button [ _type "submit"; _class "btn btn-primary" ] [
+                    i [ _class "mdi mdi-content-save-outline" ] [ rawText "&nbsp; Save" ]
+                ]
+            ]
+        ]
+        hr []
+        p [ _class "text-muted fst-italic" ] [
+            rawText "(If you want to delete your profile, or your entire account, "
+            a [ _href "/citizen/so-long" ] [ rawText "see your deletion options here" ]; rawText ".)"
+        ]
+        jsOnLoad $"
+            jjj.citizen.nextIndex = {m.Contacts.Length}
+            jjj.citizen.validatePasswords('{nameof m.NewPassword}', '{nameof m.NewPasswordConfirm}', false)"
+    ]
+
+
 /// The account confirmation page
 let confirmAccount isConfirmed =
     article [] [
@@ -231,19 +341,7 @@ let register q1 q2 (m : RegisterViewModel) csrf =
                     i [ _class "mdi mdi-content-save-outline" ] []; rawText "&nbsp; Save"
                 ]
             ]
-            script [] [ rawText """
-                const pw = document.getElementById("Password")
-                const pwConfirm = document.getElementById("ConfirmPassword")
-                pwConfirm.addEventListener("input", () => {
-                    if (!pw.validity.valid) {
-                        pwConfirm.setCustomValidity("")
-                    } else if (!pwConfirm.validity.valueMissing && pw.value !== pwConfirm.value) {
-                        pwConfirm.setCustomValidity("Confirmation password does not match")
-                    } else {
-                        pwConfirm.setCustomValidity("")
-                    }
-                })"""
-            ]
+            jsOnLoad $"jjj.citizen.validatePasswords('{nameof m.Password}', 'ConfirmPassword', true)"
         ]
     ]
 

@@ -72,9 +72,7 @@ let expire (m : ExpireListingForm) (listing : Listing) csrf =
                 ]
             ]
         ]
-        script [] [
-            rawText """document.addEventListener("DOMContentLoaded", function () { jjj.listing.toggleFromHere() })"""
-        ]
+        jsOnLoad "jjj.listing.toggleFromHere()"
     ]
 
 

@@ -119,11 +119,7 @@ let edit (m : EditProfileViewModel) continents isNew citizenId csrf =
             rawText "(If you want to delete your profile, or your entire account, "
             a [ _href "/citizen/so-long" ] [ rawText "see your deletion options here" ]; rawText ".)"
         ]
-        script [] [
-            rawText """addEventListener("DOMContentLoaded", function () {"""
-            rawText $" jjj.profile.nextIndex = {m.Skills.Length} "
-            rawText "})"
-        ]
+        jsOnLoad $"jjj.profile.nextIndex = {m.Skills.Length}"
     ]
 
 
