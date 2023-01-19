@@ -9,13 +9,12 @@ open JobsJobsJobs.ViewModels
 
 /// The add/edit success story page
 let edit (m : EditSuccessForm) isNew pgTitle csrf =
-    article [] [
-        h3 [ _class "pb-3" ] [ rawText pgTitle ]
+    pageWithTitle pgTitle [
         if isNew then
             p [] [
-                rawText "Congratulations on your employment! Your fellow citizens would enjoy hearing how it all came "
-                rawText "about; tell us about it below! "
-                em [] [ rawText "(These will be visible to other users, but not to the general public.)" ]
+                txt "Congratulations on your employment! Your fellow citizens would enjoy hearing how it all came "
+                txt "about; tell us about it below! "
+                em [] [ txt "(These will be visible to other users, but not to the general public.)" ]
             ]
         form [ _class "row g-3"; _method "POST"; _action "/success-story/save" ] [
             antiForgery csrf
@@ -25,13 +24,11 @@ let edit (m : EditSuccessForm) isNew pgTitle csrf =
             ]
             markdownEditor [] (nameof m.Story) m.Story "The Success Story"
             div [ _class "col-12" ] [
-                button [ _type "submit"; _class "btn btn-primary" ] [
-                    i [ _class "mdi mdi-content-save-outline" ] []; rawText "&nbsp; Save"
-                ]
+                submitButton "content-save-outline" "Save"
                 if isNew then
                     p [ _class "fst-italic" ] [
-                        rawText "(Saving this will set &ldquo;Seeking Employment&rdquo; to &ldquo;No&rdquo; on your "
-                        rawText "profile.)"
+                        txt "(Saving this will set &ldquo;Seeking Employment&rdquo; to &ldquo;No&rdquo; on your "
+                        txt "profile.)"
                     ]
             ]
         ]
@@ -40,28 +37,27 @@ let edit (m : EditSuccessForm) isNew pgTitle csrf =
 
 /// The list of success stories
 let list (m : StoryEntry list) citizenId tz =
-    article [] [
-        h3 [ _class "pb-3" ] [ rawText "Success Stories" ]
+    pageWithTitle "Success Stories" [
         if List.isEmpty m then
-            p [] [ rawText "There are no success stories recorded "; em [] [ rawText "(yet)" ] ]
+            p [] [ txt "There are no success stories recorded "; em [] [ txt "(yet)" ] ]
         else
             table [ _class "table table-sm table-hover" ] [
                 thead [] [
                     [ "Story"; "From"; "Found Here?"; "Recorded On" ]
-                    |> List.map (fun it -> th [ _scope "col" ] [ rawText it ])
+                    |> List.map (fun it -> th [ _scope "col" ] [ txt it ])
                     |> tr []
                 ]
                 m |> List.map (fun story ->
                     tr [] [
                         td [] [
                             let theId = SuccessId.toString story.Id
-                            if story.HasStory then a [ _href $"/success-story/{theId}/view" ] [ rawText "View" ]
-                            else em [] [ rawText "None" ]
+                            if story.HasStory then a [ _href $"/success-story/{theId}/view" ] [ txt "View" ]
+                            else em [] [ txt "None" ]
                             if story.CitizenId = citizenId then
-                                rawText " ~ "; a [ _href $"/success-story/{theId}/edit" ] [ rawText "Edit" ]
+                                txt " ~ "; a [ _href $"/success-story/{theId}/edit" ] [ txt "Edit" ]
                         ]
                         td [] [ str story.CitizenName ]
-                        td [] [ if story.FromHere then strong [] [ rawText "Yes" ] else rawText "No" ]
+                        td [] [ if story.FromHere then strong [] [ txt "Yes" ] else txt "No" ]
                         td [] [ str (fullDate story.RecordedOn tz) ]
                     ])
                 |> tbody []
@@ -73,14 +69,13 @@ let list (m : StoryEntry list) citizenId tz =
 let view (it : Success) citizenName tz =
     article [] [
         h3 [] [
-            str citizenName; rawText "&rsquo;s Success Story"
+            str citizenName; txt "&rsquo;s Success Story"
             if it.IsFromHere then
                 span [ _class "jjj-heading-label" ] [
-                    rawText " &nbsp; &nbsp; "
+                    txt " &nbsp; &nbsp; "
                     span [ _class "badge bg-success" ] [
-                        rawText "Via "
-                        rawText (if it.Source = "profile" then "employment profile" else "job listing")
-                        rawText " on Jobs, Jobs, Jobs"
+                        txt "Via "; txt (if it.Source = "profile" then "employment profile" else "job listing")
+                        txt " on Jobs, Jobs, Jobs"
                     ]
                 ]
         ]

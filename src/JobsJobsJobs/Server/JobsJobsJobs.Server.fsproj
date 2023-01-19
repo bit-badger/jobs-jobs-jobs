@@ -33,9 +33,9 @@
   
   <ItemGroup>
     <PackageReference Include="Giraffe" Version="6.0.0" />
-    <PackageReference Include="Giraffe.Htmx" Version="1.8.4" />
+    <PackageReference Include="Giraffe.Htmx" Version="1.8.5" />
     <PackageReference Include="Giraffe.ViewEngine" Version="1.4.0" />
-    <PackageReference Include="Giraffe.ViewEngine.Htmx" Version="1.8.4" />
+    <PackageReference Include="Giraffe.ViewEngine.Htmx" Version="1.8.5" />
     <PackageReference Include="MailKit" Version="3.3.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="7.0.0" />
     <PackageReference Include="Microsoft.FSharpLu.Json" Version="0.11.7" />

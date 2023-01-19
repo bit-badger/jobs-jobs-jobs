@@ -54,7 +54,7 @@ let private links ctx =
         a [ _href url
             _onclick "jjj.hideMenu()"
             if url = ctx.CurrentUrl then _class "jjj-current-page"
-        ] [ i [ _class $"mdi mdi-{icon}"; _ariaHidden "true" ] []; rawText text ]
+        ] [ i [ _class $"mdi mdi-{icon}"; _ariaHidden "true" ] []; txt text ]
     nav [ _class "jjj-nav" ] [
         if ctx.IsLoggedOn then
             navLink "/citizen/dashboard" "view-dashboard-variant"             "Dashboard"
@@ -76,12 +76,10 @@ let private links ctx =
 
 /// Generate mobile and desktop side navigation areas
 let private sideNavs ctx = [
-    div [ _id "mobileMenu"
-          _class "jjj-mobile-menu offcanvas offcanvas-end"
-          _tabindex "-1"
+    div [ _id "mobileMenu"; _class "jjj-mobile-menu offcanvas offcanvas-end"; _tabindex "-1"
           _ariaLabelledBy "mobileMenuLabel" ] [
         div [ _class "offcanvas-header" ] [
-            h5 [ _id "mobileMenuLabel" ] [ rawText "Menu" ]
+            h5 [ _id "mobileMenuLabel" ] [ txt "Menu" ]
             button [
                 _class "btn-close text-reset"; _type "button"; _data "bs-dismiss" "offcanvas"; _ariaLabel "Close"
             ] []
@@ -89,8 +87,8 @@ let private sideNavs ctx = [
         div [ _class "offcanvas-body" ] [ links ctx ]
     ]
     aside [ _class "jjj-full-menu d-none d-md-block p-3" ] [
-        p [ _class "home-link pb-3" ] [ a [ _href "/" ] [ rawText "Jobs, Jobs, Jobs" ] ]
-        p [] [ rawText "&nbsp;" ]
+        p [ _class "home-link pb-3" ] [ a [ _href "/" ] [ txt "Jobs, Jobs, Jobs" ] ]
+        emptyP
         links ctx
     ]
 ]
@@ -98,18 +96,14 @@ let private sideNavs ctx = [
 /// Title bars for mobile and desktop
 let private titleBars = [
     nav [ _class "d-flex d-md-none navbar navbar-dark" ] [
-        span [ _class "navbar-text" ] [ a [ _href "/" ] [ rawText "Jobs, Jobs, Jobs" ] ]
-        button [ _class "btn"
-                 _data "bs-toggle" "offcanvas"
-                 _data "bs-target" "#mobileMenu"
+        span [ _class "navbar-text" ] [ a [ _href "/" ] [ txt "Jobs, Jobs, Jobs" ] ]
+        button [ _class "btn"; _data "bs-toggle" "offcanvas"; _data "bs-target" "#mobileMenu"
                  _ariaControls "mobileMenu" ] [ i [ _class "mdi mdi-menu" ] [] ]
     ]
     nav [ _class "d-none d-md-flex navbar navbar-light bg-light"] [
-        span [] [ rawText "&nbsp;" ]
+        span [] [ txt "&nbsp;" ]
         span [ _class "navbar-text" ] [
-            rawText "(&hellip;and Jobs &ndash; "
-            audioClip "pelosi-jobs" (rawText "Let&rsquo;s Vote for Jobs!")
-            rawText ")"
+            txt "(&hellip;and Jobs &ndash; "; audioClip "pelosi-jobs" (txt "Let&rsquo;s Vote for Jobs!"); txt ")"
         ]
     ]
 ]
@@ -127,9 +121,9 @@ let private htmlFoot =
         } |> Seq.reduce (+)
     footer [] [
         p [ _class "text-muted" ] [
-            str "Jobs, Jobs, Jobs v"; str version; rawText " &bull; "
-            a [ _href "/privacy-policy" ] [ str "Privacy Policy" ]; rawText " &bull; "
-            a [ _href "/terms-of-service" ] [ str "Terms of Service" ]
+            txt $"Jobs, Jobs, Jobs v{version} &bull; "
+            a [ _href "/privacy-policy" ] [ txt "Privacy Policy" ]; txt " &bull; "
+            a [ _href "/terms-of-service" ] [ txt "Terms of Service" ]
         ]
     ]
 
@@ -143,9 +137,8 @@ let private messages ctx =
         div [ _class $"alert alert-{level} alert-dismissable fade show d-flex justify-content-between p-2 mb-1 mt-1"
               _roleAlert ] [
             p [ _class "mb-0" ] [
-                if level <> "success" then
-                    strong [] [ rawText (parts[0].ToUpperInvariant ()); rawText ": " ]
-                rawText message
+                if level <> "success" then strong [] [ txt $"{parts[0].ToUpperInvariant ()}: " ]
+                txt message
             ]
             button [ _type "button"; _class "btn-close"; _data "bs-dismiss" "alert"; _ariaLabel "Close" ] []
         ])

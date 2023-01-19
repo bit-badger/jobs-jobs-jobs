@@ -37,12 +37,12 @@ module DataConnection =
     open Npgsql
     
     /// The data source for the document store
-    let mutable private dataSource : NpgsqlDataSource option = None
+    let mutable private theDataSource : NpgsqlDataSource option = None
     
-    /// Get a connection
-    let connection () =
-        match dataSource with
-        | Some ds -> ds.OpenConnection () |> Sql.existingConnection
+    /// Get the data source as the start of a SQL statement
+    let dataSource () =
+        match theDataSource with
+        | Some ds -> Sql.fromDataSource ds
         | None -> invalidOp "Connection.setUp() must be called before accessing the database"
     
     /// Create tables
@@ -66,7 +66,7 @@ module DataConnection =
             $"CREATE        INDEX IF NOT EXISTS idx_success_citizen   ON {Table.Success} ((data -> 'citizenId'))"
         ]
         let! _ =
-            connection ()
+            dataSource ()
             |> Sql.executeTransactionAsync (sql |> List.map (fun sql -> sql, [ [] ]))
         ()
     }
@@ -75,7 +75,7 @@ module DataConnection =
     let setUp (cfg : IConfiguration) = backgroundTask {
         let builder = NpgsqlDataSourceBuilder (cfg.GetConnectionString "PostgreSQL")
         let _ = builder.UseNodaTime ()
-        dataSource <- Some (builder.Build ())
+        theDataSource <- Some (builder.Build ())
         do! createTables ()
     }
 
@@ -166,7 +166,7 @@ module Citizens =
     
     /// Delete a citizen by their ID
     let deleteById citizenId =
-        doDeleteById citizenId (connection ())
+        doDeleteById citizenId (dataSource ())
     
     /// Save a citizen
     let private saveCitizen (citizen : Citizen) connProps =
@@ -178,7 +178,7 @@ module Citizens =
     
     /// Purge expired tokens
     let private purgeExpiredTokens now = backgroundTask {
-        let connProps = connection ()
+        let connProps = dataSource ()
         let! info =
             Sql.query $"SELECT * FROM {Table.SecurityInfo} WHERE data ->> 'tokenExpires' IS NOT NULL" connProps
             |> Sql.executeAsync toDocument<SecurityInfo>
@@ -202,7 +202,7 @@ module Citizens =
     
     /// Find a citizen by their ID
     let findById citizenId = backgroundTask {
-        match! connection () |> getDocument<Citizen> Table.Citizen (CitizenId.toString citizenId) with
+        match! dataSource () |> getDocument<Citizen> Table.Citizen (CitizenId.toString citizenId) with
         | Some c when not c.IsLegacy -> return Some c
         | Some _
         | None -> return None
@@ -210,11 +210,11 @@ module Citizens =
     
     /// Save a citizen
     let save citizen =
-        saveCitizen citizen (connection ())
+        saveCitizen citizen (dataSource ())
         
     /// Register a citizen (saves citizen and security settings); returns false if the e-mail is already taken
     let register citizen (security : SecurityInfo) = backgroundTask {
-        let  connProps = connection ()
+        let  connProps = dataSource ()
         use  conn      = Sql.createConnection connProps
         use! txn       = conn.BeginTransactionAsync ()
         try
@@ -245,7 +245,7 @@ module Citizens =
     /// Confirm a citizen's account
     let confirmAccount token = backgroundTask {
         do! checkForPurge true
-        let connProps = connection ()
+        let connProps = dataSource ()
         match! tryConfirmToken token connProps with
         | Some info ->
             do! saveSecurity { info with AccountLocked = false; Token = None; TokenUsage = None; TokenExpires = None }
@@ -257,7 +257,7 @@ module Citizens =
     /// Deny a citizen's account (user-initiated; used if someone used their e-mail address without their consent)
     let denyAccount token = backgroundTask {
         do! checkForPurge true
-        let connProps = connection ()
+        let connProps = dataSource ()
         match! tryConfirmToken token connProps with
         | Some info ->
             do! doDeleteById info.Id connProps
@@ -269,7 +269,7 @@ module Citizens =
     let tryLogOn email password (pwVerify : Citizen -> string -> bool option) (pwHash : Citizen -> string -> string)
             now = backgroundTask {
         do! checkForPurge false
-        let  connProps  = connection ()
+        let  connProps  = dataSource ()
         let! tryCitizen =
             connProps
             |> Sql.query $"
@@ -307,6 +307,37 @@ module Citizens =
         | None -> return Error "Log on unsuccessful"
     }
 
+    /// Try to retrieve a citizen and their security information by their e-mail address
+    let tryByEmailWithSecurity email = backgroundTask {
+        let toCitizenSecurityPair row = (toDocument<Citizen> row, toDocumentFrom<SecurityInfo> "sec_data" row)
+        let! results =
+            dataSource ()
+            |> Sql.query $"
+                SELECT c.*, s.data AS sec_data
+                  FROM {Table.Citizen} c
+                       INNER JOIN {Table.SecurityInfo} s ON s.id = c.id
+                 WHERE c.data ->> 'email' = @email"
+            |> Sql.parameters [ "@email", Sql.string email ]
+            |> Sql.executeAsync toCitizenSecurityPair
+        return List.tryHead results
+    }
+
+    /// Save an updated security information document
+    let saveSecurityInfo security = backgroundTask {
+        do! saveSecurity security (dataSource ())
+    }
+
+    /// Try to retrieve security information by the given token
+    let trySecurityByToken token = backgroundTask {
+        do! checkForPurge false
+        let! results =
+            dataSource ()
+            |> Sql.query $"SELECT * FROM {Table.SecurityInfo} WHERE data ->> 'token' = @token"
+            |> Sql.parameters [ "@token", Sql.string token ]
+            |> Sql.executeAsync toDocument<SecurityInfo>
+        return List.tryHead results
+    }
+
 
 /// Continent data access functions
 [<RequireQualifiedAccess>]
@@ -314,13 +345,13 @@ module Continents =
     
     /// Retrieve all continents
     let all () =
-        connection ()
+        dataSource ()
         |> Sql.query $"SELECT * FROM {Table.Continent} ORDER BY data ->> 'name'"
         |> Sql.executeAsync toDocument<Continent>
     
     /// Retrieve a continent by its ID
     let findById continentId =
-        connection () |> getDocument<Continent> Table.Continent (ContinentId.toString continentId)
+        dataSource () |> getDocument<Continent> Table.Continent (ContinentId.toString continentId)
 
 
 open JobsJobsJobs.Domain.SharedTypes
@@ -345,14 +376,14 @@ module Listings =
     
     /// Find all job listings posted by the given citizen
     let findByCitizen citizenId =
-        connection ()
+        dataSource ()
         |> Sql.query $"{viewSql} WHERE l.data ->> 'citizenId' = @citizenId AND l.data ->> 'isLegacy' = 'false'"
         |> Sql.parameters [ "@citizenId", Sql.string (CitizenId.toString citizenId) ]
         |> Sql.executeAsync toListingForView
     
     /// Find a listing by its ID
     let findById listingId = backgroundTask {
-        match! connection () |> getDocument<Listing> Table.Listing (ListingId.toString listingId) with
+        match! dataSource () |> getDocument<Listing> Table.Listing (ListingId.toString listingId) with
         | Some listing when not listing.IsLegacy -> return Some listing
         | Some _
         | None -> return None
@@ -361,7 +392,7 @@ module Listings =
     /// Find a listing by its ID for viewing (includes continent information)
     let findByIdForView listingId = backgroundTask {
         let! tryListing =
-            connection ()
+            dataSource ()
             |> Sql.query $"{viewSql} WHERE l.id = @id AND l.data ->> 'isLegacy' = 'false'"
             |> Sql.parameters [ "@id", Sql.string (ListingId.toString listingId) ]
             |> Sql.executeAsync toListingForView
@@ -370,7 +401,7 @@ module Listings =
     
     /// Save a listing
     let save (listing : Listing) =
-        connection () |> saveDocument Table.Listing (ListingId.toString listing.Id) <| mkDoc listing
+        dataSource () |> saveDocument Table.Listing (ListingId.toString listing.Id) <| mkDoc listing
     
     /// Search job listings
     let search (search : ListingSearchForm) =
@@ -384,7 +415,7 @@ module Listings =
             if search.Text <> "" then
                 "l.data ->> 'text' ILIKE @text", [ "@text", like search.Text ]
         ]
-        connection ()
+        dataSource ()
         |> Sql.query $"
             {viewSql}
              WHERE l.data ->> 'isExpired' = 'false' AND l.data ->> 'isLegacy' = 'false'
@@ -399,14 +430,14 @@ module Profiles =
     
     /// Count the current profiles
     let count () =
-        connection ()
+        dataSource ()
         |> Sql.query $"SELECT COUNT(id) AS the_count FROM {Table.Profile} WHERE data ->> 'isLegacy' = 'false'"
         |> Sql.executeRowAsync (fun row -> row.int64 "the_count")
     
     /// Delete a profile by its ID
     let deleteById citizenId = backgroundTask {
         let! _ =
-            connection ()
+            dataSource ()
             |> Sql.query $"DELETE FROM {Table.Profile} WHERE id = @id"
             |> Sql.parameters [ "@id", Sql.string (CitizenId.toString citizenId) ]
             |> Sql.executeNonQueryAsync
@@ -415,7 +446,7 @@ module Profiles =
     
     /// Find a profile by citizen ID
     let findById citizenId = backgroundTask {
-        match! connection () |> getDocument<Profile> Table.Profile (CitizenId.toString citizenId) with
+        match! dataSource () |> getDocument<Profile> Table.Profile (CitizenId.toString citizenId) with
         | Some profile when not profile.IsLegacy -> return Some profile
         | Some _
         | None -> return None
@@ -424,7 +455,7 @@ module Profiles =
     /// Find a profile by citizen ID for viewing (includes citizen and continent information)
     let findByIdForView citizenId = backgroundTask {
         let! tryCitizen =
-            connection ()
+            dataSource ()
             |> Sql.query $"
                 SELECT p.*, c.data AS cit_data, o.data AS cont_data
                   FROM {Table.Profile} p
@@ -443,7 +474,7 @@ module Profiles =
     
     /// Save a profile
     let save (profile : Profile) =
-        connection () |> saveDocument Table.Profile (CitizenId.toString profile.Id) <| mkDoc profile
+        dataSource () |> saveDocument Table.Profile (CitizenId.toString profile.Id) <| mkDoc profile
     
     /// Search profiles (logged-on users)
     let search (search : ProfileSearchForm) = backgroundTask {
@@ -462,7 +493,7 @@ module Profiles =
                 [ "@text", like search.BioExperience ]
         ]
         let! results =
-            connection ()
+            dataSource ()
             |> Sql.query $"
                 SELECT p.*, c.data AS cit_data
                   FROM {Table.Profile} p
@@ -498,7 +529,7 @@ module Profiles =
                      WHERE x ->> 'description' ILIKE @description)",
                 [ "@description", like search.Skill ]
         ]
-        connection ()
+        dataSource ()
         |> Sql.query $"
             SELECT p.*, c.data AS cont_data
               FROM {Table.Profile} p
@@ -525,7 +556,7 @@ module Successes =
     
     // Retrieve all success stories  
     let all () =
-        connection ()
+        dataSource ()
         |> Sql.query $"
             SELECT s.*, c.data AS cit_data
               FROM {Table.Success} s
@@ -544,9 +575,9 @@ module Successes =
     
     /// Find a success story by its ID
     let findById successId =
-        connection () |> getDocument<Success> Table.Success (SuccessId.toString successId)
+        dataSource () |> getDocument<Success> Table.Success (SuccessId.toString successId)
     
     /// Save a success story
     let save (success : Success) =
-        connection () |> saveDocument Table.Success (SuccessId.toString success.Id) <| mkDoc success
+        dataSource () |> saveDocument Table.Success (SuccessId.toString success.Id) <| mkDoc success
     

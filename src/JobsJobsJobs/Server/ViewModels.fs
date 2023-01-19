@@ -238,6 +238,14 @@ type ExpireListingForm =
     }
 
 
+/// Form for the forgot / reset password page
+[<CLIMutable; NoComparison; NoEquality>]
+type ForgotPasswordForm =
+    {   /// The e-mail address for the account wishing to reset their password
+        Email : string
+    }
+
+
 /// View model for the log on page
 [<CLIMutable; NoComparison; NoEquality>]
 type LogOnViewModel =

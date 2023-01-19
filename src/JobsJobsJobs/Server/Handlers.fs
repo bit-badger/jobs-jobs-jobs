@@ -261,14 +261,26 @@ module Citizen =
         | None -> return! Error.notFound next ctx
     }
 
+    // GET: /citizen/cancel-reset/[token]
+    let cancelReset token : HttpHandler = fun next ctx -> task {
+        let! wasCanceled = task {
+            match! Citizens.trySecurityByToken token with
+            | Some security ->
+                do! Citizens.saveSecurityInfo { security with Token = None; TokenUsage = None; TokenExpires = None }
+                return true
+            | None -> return false
+        }
+        return! Citizen.resetCanceled wasCanceled |> render "Password Reset Cancellation" next ctx
+    }
+
     // GET: /citizen/confirm/[token]
-    let confirm token next ctx = task {
+    let confirm token : HttpHandler = fun next ctx -> task {
         let! isConfirmed = Citizens.confirmAccount token
         return! Citizen.confirmAccount isConfirmed |> render "Account Confirmation" next ctx
     }
 
     // GET: /citizen/dashboard
-    let dashboard = requireUser >=> fun next ctx -> task {
+    let dashboard : HttpHandler = requireUser >=> fun next ctx -> task {
         let  citizenId = currentCitizenId ctx
         let! citizen   = Citizens.findById citizenId
         let! profile   = Profiles.findById citizenId
@@ -284,13 +296,38 @@ module Citizen =
     }
 
     // GET: /citizen/deny/[token]
-    let deny token next ctx = task {
+    let deny token : HttpHandler = fun next ctx -> task {
         let! wasDeleted = Citizens.denyAccount token
         return! Citizen.denyAccount wasDeleted |> render "Account Deletion" next ctx
     }
 
+    // GET: /citizen/forgot-password
+    let forgotPassword : HttpHandler = fun next ctx ->
+        Citizen.forgotPassword (csrf ctx) |> render "Forgot Password" next ctx
+    
+    // POST: /citizen/forgot-password
+    let doForgotPassword : HttpHandler = validateCsrf >=> fun next ctx -> task {
+        let! form = ctx.BindFormAsync<ForgotPasswordForm> ()
+        match! Citizens.tryByEmailWithSecurity form.Email with
+        | Some (citizen, security) ->
+            let withToken =
+                { security with
+                    Token         = Some (Auth.createToken citizen)
+                    TokenUsage    = Some "reset"
+                    TokenExpires  = Some (now ctx + (Duration.FromDays 3))
+                }
+            do! Citizens.saveSecurityInfo withToken
+            let! emailResponse = Email.sendPasswordReset citizen withToken
+            let  logFac        = logger ctx
+            let  log           = logFac.CreateLogger "JobsJobsJobs.Handlers.Citizen"
+            log.LogInformation $"Password reset e-mail for {citizen.Email} received {emailResponse}"
+        | None -> ()
+        // TODO: send link if it matches an account
+        return! Citizen.forgotPasswordSent form |> render "Reset Request Processed" next ctx
+    }
+
     // GET: /citizen/log-off
-    let logOff = requireUser >=> fun next ctx -> task {
+    let logOff : HttpHandler = requireUser >=> fun next ctx -> task {
         do! ctx.SignOutAsync CookieAuthenticationDefaults.AuthenticationScheme
         do! addSuccess "Log off successful" ctx
         return! redirectToGet "/" next ctx
@@ -394,6 +431,15 @@ module Citizen =
         else
             do! addErrors errors ctx
             return! refreshPage () next ctx
+    }
+
+    // GET: /citizen/reset-password/[token]
+    let resetPassword token : HttpHandler = fun next ctx -> task {
+        match! Citizens.trySecurityByToken token with
+        | Some security ->
+            // TODO: create form and page
+            return! Home.home |> render "TODO" next ctx
+        | None -> return! Error.notFound next ctx
     }
 
     // POST: /citizen/save-account
@@ -807,20 +853,24 @@ let allEndpoints = [
     ]
     subRoute "/citizen" [
         GET_HEAD [
-            route  "/account"    Citizen.account
-            routef "/confirm/%s" Citizen.confirm
-            route  "/dashboard"  Citizen.dashboard
-            routef "/deny/%s"    Citizen.deny
-            route  "/log-off"    Citizen.logOff
-            route  "/log-on"     Citizen.logOn
-            route  "/register"   Citizen.register
-            route  "/so-long"    Citizen.soLong
+            route  "/account"           Citizen.account
+            routef "/cancel-reset/%s"   Citizen.cancelReset
+            routef "/confirm/%s"        Citizen.confirm
+            route  "/dashboard"         Citizen.dashboard
+            routef "/deny/%s"           Citizen.deny
+            route  "/forgot-password"   Citizen.forgotPassword
+            route  "/log-off"           Citizen.logOff
+            route  "/log-on"            Citizen.logOn
+            route  "/register"          Citizen.register
+            routef "/reset-password/%s" Citizen.resetPassword
+            route  "/so-long"           Citizen.soLong
         ]
         POST [
-            route "/delete"       Citizen.delete
-            route "/log-on"       Citizen.doLogOn
-            route "/register"     Citizen.doRegistration
-            route "/save-account" Citizen.saveAccount
+            route "/delete"          Citizen.delete
+            route "/forgot-password" Citizen.doForgotPassword
+            route "/log-on"          Citizen.doLogOn
+            route "/register"        Citizen.doRegistration
+            route "/save-account"    Citizen.saveAccount
         ]
     ]
     subRoute "/listing" [

@@ -13,9 +13,7 @@ let contactEdit (contacts : OtherContactForm array) =
         div [ _id $"contactRow{idx}"; _class "row pb-3" ] [
             div [ _class "col-2 col-md-1" ] [
                 button [ _type "button"; _class "btn btn-sm btn-outline-danger rounded-pill mt-3"; _title "Delete"
-                         _onclick $"jjj.citizen.removeContact({idx})" ] [
-                    rawText " &minus; "
-                ]
+                         _onclick $"jjj.citizen.removeContact({idx})" ] [ txt " &minus; " ]
             ]
             div [ _class "col-10 col-md-4 col-xl-3" ] [
                 div [ _class "form-floating" ] [
@@ -23,37 +21,37 @@ let contactEdit (contacts : OtherContactForm array) =
                              _value contact.ContactType; _placeholder "Type"; _required ] [
                         let optionFor value label =
                             let typ = ContactType.toString value
-                            option [ _value typ; if contact.ContactType = typ then _selected ] [ rawText label ]
+                            option [ _value typ; if contact.ContactType = typ then _selected ] [ txt label ]
                         optionFor Website "Website"
                         optionFor Email   "E-mail Address"
                         optionFor Phone   "Phone Number"
                     ]
-                    label [ _class "jjj-required"; _for $"contactType{idx}" ] [ rawText "Type" ]
+                    label [ _class "jjj-required"; _for $"contactType{idx}" ] [ txt "Type" ]
                 ]
             ]
             div [ _class "col-12 col-md-4 col-xl-3" ] [
                 div [ _class "form-floating" ] [
                     input [ _type "text"; _id $"contactName{idx}"; _name $"Contacts[{idx}].Name"; _class "form-control"
                             _maxlength "1000"; _value contact.Name; _placeholder "Name" ]
-                    label [ _class "jjj-label"; _for $"contactName{idx}" ] [ rawText "Name" ]
+                    label [ _class "jjj-label"; _for $"contactName{idx}" ] [ txt "Name" ]
                 ]
                 if idx < 1 then
-                    div [ _class "form-text" ] [ rawText "Optional; will link sites and e-mail, qualify phone numbers" ]
+                    div [ _class "form-text" ] [ txt "Optional; will link sites and e-mail, qualify phone numbers" ]
             ]
             div [ _class "col-12 col-md-7 offset-md-1 col-xl-4 offset-xl-0" ] [
                 div [ _class "form-floating" ] [
                     input [ _type "text"; _id $"contactValue{idx}"; _name $"Contacts[{idx}].Value"
                             _class "form-control"; _maxlength "1000"; _value contact.Value; _placeholder "Contact"
                             _required ]
-                    label [ _class "jjj-required"; _for "contactValue{idx}" ] [ rawText "Contact" ]
+                    label [ _class "jjj-required"; _for "contactValue{idx}" ] [ txt "Contact" ]
                 ]
-                if idx < 1 then div [ _class "form-text"] [ rawText "The URL, e-mail address, or phone number" ]
+                if idx < 1 then div [ _class "form-text"] [ txt "The URL, e-mail address, or phone number" ]
             ]
             div [ _class "col-12 col-md-3 offset-md-1 col-xl-1 offset-xl-0" ] [
                 div [ _class "form-check mt-3" ] [
                     input [ _type "checkbox"; _id $"contactIsPublic{idx}"; _name $"Contacts[{idx}].IsPublic";
                             _class "form-check-input"; _value "true"; if contact.IsPublic then _checked ]
-                    label [ _class "form-check-label"; _for $"contactIsPublic{idx}" ] [ rawText "Public" ]
+                    label [ _class "form-check-label"; _for $"contactIsPublic{idx}" ] [ txt "Public" ]
                 ]
             ]
         ]
@@ -64,12 +62,11 @@ let contactEdit (contacts : OtherContactForm array) =
 
 /// The account edit page
 let account (m : AccountProfileForm) csrf =
-    article [] [
-        h3 [ _class "pb-3" ] [ rawText "Account Profile" ]
+    pageWithTitle "Account Profile" [
         p [] [
-            rawText "This information is visible to all fellow logged-on citizens. For publicly-visible employment "
-            rawText "profiles and job listings, the &ldquo;Display Name&rdquo; fields and any public contacts will be "
-            rawText "displayed."
+            txt "This information is visible to all fellow logged-on citizens. For publicly-visible employment "
+            txt "profiles and job listings, the &ldquo;Display Name&rdquo; fields and any public contacts will be "
+            txt "displayed."
         ]
         form [ _class "row g-3"; _method "POST"; _action "/citizen/save-account" ] [
             antiForgery csrf
@@ -81,38 +78,32 @@ let account (m : AccountProfileForm) csrf =
             ]
             div [ _class "col-6 col-xl-4" ] [
                 textBox [ _type "text" ] (nameof m.DisplayName) m.DisplayName "Display Name" false
-                div [ _class "form-text" ] [ em [] [ rawText "Optional; overrides first/last for display" ] ]
+                div [ _class "form-text" ] [ em [] [ txt "Optional; overrides first/last for display" ] ]
             ]
             div [ _class "col-6 col-xl-4" ] [
                 textBox [ _type "password"; _minlength "8" ] (nameof m.NewPassword) "" "New Password" false
-                div [ _class "form-text" ] [ rawText "Leave blank to keep your current password" ]
+                div [ _class "form-text" ] [ txt "Leave blank to keep your current password" ]
             ]
             div [ _class "col-6 col-xl-4" ] [
                 textBox [ _type "password"; _minlength "8" ] (nameof m.NewPasswordConfirm) "" "Confirm New Password"
                         false
-                div [ _class "form-text" ] [ rawText "Leave blank to keep your current password" ]
+                div [ _class "form-text" ] [ txt "Leave blank to keep your current password" ]
             ]
             div [ _class "col-12" ] [
                 hr []
                 h4 [ _class "pb-2" ] [
-                    rawText "Ways to Be Contacted &nbsp; "
+                    txt "Ways to Be Contacted &nbsp; "
                     button [ _type "button"; _class "btn btn-sm btn-outline-primary rounded-pill"
-                             _onclick "jjj.citizen.addContact()" ] [
-                        rawText "Add a Contact Method"
-                    ]
+                             _onclick "jjj.citizen.addContact()" ] [ txt "Add a Contact Method" ]
                 ]
             ]
             yield! contactEdit m.Contacts
-            div [ _class "col-12" ] [
-                button [ _type "submit"; _class "btn btn-primary" ] [
-                    i [ _class "mdi mdi-content-save-outline" ] [ rawText "&nbsp; Save" ]
-                ]
-            ]
+            div [ _class "col-12" ] [ submitButton "content-save-outline" "Save" ]
         ]
         hr []
         p [ _class "text-muted fst-italic" ] [
-            rawText "(If you want to delete your profile, or your entire account, "
-            a [ _href "/citizen/so-long" ] [ rawText "see your deletion options here" ]; rawText ".)"
+            txt "(If you want to delete your profile, or your entire account, "
+            a [ _href "/citizen/so-long" ] [ rawText "see your deletion options here" ]; txt ".)"
         ]
         jsOnLoad $"
             jjj.citizen.nextIndex = {m.Contacts.Length}
@@ -122,157 +113,171 @@ let account (m : AccountProfileForm) csrf =
 
 /// The account confirmation page
 let confirmAccount isConfirmed =
-    article [] [
-        h3 [ _class "pb-3" ] [ rawText "Account Confirmation" ]
+    pageWithTitle "Account Confirmation" [
         p [] [
             if isConfirmed then
-                rawText "Your account was confirmed successfully! You may "
-                a [ _href "/citizen/log-on" ] [ rawText "log on here" ]; rawText "."
+                txt "Your account was confirmed successfully! You may "
+                a [ _href "/citizen/log-on" ] [ rawText "log on here" ]; txt "."
             else
-                rawText "The confirmation token did not match any pending accounts. Confirmation tokens are only valid "
-                rawText "for 3 days; if the token expired, you will need to re-register, which "
-                a [ _href "/citizen/register" ] [ rawText "you can do here" ]; rawText "."
+                txt "The confirmation token did not match any pending accounts. Confirmation tokens are only valid for "
+                txt "3 days; if the token expired, you will need to re-register, which "
+                a [ _href "/citizen/register" ] [ txt "you can do here" ]; txt "."
         ]
     ]
 
 /// The citizen's dashboard page
 let dashboard (citizen : Citizen) (profile : Profile option) profileCount tz =
     article [ _class "container" ] [
-        h3 [ _class "pb-4" ] [ rawText "ITM, "; str citizen.FirstName; rawText "!" ]
+        h3 [ _class "pb-4" ] [ str $"ITM, {citizen.FirstName}!" ]
         div [ _class "row row-cols-1 row-cols-md-2" ] [
             div [ _class "col" ] [
                 div [ _class "card h-100" ] [
-                    h5 [ _class "card-header" ] [ rawText "Your Profile" ]
+                    h5 [ _class "card-header" ] [ txt "Your Profile" ]
                     div [ _class "card-body" ] [
                         match profile with
                         | Some prfl ->
                             h6 [ _class "card-subtitle mb-3 text-muted fst-italic" ] [
-                                rawText "Last updated "; str (fullDateTime prfl.LastUpdatedOn tz)
+                                str $"Last updated {fullDateTime prfl.LastUpdatedOn tz}"
                             ]
                             p [ _class "card-text" ] [
-                                rawText "Your profile currently lists "; str $"{List.length prfl.Skills}"
-                                rawText " skill"; rawText (if List.length prfl.Skills <> 1 then "s" else "")
-                                rawText "."
+                                txt $"Your profile currently lists {List.length prfl.Skills} skill"
+                                txt (if List.length prfl.Skills <> 1 then "s" else ""); txt "."
                                 if prfl.IsSeekingEmployment then
                                     br []; br []
-                                    rawText "Your profile indicates that you are seeking employment. Once you find it, "
-                                    a [ _href "/success-story/add" ] [ rawText "tell your fellow citizens about it!" ]
+                                    txt "Your profile indicates that you are seeking employment. Once you find it, "
+                                    a [ _href "/success-story/add" ] [ txt "tell your fellow citizens about it!" ]
                             ]
                         | None ->
                             p [ _class "card-text" ] [
-                                rawText "You do not have an employment profile established; click below (or "
-                                rawText "&ldquo;Edit Profile&rdquo; in the menu) to get started!"
+                                txt "You do not have an employment profile established; click below (or &ldquo;Edit "
+                                txt "Profile&rdquo; in the menu) to get started!"
                             ]
                     ]
                     div [ _class "card-footer" ] [
                         match profile with
-                        | Some p ->
+                        | Some _ ->
                             a [ _href $"/profile/{CitizenId.toString citizen.Id}/view"
-                                _class "btn btn-outline-secondary" ] [
-                                rawText "View Profile"
-                            ]; rawText "&nbsp; &nbsp;"
-                            a [ _href "/profile/edit"; _class "btn btn-outline-secondary" ] [ rawText "Edit Profile" ]
+                                _class "btn btn-outline-secondary" ] [ txt "View Profile" ]; txt "&nbsp; &nbsp;"
+                            a [ _href "/profile/edit"; _class "btn btn-outline-secondary" ] [ txt "Edit Profile" ]
                         | None ->
-                            a [ _href "/profile/edit"; _class "btn btn-primary" ] [ rawText "Create Profile" ]
+                            a [ _href "/profile/edit"; _class "btn btn-primary" ] [ txt "Create Profile" ]
                     ]
                 ]
             ]
             div [ _class "col" ] [
                 div [ _class "card h-100" ] [
-                    h5 [ _class "card-header" ] [ rawText "Other Citizens" ]
+                    h5 [ _class "card-header" ] [ txt "Other Citizens" ]
                     div [ _class "card-body" ] [
                         h6 [ _class "card-subtitle mb-3 text-muted fst-italic" ] [
-                            rawText (if profileCount = 0L then "No" else $"{profileCount} Total")
-                            rawText " Employment Profile"; rawText (if profileCount <> 1 then "s" else "")
+                            txt (if profileCount = 0L then "No" else $"{profileCount} Total")
+                            txt " Employment Profile"; txt (if profileCount <> 1 then "s" else "")
                         ]
                         p [ _class "card-text" ] [
                             if profileCount = 1 && Option.isSome profile then
                                 "It looks like, for now, it&rsquo;s just you&hellip;"
                             else if profileCount > 0 then "Take a look around and see if you can help them find work!"
                             else "You can click below, but you will not find anything&hellip;"
-                            |> rawText
+                            |> txt
                         ]
                     ]
                     div [ _class "card-footer" ] [
-                        a [ _href "/profile/search"; _class "btn btn-outline-secondary" ] [ rawText "Search Profiles" ]
+                        a [ _href "/profile/search"; _class "btn btn-outline-secondary" ] [ txt "Search Profiles" ]
                     ]
                 ]
             ]
         ]
-        p [] [ rawText "&nbsp;" ]
+        emptyP
         p [] [
-            rawText "To see how this application works, check out &ldquo;How It Works&rdquo; in the sidebar (last "
-            rawText "updated August 29<sup>th</sup>, 2021)."
+            txt "To see how this application works, check out &ldquo;How It Works&rdquo; in the sidebar (last updated "
+            txt "August 29<sup>th</sup>, 2021)."
         ]
     ]
 
 
 /// The account deletion success page
 let deleted =
-    article [] [
-        h3 [ _class "pb-3" ] [ rawText "Account Deletion Success" ]
-        p [] [ rawText "&nbsp;" ]
-        p [] [ rawText "Your account has been successfully deleted." ]
-        p [] [ rawText "&nbsp;" ]
-        p [] [ rawText "Thank you for participating, and thank you for your courage. #GitmoNation" ]
+    pageWithTitle "Account Deletion Success" [
+        emptyP; p [] [ txt "Your account has been successfully deleted." ]
+        emptyP; p [] [ txt "Thank you for participating, and thank you for your courage. #GitmoNation" ]
     ]
 
 
 /// The profile or account deletion page
 let deletionOptions csrf =
-    article [] [
-        h3 [ _class "pb-3" ] [ rawText "Account Deletion Options" ]
-        h4 [ _class "pb-3" ] [ rawText "Option 1 &ndash; Delete Your Profile" ]
+    pageWithTitle "Account Deletion Options" [
+        h4 [ _class "pb-3" ] [ txt "Option 1 &ndash; Delete Your Profile" ]
         p [] [
-            rawText "Utilizing this option will remove your current employment profile and skills. This will preserve "
-            rawText "any job listings you may have posted, or any success stories you may have written, and preserves "
-            rawText "this application&rsquo;s knowledge of you. This is what you want to use if you want to clear out "
-            rawText "your profile and start again (and remove the current one from others&rsquo; view)."
+            txt "Utilizing this option will remove your current employment profile and skills. This will preserve any "
+            txt "job listings you may have posted, or any success stories you may have written, and preserves this "
+            txt "this application&rsquo;s knowledge of you. This is what you want to use if you want to clear out your "
+            txt "profile and start again (and remove the current one from others&rsquo; view)."
         ]
         form [ _class "text-center"; _method "POST"; _action "/profile/delete" ] [
             antiForgery csrf
-            button [ _type "submit"; _class "btn btn-danger" ] [ rawText "Delete Your Profile" ]
+            button [ _type "submit"; _class "btn btn-danger" ] [ txt "Delete Your Profile" ]
         ]
         hr []
-        h4 [ _class "pb-3" ] [ rawText "Option 2 &ndash; Delete Your Account" ]
+        h4 [ _class "pb-3" ] [ txt "Option 2 &ndash; Delete Your Account" ]
         p [] [
-            rawText "This option will make it like you never visited this site. It will delete your profile, skills, "
-            rawText "job listings, success stories, and account. This is what you want to use if you want to disappear "
-            rawText "from this application."
+            txt "This option will make it like you never visited this site. It will delete your profile, skills, job "
+            txt "listings, success stories, and account. This is what you want to use if you want to disappear from "
+            txt "this application."
         ]
         form [ _class "text-center"; _method "POST"; _action "/citizen/delete" ] [
             antiForgery csrf
-            button [ _type "submit"; _class "btn btn-danger" ] [ rawText "Delete Your Entire Account" ]
+            button [ _type "submit"; _class "btn btn-danger" ] [ txt "Delete Your Entire Account" ]
         ]
     ]
 
 
 /// The account denial page
 let denyAccount wasDeleted =
-    article [] [
-        h3 [ _class "pb-3" ] [ rawText "Account Deletion" ]
+    pageWithTitle "Account Deletion" [
         p [] [
-            if wasDeleted then
-                rawText "The account was deleted successfully; sorry for the trouble."
+            if wasDeleted then txt "The account was deleted successfully; sorry for the trouble."
             else
-                rawText "The confirmation token did not match any pending accounts; if this was an inadvertently "
-                rawText "created account, it has likely already been deleted."
+                txt "The confirmation token did not match any pending accounts; if this was an inadvertently created "
+                txt "account, it has likely already been deleted."
         ]
     ]
 
+
+/// The forgot / reset password page
+let forgotPassword csrf =
+    let m = { Email = "" }
+    pageWithTitle "Forgot Password" [
+        p [] [
+            txt "Enter your e-mail address below; if it matches the e-mail address of an account, we will send a "
+            txt "password reset link."
+        ]
+        form [ _class "row g-3 pb-3"; _method "POST"; _action "/citizen/forgot-password" ] [
+            antiForgery csrf
+            div [ _class "col-12 col-md-6 offset-md-3" ] [
+                textBox [ _type "email"; _autofocus ] (nameof m.Email) m.Email "E-mail Address" true
+            ]
+            div [ _class "col-12" ] [ submitButton "login" "Send Reset Link" ]
+        ]
+    ]
+
+
+/// The page displayed after a forgotten / reset request has been processed
+let forgotPasswordSent (m : ForgotPasswordForm) =
+    pageWithTitle "Reset Request Processed" [
+        p [] [ txt "The reset link request has been processed; check your e-mail for further instructions." ]
+    ]
+
+
 /// The log on page
 let logOn (m : LogOnViewModel) csrf =
-    article [] [
-        h3 [ _class "pb-3" ] [ rawText "Log On" ]
+    pageWithTitle "Log On" [
         match m.ErrorMessage with
         | Some msg ->
             p [ _class "pb-3 text-center" ] [
-                span [ _class "text-danger" ] [ str msg ]; br []
+                span [ _class "text-danger" ] [ txt msg ]; br []
                 if msg.IndexOf("ocked") > -1 then
-                    rawText "If this is a new account, it must be confirmed before it can be used; otherwise, you need "
-                    rawText "to "
-                    a [ _href "/citizen/forgot-password" ] [ rawText "request an unlock code" ]
-                    rawText " before you may log on."
+                    txt "If this is a new account, it must be confirmed before it can be used; otherwise, you need to "
+                    a [ _href "/citizen/forgot-password" ] [ txt "request an unlock code" ]
+                    txt " before you may log on."
             ]
         | None -> ()
         form [ _class "row g-3 pb-3"; _hxPost "/citizen/log-on" ] [
@@ -286,24 +291,19 @@ let logOn (m : LogOnViewModel) csrf =
             div [ _class "col-12 col-md-6" ] [
                 textBox [ _type "password" ] (nameof m.Password) "" "Password" true
             ]
-            div [ _class "col-12" ] [
-                button [ _class "btn btn-primary"; _type "submit" ] [
-                    i [ _class "mdi mdi-login" ] []; rawText "&nbsp; Log On"
-                ]
-            ]
+            div [ _class "col-12" ] [ submitButton "login" "Log On" ]
         ]
         p [ _class "text-center" ] [
-            rawText "Need an account? "; a [ _href "/citizen/register" ] [ rawText "Register for one!" ]
+            txt "Need an account? "; a [ _href "/citizen/register" ] [ txt "Register for one!" ]
         ]
         p [ _class "text-center" ] [
-            rawText "Forgot your password? "; a [ _href "/citizen/forgot-password" ] [ rawText "Request a reset." ]
+            txt "Forgot your password? "; a [ _href "/citizen/forgot-password" ] [ txt "Request a reset." ]
         ]
     ]
 
 /// The registration page
 let register q1 q2 (m : RegisterViewModel) csrf =
-    article [] [
-        h3 [ _class "pb-3" ] [ rawText "Register" ]
+    pageWithTitle "Register" [
         form [ _class  "row g-3"; _hxPost "/citizen/register" ] [
             antiForgery csrf
             div [ _class "col-6 col-xl-4" ] [
@@ -314,7 +314,7 @@ let register q1 q2 (m : RegisterViewModel) csrf =
             ]
             div [ _class "col-6 col-xl-4" ] [
                 textBox [ _type "text" ] (nameof m.DisplayName) (defaultArg m.DisplayName "") "Display Name" false
-                div [ _class "form-text" ] [ em [] [ rawText "Optional; overrides first/last for display" ] ]
+                div [ _class "form-text fst-italic" ] [ txt "Optional; overrides first/last for display" ]
             ]
             div [ _class "col-6 col-xl-4" ] [
                 textBox [ _type "text" ] (nameof m.Email) m.Email "E-mail Address" true
@@ -328,7 +328,7 @@ let register q1 q2 (m : RegisterViewModel) csrf =
             div [ _class "col-12" ] [
                 hr []
                 p [ _class "mb-0 text-muted fst-italic" ] [
-                    rawText "Before your account request is through, you must answer these questions two&hellip;"
+                    txt "Before your account request is through, you must answer these questions two&hellip;"
                 ]
             ]
             div [ _class "col-12 col-xl-6" ] [
@@ -339,30 +339,34 @@ let register q1 q2 (m : RegisterViewModel) csrf =
                 textBox [ _type "text"; _maxlength "30" ] (nameof m.Question2Answer) m.Question2Answer q2 true
                 input [ _type "hidden"; _name (nameof m.Question2Index); _value (string m.Question2Index ) ]
             ]
-            div [ _class "col-12" ] [
-                button [ _type "submit"; _class "btn btn-primary" ] [
-                    i [ _class "mdi mdi-content-save-outline" ] []; rawText "&nbsp; Save"
-                ]
-            ]
+            div [ _class "col-12" ] [ submitButton "content-save-outline" "Save" ]
             jsOnLoad $"jjj.citizen.validatePasswords('{nameof m.Password}', 'ConfirmPassword', true)"
         ]
     ]
 
 /// The confirmation page for user registration
 let registered =
-    article [] [
-        h3 [ _class "pb-3" ] [ rawText "Registration Successful" ]
+    pageWithTitle "Registration Successful" [
         p [] [
-            rawText "You have been successfully registered with Jobs, Jobs, Jobs. Check your e-mail for a confirmation "
-            rawText "link; it will be valid for the next 72 hours (3 days). Once you confirm your account, you will be "
-            rawText "able to log on using the e-mail address and password you provided."
+            txt "You have been successfully registered with Jobs, Jobs, Jobs. Check your e-mail for a confirmation "
+            txt "link; it will be valid for the next 72 hours (3 days). Once you confirm your account, you will be "
+            txt "able to log on using the e-mail address and password you provided."
         ]
         p [] [
-            rawText "If the account is not confirmed within the 72-hour window, it will be deleted, and you will need "
-            rawText "to register again."
+            txt "If the account is not confirmed within the 72-hour window, it will be deleted, and you will need to "
+            txt "register again."
         ]
         p [] [
-            rawText "If you encounter issues, feel free to reach out to @danieljsummers on No Agenda Social for "
-            rawText "assistance."
+            txt "If you encounter issues, feel free to reach out to @danieljsummers on No Agenda Social for assistance."
+        ]
+    ]
+
+/// The confirmation page for canceling a reset request
+let resetCanceled wasCanceled =
+    let pgTitle = if wasCanceled then "Password Reset Request Canceled" else "Reset Request Not Found"
+    pageWithTitle pgTitle [
+        p [] [
+            if wasCanceled then txt "Your password reset request has been canceled."
+            else txt "There was no active password reset request found; it may have already expired."
         ]
     ]

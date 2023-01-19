@@ -16,6 +16,16 @@ let audioClip clip text =
 let antiForgery (csrf : AntiforgeryTokenSet) =
     input [ _type "hidden"; _name csrf.FormFieldName; _value csrf.RequestToken ]
 
+/// Alias for rawText
+let txt = rawText
+
+/// Create a page with a title displayed on the page
+let pageWithTitle title content =
+    article [] [
+        h3 [ _class "pb-3" ] [ txt title ]
+        yield! content
+    ]
+
 /// Create a floating-label text input box
 let textBox attrs name value fieldLabel isRequired =
     div [ _class "form-floating" ] [
@@ -23,7 +33,7 @@ let textBox attrs name value fieldLabel isRequired =
             _id name; _name name; _class "form-control"; _placeholder fieldLabel; _value value
             if isRequired then _required
         ] |> input
-        label [ _class (if isRequired then "jjj-required" else "jjj-label"); _for name ] [ rawText fieldLabel ]
+        label [ _class (if isRequired then "jjj-required" else "jjj-label"); _for name ] [ txt fieldLabel ]
     ]
 
 /// Create a checkbox that will post "true" if checked
@@ -33,7 +43,7 @@ let checkBox attrs name isChecked checkLabel =
             [ _type "checkbox"; _id name; _name name; _class "form-check-input"; _value "true"
               if isChecked then _checked ]
         |> input
-        label [ _class "form-check-label"; _for name ] [ str checkLabel ]
+        label [ _class "form-check-label"; _for name ] [ txt checkLabel ]
     ]
 
 /// Create a select list of continents
@@ -46,26 +56,32 @@ let continentList attrs name (continents : Continent list) emptyLabel selectedVa
                 |> List.map (fun c ->
                     let theId = ContinentId.toString c.Id
                     option [ _value theId; if theId = selectedValue then _selected ] [ str c.Name ])))
-        label [ _class (if isRequired then "jjj-required" else "jjj-label"); _for name ] [ rawText "Continent" ]
+        label [ _class (if isRequired then "jjj-required" else "jjj-label"); _for name ] [ txt "Continent" ]
     ]
+
+/// Create a submit button with the given icon and text
+let submitButton icon text =
+    button [ _type "submit"; _class "btn btn-primary" ] [ i [ _class $"mdi mdi-%s{icon}" ] []; txt $"&nbsp; %s{text}" ]
+
+/// An empty paragraph
+let emptyP =
+    p [] [ txt "&nbsp;" ]
 
 /// Register JavaScript code to run in the DOMContentLoaded event on the page
 let jsOnLoad js =
-    script [] [
-        rawText """document.addEventListener("DOMContentLoaded", function () { """; rawText js; rawText " })"
-    ]
+    script [] [ txt """document.addEventListener("DOMContentLoaded", function () { """; txt js; txt " })" ]
 
 /// Create a Markdown editor
 let markdownEditor attrs name value editorLabel =
     div [ _class "col-12"; _id $"{name}EditRow" ] [
         nav [ _class "nav nav-pills pb-1" ] [
             button [ _type "button"; _id $"{name}EditButton"; _class "btn btn-primary btn-sm rounded-pill" ] [
-                rawText "Markdown"
+                txt "Markdown"
             ]
             rawText " &nbsp; "
             button [ _type "button"; _id $"{name}PreviewButton"
                      _class "btn btn-outline-secondary btn-sm rounded-pill" ] [
-                rawText "Preview"
+                txt "Preview"
             ]
         ]
         section [ _id $"{name}Preview"; _class "jjj-not-shown jjj-markdown-preview px-2 pt-2"
@@ -73,9 +89,9 @@ let markdownEditor attrs name value editorLabel =
         div [ _id $"{name}Edit"; _class "form-floating jjj-shown" ] [
             textarea (List.append attrs
                                   [ _id name; _name name; _class "form-control jjj-markdown-editor"; _rows "10" ]) [
-                rawText value
+                txt value
             ]
-            label [ _for name ] [ rawText editorLabel ]
+            label [ _for name ] [ txt editorLabel ]
         ]
         jsOnLoad $"jjj.markdownOnLoad('{name}')"
     ]
@@ -87,7 +103,7 @@ let collapsePanel header content =
             h6 [ _class "card-title" ] [
                 // TODO: toggle collapse
                 //a [ _href "#"; _class "{ 'cp-c': collapsed, 'cp-o': !collapsed }"; @click.prevent="toggle">{{headerText}} ]
-                rawText header
+                txt header
             ]
             yield! content
         ]
@@ -99,7 +115,7 @@ let yesOrNo value =
 
 /// Markdown as a raw HTML text node
 let md2html value =
-    rawText (MarkdownString.toHtml value)
+    (MarkdownString.toHtml >> txt) value
 
 /// Display a citizen's contact information
 let contactInfo citizen isPublic =

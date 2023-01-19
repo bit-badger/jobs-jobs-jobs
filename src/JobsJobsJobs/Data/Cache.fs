@@ -58,16 +58,16 @@ module private CacheHelpers =
 
 open DataConnection
 
-/// A distributed cache implementation in PostgreSQL used to handle sessions for myWebLog
+/// A distributed cache implementation in PostgreSQL used to handle sessions for Jobs, Jobs, Jobs
 type DistributedCache () =
     
     // ~~~ INITIALIZATION ~~~
     
     do
         task {
-            let conn = connection ()
+            let dataSource = dataSource ()
             let! exists =
-                conn
+                dataSource
                 |> Sql.query $"
                     SELECT EXISTS
                         (SELECT 1 FROM pg_tables WHERE schemaname = 'public' AND tablename = 'session')
@@ -75,7 +75,7 @@ type DistributedCache () =
                 |> Sql.executeRowAsync (fun row -> row.bool "does_exist")
             if not exists then
                 let! _ =
-                    conn
+                    dataSource
                     |> Sql.query
                         "CREATE TABLE session (
                             id                  TEXT        NOT NULL PRIMARY KEY,
@@ -92,10 +92,10 @@ type DistributedCache () =
     
     /// Get an entry, updating it for sliding expiration
     let getEntry key = backgroundTask {
-        let conn = connection ()
+        let dataSource = dataSource ()
         let idParam = "@id", Sql.string key
         let! tryEntry =
-            conn
+            dataSource
             |> Sql.query "SELECT * FROM session WHERE id = @id"
             |> Sql.parameters [ idParam ]
             |> Sql.executeAsync (fun row ->
@@ -118,7 +118,7 @@ type DistributedCache () =
                 else true, { entry with ExpireAt = now.Plus slideExp }
             if needsRefresh then
                 let! _ =
-                    conn
+                    dataSource
                     |> Sql.query "UPDATE session SET expire_at = @expireAt WHERE id = @id"
                     |> Sql.parameters [ expireParam item.ExpireAt; idParam ]
                     |> Sql.executeNonQueryAsync
@@ -135,7 +135,7 @@ type DistributedCache () =
         let now = getNow ()
         if lastPurge.Plus (Duration.FromMinutes 30L) < now then
             let! _ =
-                connection ()
+                dataSource ()
                 |> Sql.query "DELETE FROM session WHERE expire_at < @expireAt"
                 |> Sql.parameters [ expireParam now ]
                 |> Sql.executeNonQueryAsync
@@ -145,7 +145,7 @@ type DistributedCache () =
     /// Remove a cache entry
     let removeEntry key = backgroundTask {
         let! _ =
-            connection ()
+            dataSource ()
             |> Sql.query "DELETE FROM session WHERE id = @id"
             |> Sql.parameters [ "@id", Sql.string key ]
             |> Sql.executeNonQueryAsync
@@ -170,7 +170,7 @@ type DistributedCache () =
                 let slide = Duration.FromHours 1
                 now.Plus slide, Some slide, None
         let! _ =
-            connection ()
+            dataSource ()
             |> Sql.query
                 "INSERT INTO session (
                     id, payload, expire_at, sliding_expiration, absolute_expiration
