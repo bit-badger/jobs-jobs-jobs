@@ -255,7 +255,7 @@ let forgotPassword csrf =
             div [ _class "col-12 col-md-6 offset-md-3" ] [
                 textBox [ _type "email"; _autofocus ] (nameof m.Email) m.Email "E-mail Address" true
             ]
-            div [ _class "col-12" ] [ submitButton "login" "Send Reset Link" ]
+            div [ _class "col-12" ] [ submitButton "send-lock-outline" "Send Reset Link" ]
         ]
     ]
 
@@ -263,7 +263,10 @@ let forgotPassword csrf =
 /// The page displayed after a forgotten / reset request has been processed
 let forgotPasswordSent (m : ForgotPasswordForm) =
     pageWithTitle "Reset Request Processed" [
-        p [] [ txt "The reset link request has been processed; check your e-mail for further instructions." ]
+        p [] [
+            txt "The reset link request has been processed. If the e-mail address matched an account, further "
+            txt "instructions were sent to that address."
+        ]
     ]
 
 
@@ -368,5 +371,25 @@ let resetCanceled wasCanceled =
         p [] [
             if wasCanceled then txt "Your password reset request has been canceled."
             else txt "There was no active password reset request found; it may have already expired."
+        ]
+    ]
+
+
+/// The password reset page
+let resetPassword (m : ResetPasswordForm) csrf =
+    pageWithTitle "Reset Password" [
+        p [] [ txt "Enter your new password in the fields below" ]
+        form [ _class "row g-3"; _method "POST"; _action "/citizen/reset-password" ] [
+            antiForgery csrf
+            input [ _type "hidden"; _name (nameof m.Id); _value m.Id ]
+            input [ _type "hidden"; _name (nameof m.Token); _value m.Token ]
+            div [ _class "col-12 col-md-6 col-xl-4 offset-xl-2" ] [
+                textBox [ _type "password"; _minlength "8"; _autofocus ] (nameof m.Password) "" "New Password" true
+            ]
+            div [ _class "col-12 col-md-6 col-xl-4" ] [
+                textBox [ _type "password"; _minlength "8" ] "ConfirmPassword" "" "Confirm New Password" true
+            ]
+            div [ _class "col-12" ] [ submitButton "lock-reset" "Reset Password" ]
+            jsOnLoad $"jjj.citizen.validatePasswords('{nameof m.Password}', 'ConfirmPassword', true)"
         ]
     ]

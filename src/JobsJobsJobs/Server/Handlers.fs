@@ -63,7 +63,6 @@ module Helpers =
     open Microsoft.AspNetCore.Antiforgery
     open Microsoft.Extensions.Configuration
     open Microsoft.Extensions.DependencyInjection
-    open Microsoft.Extensions.Options
 
     /// Get the NodaTime clock from the request context
     let now (ctx : HttpContext) = ctx.GetService<IClock>().GetCurrentInstant ()
@@ -437,9 +436,35 @@ module Citizen =
     let resetPassword token : HttpHandler = fun next ctx -> task {
         match! Citizens.trySecurityByToken token with
         | Some security ->
-            // TODO: create form and page
-            return! Home.home |> render "TODO" next ctx
+            return!
+                Citizen.resetPassword { Id = CitizenId.toString security.Id; Token = token; Password = "" } (csrf ctx)
+                |> render "Reset Password" next ctx
         | None -> return! Error.notFound next ctx
+    }
+
+    // POST: /citizen/reset-password
+    let doResetPassword : HttpHandler = validateCsrf >=> fun next ctx -> task {
+        let! form = ctx.BindFormAsync<ResetPasswordForm> ()
+        let errors = [
+            if form.Id    = "" then "Request invalid; please return to the link in your e-mail and try again"
+            if form.Token = "" then "Request invalid; please return to the link in your e-mail and try again"
+            if form.Password.Length < 8 then "Password too short"
+        ]
+        if List.isEmpty errors then
+            match! Citizens.trySecurityByToken form.Token with
+            | Some security when security.Id = CitizenId.ofString form.Id ->
+                match! Citizens.findById security.Id with
+                | Some citizen ->
+                    do! Citizens.saveSecurityInfo { security with Token = None; TokenUsage = None; TokenExpires = None }
+                    do! Citizens.save { citizen with PasswordHash = Auth.Passwords.hash citizen form.Password }
+                    do! addSuccess "Password reset successfully; you may log on with your new credentials" ctx
+                    return! redirectToGet "/citizen/log-on" next ctx
+                | None -> return! Error.notFound next ctx
+            | Some _
+            | None -> return! Error.notFound next ctx
+        else
+            do! addErrors errors ctx 
+            return! Citizen.resetPassword form (csrf ctx) |> render "Reset Password" next ctx
     }
 
     // POST: /citizen/save-account
@@ -870,6 +895,7 @@ let allEndpoints = [
             route "/forgot-password" Citizen.doForgotPassword
             route "/log-on"          Citizen.doLogOn
             route "/register"        Citizen.doRegistration
+            route "/reset-password"  Citizen.doResetPassword
             route "/save-account"    Citizen.saveAccount
         ]
     ]

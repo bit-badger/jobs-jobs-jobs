@@ -309,3 +309,17 @@ module RegisterViewModel =
             Question2Index  = 0
             Question2Answer = ""
         }
+
+
+/// The form for a user resetting their password
+[<CLIMutable; NoComparison; NoEquality>]
+type ResetPasswordForm =
+    {   /// The ID of the citizen whose password is being reset
+        Id : string
+
+        /// The verification token for the password reset
+        Token : string
+
+        /// The new password for the account
+        Password : string
+    }

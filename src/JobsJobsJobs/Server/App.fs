@@ -68,10 +68,7 @@ let main args =
     let _ = app.UseAuthorization ()
     let _ = app.UseSession ()
     let _ = app.UseGiraffeErrorHandler Handlers.Error.unexpectedError
-    let _ = app.UseEndpoints (
-        fun e ->
-            e.MapGiraffeEndpoints Handlers.allEndpoints
-            e.MapFallbackToFile "index.html" |> ignore)
+    let _ = app.UseEndpoints (fun e -> e.MapGiraffeEndpoints Handlers.allEndpoints |> ignore)
 
     app.Run ()
 
