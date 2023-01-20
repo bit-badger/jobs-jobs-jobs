@@ -7,6 +7,47 @@ open JobsJobsJobs.Common.Views
 open JobsJobsJobs.Domain
 open JobsJobsJobs.Profiles.Domain
 
+/// The profile edit menu page
+let edit (profile : Profile) =
+    let hasProfile = profile.Region <> ""
+    pageWithTitle "Employment Profile" [
+        p [] [ txt "There are three different sections to the employment profile." ]
+        ul [] [
+            li [ _class "mb-2" ] [
+                a [ _href $"/profile/edit/general" ] [ strong [] [ txt "General Information" ] ]; br []
+                txt "contains your location, professional biography, and information about the type of employment you "
+                txt "may be seeking."
+                if not hasProfile then txt " Entering information here will create your profile."
+            ]
+            if hasProfile then
+                li [ _class "mb-2" ] [
+                    let skillCount = List.length profile.Skills
+                    a [ _href $"/profile/edit/skills" ] [ strong [] [ txt "Skills" ] ]; br []
+                    txt "is where you can list skills you have acquired through education or experience."
+                    em [] [
+                        txt $" (Your profile currently lists {skillCount} skill"; if skillCount <> 1 then txt "s"
+                        txt ".)"
+                    ]
+                ]
+                li [ _class "mb-2" ] [
+                    let historyCount = List.length profile.History
+                    a [ _href $"/profile/edit/history" ] [ strong [] [ txt "Employment History" ] ]; br []
+                    txt "is where you can record a chronological history of your employment."
+                    em [] [
+                        txt $" (Your profile contains {historyCount} employment history entr"
+                        txt (if historyCount <> 1 then "ies" else "y"); txt ".)"
+                    ]
+                ]
+        ]
+        if hasProfile then
+            p [] [
+                a [ _class "btn btn-primary"; _href $"/profile/{CitizenId.toString profile.Id}/view" ] [
+                    i [ _class "mdi mdi-file-account-outline" ] []; txt "&nbsp; View Your User Profile"
+                ]
+            ]
+    ]
+
+
 /// Render the skill edit template and existing skills
 let skillEdit (skills : SkillForm array) =
     let mapToInputs (idx : int) (skill : SkillForm) =
@@ -38,7 +79,7 @@ let skillEdit (skills : SkillForm array) =
     :: (skills |> Array.mapi mapToInputs |> List.ofArray)
 
 /// The profile edit page
-let edit (m : EditProfileForm) continents isNew citizenId csrf =
+let editGeneralInfo (m : EditProfileForm) continents isNew citizenId csrf =
     pageWithTitle "My Employment Profile" [
         form [ _class "row g-3"; _action "/profile/save"; _hxPost "/profile/save" ] [
             antiForgery csrf

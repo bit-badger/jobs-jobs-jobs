@@ -42,7 +42,8 @@ module Rethink =
 /// Shorthand for the RethinkDB R variable (how every command starts)
 let r = RethinkDb.Driver.RethinkDB.R
 
-open JobsJobsJobs.Data
+open JobsJobsJobs
+open JobsJobsJobs.Common.Data
 open JobsJobsJobs.Domain
 open Newtonsoft.Json.Linq
 open NodaTime.Text
@@ -63,8 +64,8 @@ task {
     // Establish database connections
     let cfg = ConfigurationBuilder().AddJsonFile("appsettings.json").Build ()
     use rethinkConn = Rethink.Startup.createConnection (cfg.GetConnectionString "RethinkDB")
-    do! DataConnection.setUp cfg
-    let pgConn = DataConnection.dataSource ()
+    do! setUp cfg
+    let pgConn = dataSource ()
     
     let getOld table =
         fromTable table
@@ -88,7 +89,7 @@ task {
                 IsLegacy   = true
             })
     for citizen in newCitizens do
-        do! Citizens.save citizen
+        do! Citizens.Data.save citizen
     let! _ =
         pgConn
         |> Sql.executeTransactionAsync [
@@ -148,7 +149,7 @@ task {
                 IsLegacy             = true
             })
     for profile in newProfiles do
-        do! Profiles.save profile
+        do! Profiles.Data.save profile
     printfn $"** Migrated {List.length newProfiles} profiles"
     
     // Migrate listings
@@ -179,7 +180,7 @@ task {
                 IsLegacy      = true
             })
     for listing in newListings do
-        do! Listings.save listing
+        do! Listings.Data.save listing
     printfn $"** Migrated {List.length newListings} listings"
     
     // Migrate success stories
@@ -196,7 +197,7 @@ task {
                 Story      = if isNull story then None else Some (Text story)
             })
     for success in newSuccesses do
-        do! Successes.save success
+        do! SuccessStories.Data.save success
     printfn $"** Migrated {List.length newSuccesses} successes"
     
     // Delete any citizens who have no profile, no listing, and no success story recorded

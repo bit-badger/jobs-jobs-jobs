@@ -44,6 +44,55 @@ module ContinentId =
     let value = function ContinentId guid -> guid
 
 
+/// A string of Markdown text
+type MarkdownString = Text of string
+
+/// Support functions for Markdown strings
+module MarkdownString =
+    
+    open Markdig
+    
+    /// The Markdown conversion pipeline (enables all advanced features)
+    let private pipeline = MarkdownPipelineBuilder().UseAdvancedExtensions().Build ()
+    
+    /// Convert this Markdown string to HTML
+    let toHtml = function Text text -> Markdown.ToHtml (text, pipeline)
+    
+    /// Convert a Markdown string to its string representation
+    let toString = function Text text -> text
+
+
+/// An employment history entry
+[<NoComparison; NoEquality>]
+type EmploymentHistory =
+    {   /// The employer for this period of employment
+        Employer : string
+
+        /// The date employment started
+        StartDate : LocalDate
+
+        /// The date employment ended (None implies ongoing employment)
+        EndDate : LocalDate option
+
+        /// The title / position held
+        Position : string option
+
+        /// A description of the duties entailed during this employment
+        Description : MarkdownString option
+    }
+
+/// Support functions for employment history entries
+module EmploymentHistory =
+
+    let empty =
+        {   Employer    = ""
+            StartDate   = LocalDate.MinIsoValue
+            EndDate     = None
+            Position    = None
+            Description = None
+        }
+
+
 /// The ID of a job listing
 type ListingId = ListingId of Guid
 
@@ -61,24 +110,6 @@ module ListingId =
     
     /// Get the GUID value of a listing ID
     let value = function ListingId guid -> guid
-
-
-/// A string of Markdown text
-type MarkdownString = Text of string
-
-/// Support functions for Markdown strings
-module MarkdownString =
-    
-    open Markdig
-    
-    /// The Markdown conversion pipeline (enables all advanced features)
-    let private pipeline = MarkdownPipelineBuilder().UseAdvancedExtensions().Build ()
-    
-    /// Convert this Markdown string to HTML
-    let toHtml = function Text text -> Markdown.ToHtml (text, pipeline)
-    
-    /// Convert a Markdown string to its string representation
-    let toString = function Text text -> text
 
 
 /// Types of contacts supported by Jobs, Jobs, Jobs
@@ -133,7 +164,7 @@ type Skill =
         Description : string
         
         /// Notes regarding this skill (level, duration, etc.)
-        Notes       : string option
+        Notes : string option
     }
 
 
@@ -363,14 +394,17 @@ type Profile =
         /// The citizen's professional biography
         Biography : MarkdownString
         
-        /// When the citizen last updated their profile
-        LastUpdatedOn : Instant
+        /// Skills this citizen possesses
+        Skills : Skill list
         
+        /// The citizen's employment history
+        History : EmploymentHistory list
+
         /// The citizen's experience (topical / chronological)
         Experience : MarkdownString option
         
-        /// Skills this citizen possesses
-        Skills : Skill list
+        /// When the citizen last updated their profile
+        LastUpdatedOn : Instant
         
         /// Whether this is a legacy profile
         IsLegacy : bool
@@ -390,9 +424,10 @@ module Profile =
         IsRemote             = false
         IsFullTime           = false
         Biography            = Text ""
-        LastUpdatedOn        = Instant.MinValue
-        Experience           = None
         Skills               = []
+        History              = []
+        Experience           = None
+        LastUpdatedOn        = Instant.MinValue
         IsLegacy             = false
     }
 

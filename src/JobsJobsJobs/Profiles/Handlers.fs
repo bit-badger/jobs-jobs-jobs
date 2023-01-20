@@ -15,13 +15,21 @@ let delete : HttpHandler = requireUser >=> validateCsrf >=> fun next ctx -> task
 
 // GET: /profile/edit
 let edit : HttpHandler = requireUser >=> fun next ctx -> task {
+    let  citizenId = currentCitizenId ctx
+    let! profile   = Data.findById citizenId
+    let  display   = match profile with Some p -> p | None -> { Profile.empty with Id = citizenId }
+    return! Views.edit display |> render "Employment Profile" next ctx
+}
+
+// GET: /profile/edit/general
+let editGeneralInfo : HttpHandler = requireUser >=> fun next ctx -> task {
     let  citizenId  = currentCitizenId ctx
     let! profile    = Data.findById citizenId
     let! continents = Common.Data.Continents.all ()
     let  isNew      = Option.isNone profile
     let  form       = if isNew then EditProfileForm.empty else EditProfileForm.fromProfile profile.Value
     let  title      = $"""{if isNew then "Create" else "Edit"} Profile"""
-    return! Views.edit form continents isNew citizenId (csrf ctx) |> render title next ctx
+    return! Views.editGeneralInfo form continents isNew citizenId (csrf ctx) |> render title next ctx
 }
 
 // POST: /profile/save
@@ -66,7 +74,7 @@ let save : HttpHandler = requireUser >=> fun next ctx -> task {
         do! addErrors errors ctx
         let! continents = Common.Data.Continents.all ()
         return!
-            Views.edit form continents isNew citizenId (csrf ctx)
+            Views.editGeneralInfo form continents isNew citizenId (csrf ctx)
             |> render $"""{if isNew then "Create" else "Edit"} Profile""" next ctx
 }
 
@@ -123,10 +131,11 @@ open Giraffe.EndpointRouting
 let endpoints =
     subRoute "/profile" [
         GET_HEAD [
-            routef "/%O/view" view
-            route  "/edit"    edit
-            route  "/search"  search
-            route  "/seeking" seeking
+            routef "/%O/view"      view
+            route  "/edit"         edit
+            route  "/edit/general" editGeneralInfo
+            route  "/search"       search
+            route  "/seeking"      seeking
         ]
         POST [
             route "/delete" delete
