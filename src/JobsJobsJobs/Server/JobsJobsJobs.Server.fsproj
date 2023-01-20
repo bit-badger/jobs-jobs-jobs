@@ -8,32 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="Domain.fs" />
-    <Compile Include="Email.fs" />
-    <Compile Include="Common\Json.fs" />
-    <Compile Include="Common\Data.fs" />
-    <Compile Include="Common\Views.fs" />
-    <Compile Include="Common\Handlers.fs" />
-    <Compile Include="Profiles\Domain.fs" />
-    <Compile Include="Profiles\Data.fs" />
-    <Compile Include="Profiles\Views.fs" />
-    <Compile Include="Profiles\Handlers.fs" />
-    <Compile Include="Citizens\Domain.fs" />
-    <Compile Include="Citizens\Data.fs" />
-    <Compile Include="Citizens\Views.fs" />
-    <Compile Include="Citizens\Handlers.fs" />
-    <Compile Include="SuccessStories\Domain.fs" />
-    <Compile Include="SuccessStories\Data.fs" />
-    <Compile Include="SuccessStories\Views.fs" />
-    <Compile Include="SuccessStories\Handlers.fs" />
-    <Compile Include="Listings\Domain.fs" />
-    <Compile Include="Listings\Data.fs" />
-    <Compile Include="Listings\Views.fs" />
-    <Compile Include="Listings\Handlers.fs" />
-    <Compile Include="Home\Views.fs" />
-    <Compile Include="Home\Handlers.fs" />
     <Compile Include="ApiHandlers.fs" />
-    <Compile Include="Cache.fs" />
     <Compile Include="App.fs" />
   </ItemGroup>
   
@@ -42,17 +17,12 @@
   </ItemGroup>
   
   <ItemGroup>
-    <PackageReference Include="FSharp.SystemTextJson" Version="1.0.7" />
-    <PackageReference Include="Giraffe" Version="6.0.0" />
-    <PackageReference Include="Giraffe.Htmx" Version="1.8.5" />
-    <PackageReference Include="Giraffe.ViewEngine" Version="1.4.0" />
-    <PackageReference Include="Giraffe.ViewEngine.Htmx" Version="1.8.5" />
-    <PackageReference Include="MailKit" Version="3.3.0" />
-    <PackageReference Include="Markdig" Version="0.30.4" />
-    <PackageReference Include="NodaTime.Serialization.JsonNet" Version="3.0.0" />
-    <PackageReference Include="NodaTime.Serialization.SystemTextJson" Version="1.0.0" />
-    <PackageReference Include="Npgsql.FSharp" Version="5.6.0" />
-    <PackageReference Include="Npgsql.NodaTime" Version="7.0.1" />
+    <ProjectReference Include="..\Citizens\JobsJobsJobs.Citizens.fsproj" />
+    <ProjectReference Include="..\Common\JobsJobsJobs.Common.fsproj" />
+    <ProjectReference Include="..\Home\JobsJobsJobs.Home.fsproj" />
+    <ProjectReference Include="..\Listings\JobsJobsJobs.Listings.fsproj" />
+    <ProjectReference Include="..\Profiles\JobsJobsJobs.Profiles.fsproj" />
+    <ProjectReference Include="..\SuccessStories\JobsJobsJobs.SuccessStories.fsproj" />
   </ItemGroup>
 
 </Project>
