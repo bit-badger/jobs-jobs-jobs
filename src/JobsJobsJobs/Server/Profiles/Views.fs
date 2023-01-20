@@ -1,12 +1,11 @@
 /// Views for /profile URLs
-[<RequireQualifiedAccess>]
-module JobsJobsJobs.Views.Profile
+module JobsJobsJobs.Profiles.Views
 
 open Giraffe.ViewEngine
 open Giraffe.ViewEngine.Htmx
+open JobsJobsJobs.Common.Views
 open JobsJobsJobs.Domain
-open JobsJobsJobs.Domain.SharedTypes
-open JobsJobsJobs.ViewModels
+open JobsJobsJobs.Profiles.Domain
 
 /// Render the skill edit template and existing skills
 let skillEdit (skills : SkillForm array) =
@@ -39,7 +38,7 @@ let skillEdit (skills : SkillForm array) =
     :: (skills |> Array.mapi mapToInputs |> List.ofArray)
 
 /// The profile edit page
-let edit (m : EditProfileViewModel) continents isNew citizenId csrf =
+let edit (m : EditProfileForm) continents isNew citizenId csrf =
     pageWithTitle "My Employment Profile" [
         form [ _class "row g-3"; _action "/profile/save"; _hxPost "/profile/save" ] [
             antiForgery csrf
@@ -276,38 +275,38 @@ let search (m : ProfileSearchForm) continents tz (results : ProfileSearchResult 
 
 
 /// Profile view template
-let view (citizen : Citizen) (profile : Profile) (continentName : string) currentId =
+let view (it : ProfileForView) currentId =
     article [] [
         h2 [] [
-            str (Citizen.name citizen)
-            if profile.IsSeekingEmployment then
+            str (Citizen.name it.Citizen)
+            if it.Profile.IsSeekingEmployment then
                 span [ _class "jjj-heading-label" ] [
                     txt "&nbsp; &nbsp;"; span [ _class "badge bg-dark" ] [ txt "Currently Seeking Employment" ]
                 ]
         ]
-        h4 [] [ str $"{continentName}, {profile.Region}" ]
-        contactInfo citizen (Option.isNone currentId)
+        h4 [] [ str $"{it.Continent.Name}, {it.Profile.Region}" ]
+        contactInfo it.Citizen (Option.isNone currentId)
         |> div [ _class "pb-3" ]
         p [] [
-            txt (if profile.IsFullTime then "I" else "Not i"); txt "nterested in full-time employment &bull; "
-            txt (if profile.IsRemote then "I" else "Not i"); txt "nterested in remote opportunities"
+            txt (if it.Profile.IsFullTime then "I" else "Not i"); txt "nterested in full-time employment &bull; "
+            txt (if it.Profile.IsRemote then "I" else "Not i"); txt "nterested in remote opportunities"
         ]
         hr []
-        div [] [ md2html profile.Biography ]
-        if not (List.isEmpty profile.Skills) then
+        div [] [ md2html it.Profile.Biography ]
+        if not (List.isEmpty it.Profile.Skills) then
             hr []
             h4 [ _class "pb-3" ] [ txt "Skills" ]
-            profile.Skills
+            it.Profile.Skills
             |> List.map (fun skill ->
                 li [] [
                     str skill.Description
                     match skill.Notes with Some notes -> txt " &nbsp;("; str notes; txt ")" | None -> ()
                 ])
             |> ul []
-        match profile.Experience with
+        match it.Profile.Experience with
         | Some exp -> hr []; h4 [ _class "pb-3" ] [ txt "Experience / Employment History" ]; div [] [ md2html exp ]
         | None -> ()
-        if Option.isSome currentId && currentId.Value = citizen.Id then
+        if Option.isSome currentId && currentId.Value = it.Citizen.Id then
             br []; br []
             a [ _href "/profile/edit"; _class "btn btn-primary" ] [
                 i [ _class "mdi mdi-pencil" ] []; txt "&nbsp; Edit Your Profile"

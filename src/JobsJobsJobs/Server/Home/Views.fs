@@ -1,6 +1,7 @@
-module JobsJobsJobs.Views.Home
+module JobsJobsJobs.Home.Views
 
 open Giraffe.ViewEngine
+open JobsJobsJobs.Common.Views
 
 /// The home page
 let home =

@@ -1,11 +1,10 @@
 /// Views for /success-stor[y|ies] URLs
-[<RequireQualifiedAccess>]
-module JobsJobsJobs.Views.Success
+module JobsJobsJobs.SuccessStories.Views
 
 open Giraffe.ViewEngine
+open JobsJobsJobs.Common.Views
 open JobsJobsJobs.Domain
-open JobsJobsJobs.Domain.SharedTypes
-open JobsJobsJobs.ViewModels
+open JobsJobsJobs.SuccessStories.Domain
 
 /// The add/edit success story page
 let edit (m : EditSuccessForm) isNew pgTitle csrf =

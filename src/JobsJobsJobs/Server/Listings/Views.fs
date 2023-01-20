@@ -1,11 +1,10 @@
 /// Views for /profile URLs
-[<RequireQualifiedAccess>]
-module JobsJobsJobs.Views.Listing
+module JobsJobsJobs.Listings.Views
 
 open Giraffe.ViewEngine
+open JobsJobsJobs.Common.Views
 open JobsJobsJobs.Domain
-open JobsJobsJobs.Domain.SharedTypes
-open JobsJobsJobs.ViewModels
+open JobsJobsJobs.Listings.Domain
 
 
 /// Job listing edit page

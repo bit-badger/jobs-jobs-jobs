@@ -1,11 +1,11 @@
 /// Views for URLs beginning with /citizen
-[<RequireQualifiedAccess>]
-module JobsJobsJobs.Views.Citizen
+module JobsJobsJobs.Citizens.Views
 
 open Giraffe.ViewEngine
 open Giraffe.ViewEngine.Htmx
+open JobsJobsJobs.Citizens.Domain
+open JobsJobsJobs.Common.Views
 open JobsJobsJobs.Domain
-open JobsJobsJobs.ViewModels
 
 /// The form to add or edit a means of contact
 let contactEdit (contacts : OtherContactForm array) =
@@ -264,14 +264,14 @@ let forgotPassword csrf =
 let forgotPasswordSent (m : ForgotPasswordForm) =
     pageWithTitle "Reset Request Processed" [
         p [] [
-            txt "The reset link request has been processed. If the e-mail address matched an account, further "
-            txt "instructions were sent to that address."
+            txt $"The reset link request has been processed. If the e-mail address {m.Email} matched an account, "
+            txt "further instructions were sent to that address."
         ]
     ]
 
 
 /// The log on page
-let logOn (m : LogOnViewModel) csrf =
+let logOn (m : LogOnForm) csrf =
     pageWithTitle "Log On" [
         match m.ErrorMessage with
         | Some msg ->
@@ -305,7 +305,7 @@ let logOn (m : LogOnViewModel) csrf =
     ]
 
 /// The registration page
-let register q1 q2 (m : RegisterViewModel) csrf =
+let register q1 q2 (m : RegisterForm) csrf =
     pageWithTitle "Register" [
         form [ _class  "row g-3"; _hxPost "/citizen/register" ] [
             antiForgery csrf

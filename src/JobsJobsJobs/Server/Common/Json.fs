@@ -1,4 +1,5 @@
-module JobsJobsJobs.Data.Json
+/// JSON serializer options
+module JobsJobsJobs.Json
 
 open System.Text.Json
 open System.Text.Json.Serialization

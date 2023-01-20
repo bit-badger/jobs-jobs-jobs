@@ -1,8 +1,5 @@
-namespace JobsJobsJobs.Data
+namespace JobsJobsJobs
 
-open System.Threading
-open System.Threading.Tasks
-open Microsoft.Extensions.Caching.Distributed
 open NodaTime
 open Npgsql.FSharp
 
@@ -11,6 +8,7 @@ open Npgsql.FSharp
 module private CacheHelpers =
     
     open System
+    open System.Threading.Tasks
     open Npgsql
 
     /// The cache entry
@@ -56,7 +54,10 @@ module private CacheHelpers =
     let expireParam =
         typedParam "expireAt"
 
-open DataConnection
+
+open System.Threading
+open JobsJobsJobs.Common.Data
+open Microsoft.Extensions.Caching.Distributed
 
 /// A distributed cache implementation in PostgreSQL used to handle sessions for Jobs, Jobs, Jobs
 type DistributedCache () =

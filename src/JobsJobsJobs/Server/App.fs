@@ -1,11 +1,11 @@
 /// The main web server application for Jobs, Jobs, Jobs
-module JobsJobsJobs.Server.App
+module JobsJobsJobs.App
 
 open System
 open System.Text
 open Giraffe
 open Giraffe.EndpointRouting
-open JobsJobsJobs.Data
+open JobsJobsJobs.Common.Data
 open Microsoft.AspNetCore.Authentication.Cookies
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Http
@@ -50,7 +50,7 @@ let main args =
     
     // Set up the data store
     let cfg = svc.BuildServiceProvider().GetRequiredService<IConfiguration> ()
-    let _ = DataConnection.setUp cfg |> Async.AwaitTask |> Async.RunSynchronously
+    let _ = setUp cfg |> Async.AwaitTask |> Async.RunSynchronously
     let _ = svc.AddSingleton<IDistributedCache> (fun _ -> DistributedCache () :> IDistributedCache)
     let _ = svc.AddSession(fun opts ->
                 opts.IdleTimeout        <- TimeSpan.FromMinutes 60
@@ -58,6 +58,16 @@ let main args =
                 opts.Cookie.IsEssential <- true)
     
     let app = builder.Build ()
+
+    // Unify the endpoints from all features
+    let endpoints = [
+        Citizens.Handlers.endpoints
+        Home.Handlers.endpoints
+        yield! Listings.Handlers.endpoints
+        Profiles.Handlers.endpoints
+        SuccessStories.Handlers.endpoints
+        Api.Handlers.endpoints
+    ]
 
     let _ = app.UseForwardedHeaders ()
     let _ = app.UseCookiePolicy (CookiePolicyOptions (MinimumSameSitePolicy = SameSiteMode.Strict))
@@ -67,8 +77,8 @@ let main args =
     let _ = app.UseAuthentication ()
     let _ = app.UseAuthorization ()
     let _ = app.UseSession ()
-    let _ = app.UseGiraffeErrorHandler Handlers.Error.unexpectedError
-    let _ = app.UseEndpoints (fun e -> e.MapGiraffeEndpoints Handlers.allEndpoints |> ignore)
+    let _ = app.UseGiraffeErrorHandler Common.Handlers.Error.unexpectedError
+    let _ = app.UseEndpoints (fun e -> e.MapGiraffeEndpoints endpoints |> ignore)
 
     app.Run ()
 

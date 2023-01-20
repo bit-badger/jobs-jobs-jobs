@@ -64,7 +64,7 @@ task {
     let cfg = ConfigurationBuilder().AddJsonFile("appsettings.json").Build ()
     use rethinkConn = Rethink.Startup.createConnection (cfg.GetConnectionString "RethinkDB")
     do! DataConnection.setUp cfg
-    let pgConn = DataConnection.connection ()
+    let pgConn = DataConnection.dataSource ()
     
     let getOld table =
         fromTable table
