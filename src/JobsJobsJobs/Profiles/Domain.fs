@@ -3,27 +3,6 @@ module JobsJobsJobs.Profiles.Domain
 open JobsJobsJobs.Domain
 open NodaTime
 
-/// The fields required for a skill
-[<CLIMutable; NoComparison; NoEquality>]
-type SkillForm =
-    {   Description : string
-        
-        /// Notes regarding the skill
-        Notes : string
-    }
-
-/// Functions to support skill forms
-module SkillForm =
-
-    /// Create a skill form from a skill
-    let fromSkill (skill : Skill) =
-        { SkillForm.Description = skill.Description; Notes = defaultArg skill.Notes "" }
-    
-    /// Create a skill from a skill form
-    let toSkill (form : SkillForm) =
-        { Skill.Description = form.Description; Notes = if form.Notes = "" then None else Some form.Notes }
-
-
 /// The data required to update a profile
 [<CLIMutable; NoComparison; NoEquality>]
 type EditProfileForm =
@@ -77,6 +56,48 @@ module EditProfileForm =
             Biography           = MarkdownString.toString profile.Biography
             Experience          = profile.Experience |> Option.map MarkdownString.toString
             Visibility          = ProfileVisibility.toString profile.Visibility
+        }
+
+
+/// The form used to add or edit employment history entries
+[<CLIMutable; NoComparison; NoEquality>]
+type HistoryForm =
+    {   /// The name of the employer
+        Employer : string
+
+        StartDate : string
+
+        EndDate : string
+
+        Position : string
+
+        Description : string
+    }
+
+/// Support functions for the employment history form
+module HistoryForm =
+
+    open System
+
+    /// The date format expected by the browser's date input field
+    let dateFormat = Text.LocalDatePattern.CreateWithInvariantCulture "yyyy-MM-dd"
+
+    /// Create an employment history form from an employment history entry
+    let fromHistory (history : EmploymentHistory) =
+        {   Employer    = history.Employer
+            StartDate   = dateFormat.Format history.StartDate
+            EndDate     = match history.EndDate with Some dt -> dateFormat.Format dt | None -> ""
+            Position    = defaultArg history.Position ""
+            Description = match history.Description with Some d -> MarkdownString.toString d | None -> ""
+        }
+    
+    /// Create an employment history entry from an employment history form
+    let toHistory (history : HistoryForm) : EmploymentHistory =
+        {   Employer    = history.Employer
+            StartDate   = (dateFormat.Parse history.StartDate).Value
+            EndDate     = if history.EndDate = "" then None else Some (dateFormat.Parse history.EndDate).Value
+            Position    = if history.Position = "" then None else Some history.Position
+            Description = if history.Description = "" then None else Some (Text history.Description)
         }
 
 
@@ -166,3 +187,23 @@ type PublicSearchResult =
         Skills : string list
     }
 
+
+/// The fields required for a skill
+[<CLIMutable; NoComparison; NoEquality>]
+type SkillForm =
+    {   Description : string
+        
+        /// Notes regarding the skill
+        Notes : string
+    }
+
+/// Functions to support skill forms
+module SkillForm =
+
+    /// Create a skill form from a skill
+    let fromSkill (skill : Skill) =
+        { SkillForm.Description = skill.Description; Notes = defaultArg skill.Notes "" }
+    
+    /// Create a skill from a skill form
+    let toSkill (form : SkillForm) =
+        { Skill.Description = form.Description; Notes = if form.Notes = "" then None else Some form.Notes }

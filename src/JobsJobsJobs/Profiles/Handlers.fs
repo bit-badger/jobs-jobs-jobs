@@ -108,6 +108,13 @@ let skills : HttpHandler = requireUser >=> fun next ctx -> task {
     | None -> return! notFound ctx
 }
 
+// GET: /profile/edit/skills/list
+let skillList : HttpHandler = requireUser >=> fun next ctx -> task {
+    match! Data.findById (currentCitizenId ctx) with
+    | Some profile -> return! Views.skillTable profile.Skills None (csrf ctx) |> renderBare next ctx
+    | None -> return! notFound ctx
+}
+
 // GET: /profile/edit/skill/[idx]
 let editSkill idx : HttpHandler = requireUser >=> fun next ctx -> task {
     match! Data.findById (currentCitizenId ctx) with
@@ -146,6 +153,59 @@ let deleteSkill idx : HttpHandler = requireUser >=> validateCsrf >=> fun next ct
     | None -> return! notFound ctx
 }
 
+// GET: /profile/edit/history
+let history : HttpHandler = requireUser >=> fun next ctx -> task {
+    match! Data.findById (currentCitizenId ctx) with
+    | Some profile ->
+        return! Views.history profile.History (csrf ctx) |> render "Employment History | Employment Profile" next ctx
+    | None -> return! notFound ctx
+}
+
+// GET: /profile/edit/history/list
+let historyList : HttpHandler = requireUser >=> fun next ctx -> task {
+    match! Data.findById (currentCitizenId ctx) with
+    | Some profile -> return! Views.historyTable profile.History None (csrf ctx) |> renderBare next ctx
+    | None -> return! notFound ctx
+}
+
+// GET: /profile/edit/history/[idx]
+let editHistory idx : HttpHandler = requireUser >=> fun next ctx -> task {
+    match! Data.findById (currentCitizenId ctx) with
+    | Some profile ->
+        if idx < -1 || idx >= List.length profile.History then return! notFound ctx
+        else return! Views.editHistory profile.History idx (csrf ctx) |> renderBare next ctx
+    | None -> return! notFound ctx
+}
+
+// POST: /profile/edit/history/[idx]
+let saveHistory idx : HttpHandler = requireUser >=> validateCsrf >=> fun next ctx -> task {
+    match! Data.findById (currentCitizenId ctx) with
+    | Some profile ->
+        if idx < -1 || idx >= List.length profile.History then return! notFound ctx
+        else
+            let! form    = ctx.BindFormAsync<HistoryForm> ()
+            let  entry   = HistoryForm.toHistory form
+            let  history =
+                if idx = -1 then entry :: profile.History
+                else profile.History |> List.mapi (fun histIdx it -> if histIdx = idx then entry else it)
+                |> List.sortByDescending (fun it -> defaultArg it.EndDate NodaTime.LocalDate.MaxIsoValue)
+            do! Data.save { profile with History = history }
+            return! Views.historyTable history None (csrf ctx) |> renderBare next ctx
+    | None -> return! notFound ctx
+}
+
+// POST: /profile/edit/history/[idx]/delete
+let deleteHistory idx : HttpHandler = requireUser >=> validateCsrf >=> fun next ctx -> task {
+    match! Data.findById (currentCitizenId ctx) with
+    | Some profile ->
+        if idx < 0 || idx >= List.length profile.History then return! notFound ctx
+        else
+            let history = profile.History |> List.indexed |> List.filter (fun it -> fst it <> idx) |> List.map snd
+            do! Data.save { profile with History = history }
+            return! Views.historyTable history None (csrf ctx) |> renderBare next ctx
+    | None -> return! notFound ctx
+}
+
 // GET: /profile/[id]/view
 let view citizenId : HttpHandler = fun next ctx -> task {
     let citId = CitizenId citizenId
@@ -167,18 +227,24 @@ open Giraffe.EndpointRouting
 let endpoints =
     subRoute "/profile" [
         GET_HEAD [
-            routef "/%O/view"       view
-            route  "/edit"          edit
-            route  "/edit/general"  editGeneralInfo
-            routef "/edit/skill/%i" editSkill
-            route  "/edit/skills"   skills
-            route  "/search"        search
-            route  "/seeking"       seeking
+            routef "/%O/view"           view
+            route  "/edit"              edit
+            route  "/edit/general"      editGeneralInfo
+            routef "/edit/history/%i"   editHistory
+            route  "/edit/history"      history
+            route  "/edit/history/list" historyList
+            routef "/edit/skill/%i"     editSkill
+            route  "/edit/skills"       skills
+            route  "/edit/skills/list"  skillList
+            route  "/search"            search
+            route  "/seeking"           seeking
         ]
         POST [
-            route  "/delete"               delete
-            routef "/edit/skill/%i"        saveSkill
-            routef "/edit/skill/%i/delete" deleteSkill
-            route  "/save"                 saveGeneralInfo
+            route  "/delete"                 delete
+            routef "/edit/history/%i"        saveHistory
+            routef "/edit/history/%i/delete" deleteHistory
+            routef "/edit/skill/%i"          saveSkill
+            routef "/edit/skill/%i/delete"   deleteSkill
+            route  "/save"                   saveGeneralInfo
         ]
     ]

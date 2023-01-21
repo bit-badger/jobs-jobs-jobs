@@ -134,19 +134,15 @@ let editGeneralInfo (m : EditProfileForm) continents csrf =
     ]
 
 
-/// Render the skill edit template and existing skills
+/// Render the skill edit template
 let skillForm (m : SkillForm) isNew =
     [   h4 [] [ txt $"""{if isNew then "Add a" else "Edit"} Skill""" ]
         div [ _class "col-12 col-md-6" ] [
-            div [ _class "form-floating" ] [
-                textBox [ _type "text"; _maxlength "200"; _autofocus ] (nameof m.Description) m.Description "Skill" true
-            ]
+            textBox [ _type "text"; _maxlength "200"; _autofocus ] (nameof m.Description) m.Description "Skill" true
             div [ _class "form-text" ] [ txt "A skill (language, design technique, process, etc.)" ]
         ]
         div [ _class "col-12 col-md-6" ] [
-            div [ _class "form-floating" ] [
-                textBox [ _type "text"; _maxlength "1000" ] (nameof m.Notes) m.Notes "Notes" false
-            ]
+            textBox [ _type "text"; _maxlength "1000" ] (nameof m.Notes) m.Notes "Notes" false
             div [ _class "form-text" ] [ txt "A further description of the skill" ]
         ]
         div [ _class "col-12" ] [
@@ -231,6 +227,120 @@ let skills (skills : Skill list) csrf =
 let editSkill (skills : Skill list) idx csrf =
     skillTable skills (Some idx) csrf
 
+open NodaTime
+
+/// Render the employment history edit template
+let historyForm (m : HistoryForm) isNew =
+    let maxDate = HistoryForm.dateFormat.Format (LocalDate.FromDateTime System.DateTime.Today)
+    [   h4 [] [ txt $"""{if isNew then "Add" else "Edit"} Employment History""" ]
+        div [ _class "col-12 col-md-6" ] [
+            textBox [ _type "text"; _maxlength "200"; _autofocus ] (nameof m.Employer) m.Employer "Employer" true
+        ]
+        div [ _class "col-12 col-md-6" ] [
+            textBox [ _type "text"; _maxlength "200" ] (nameof m.Position) m.Position "Title or Position" true
+        ]
+        p [ _class "col-12 text-center" ] [
+            txt "Select any date within the month; only the month and year will be displayed"
+        ]
+        div [ _class "col-12 col-md-6 col-xl-4 offset-xl-1" ] [
+            textBox [ _type "date"; _max maxDate ] (nameof m.StartDate) m.StartDate "Start Date" true
+        ]
+        div [ _class "col-12 col-md-6 col-xl-4 offset-xl-2" ] [
+            textBox [ _type "date"; _max maxDate ] (nameof m.EndDate) m.EndDate "End Date" false
+        ]
+        markdownEditor [] (nameof m.Description) m.Description "Description"
+        div [ _class "col-12" ] [
+            submitButton "content-save-outline" "Save"; txt " &nbsp; &nbsp; "
+            a [ _href "/profile/edit/history/list"; _hxGet "/profile/edit/history/list"; _hxTarget "#historyList"
+                _class "btn btn-secondary" ] [ i [ _class "mdi mdi-cancel"] []; txt "&nbsp; Cancel" ]
+        ]
+    ]
+
+
+/// List the employment history entries for an employment profile
+let historyTable (history : EmploymentHistory list) editIdx csrf =
+    let editingIdx   = defaultArg editIdx -2
+    let isEditing    = editingIdx >= -1
+    let monthAndYear = Text.LocalDatePattern.CreateWithInvariantCulture "MMMM yyyy"
+    let renderTable () =
+        let editHistoryForm entry idx =
+            tr [] [
+                td [ _colspan "4" ] [
+                    form [ _class "row g-3"; _hxPost $"/profile/edit/history/{idx}"; _hxTarget "#historyList" ] [
+                        antiForgery csrf
+                        yield! historyForm (HistoryForm.fromHistory entry) (idx = -1)
+                    ]
+                ]
+            ]
+        table [ _class "table table-sm table-hover pt-3" ] [
+            thead [] [
+                [ "Action"; "Employer"; "Dates"; "Position" ]
+                |> List.map (fun it -> th [ _scope "col" ] [ txt it ])
+                |> tr []
+            ]
+            tbody [] [
+                if isEditing && editingIdx = -1 then editHistoryForm EmploymentHistory.empty -1
+                yield! history |> List.mapi (fun idx entry ->
+                    if isEditing && editingIdx = idx then editHistoryForm entry idx
+                    else
+                        tr [] [
+                            td [ if isEditing then _class "text-muted" ] [
+                                if isEditing then txt "Edit ~ Delete"
+                                else
+                                    let link = $"/profile/edit/history/{idx}"
+                                    a [ _href link; _hxGet link ] [ txt "Edit" ]; txt " ~ "
+                                    a [ _href $"{link}/delete"; _hxPost $"{link}/delete"; _class "text-danger"
+                                        _hxConfirm "Are you sure you want to delete this employment history entry?" ] [
+                                        txt "Delete"
+                                    ]
+                            ]
+                            td [] [ str entry.Employer ]
+                            td [] [
+                                str (monthAndYear.Format entry.StartDate); txt " to "
+                                match entry.EndDate with Some dt -> str (monthAndYear.Format dt) | None -> txt "Present"
+                            ]
+                            td [ if Option.isNone entry.Position then _class "text-muted fst-italic" ] [
+                                str (defaultArg entry.Position "None")
+                            ]
+                        ])
+            ]
+        ]
+
+    if List.isEmpty history && not isEditing then
+        p [ _id "historyList"; _class "text-muted fst-italic pt-3" ] [
+            txt "Your profile has no employment history defined"
+        ]
+    else if List.isEmpty history then
+        form [ _id "historyList"; _hxTarget "this"; _hxPost "/profile/edit/history/-1"; _hxSwap HxSwap.OuterHtml
+               _class "row g-3" ] [
+            antiForgery csrf
+            yield! historyForm (HistoryForm.fromHistory EmploymentHistory.empty) true
+        ]
+    else if isEditing then div [ _id "historyList" ] [ renderTable () ]
+    else // not editing, there is history to show
+        form [ _id "historyList"; _hxTarget "this"; _hxSwap HxSwap.OuterHtml ] [
+            antiForgery csrf
+            renderTable ()
+        ]
+
+
+/// The employment history maintenance page
+let history (history : EmploymentHistory list) csrf =
+    pageWithTitle "Employment Profile: Employment History" [
+        backToEdit
+        p [] [
+            a [ _href "/profile/edit/history/-1"; _hxGet "/profile/edit/history/-1"; _hxTarget "#historyList"
+                _hxSwap HxSwap.OuterHtml; _class "btn btn-sm btn-outline-primary rounded-pill" ] [
+                txt "Add an Employment History Entry"
+            ]
+        ]
+        historyTable history None csrf
+    ]
+
+
+/// The employment history edit component
+let editHistory (history : EmploymentHistory list) idx csrf =
+    historyTable history (Some idx) csrf
 
 // ~~~ PROFILE SEARCH ~~~ //
 

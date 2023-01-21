@@ -114,7 +114,7 @@ module EmploymentHistory =
 
     let empty =
         {   Employer    = ""
-            StartDate   = LocalDate.MinIsoValue
+            StartDate   = LocalDate.FromDateTime DateTime.Today
             EndDate     = None
             Position    = None
             Description = None
