@@ -352,3 +352,10 @@ module Layout =
                 ]
             ]
         ]
+    
+    /// Render a bare view (used for components)
+    let bare ctx =
+        html [ _lang "en" ] [
+            head [] [ title [] [] ]
+            body [] [ ctx.Content ]
+        ]

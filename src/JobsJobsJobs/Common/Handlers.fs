@@ -20,12 +20,12 @@ module Error =
     open System.Net
 
     /// Handler that will return a status code 404 and the text "Not Found"
-    let notFound : HttpHandler = fun next ctx ->
+    let notFound : HttpHandler = fun _ ctx ->
         let fac  = ctx.GetService<ILoggerFactory> ()
         let log  = fac.CreateLogger "Handler"
         let path = string ctx.Request.Path
         log.LogInformation "Returning 404"
-        RequestErrors.NOT_FOUND $"The URL {path} was not recognized as a valid URL" next ctx
+        RequestErrors.NOT_FOUND $"The URL {path} was not recognized as a valid URL" earlyReturn ctx
     
     
     /// Handle unauthorized actions, redirecting to log on for GETs, otherwise returning a 401 Not Authorized response
@@ -78,18 +78,9 @@ let tryUser (ctx : HttpContext) =
     |> Option.ofObj
     |> Option.map (fun x -> x.Value)
 
-/// Require a user to be logged in
-let authorize : HttpHandler =
-    fun next ctx -> match tryUser ctx with Some _ -> next ctx | None -> Error.notAuthorized next ctx
-
 /// Get the ID of the currently logged in citizen
 //  NOTE: if no one is logged in, this will raise an exception
 let currentCitizenId ctx = (tryUser >> Option.get >> CitizenId.ofString) ctx
-
-/// Return an empty OK response
-let ok : HttpHandler = Successful.OK ""
-
-// -- NEW --
 
 let antiForgerySvc (ctx : HttpContext) =
     ctx.RequestServices.GetRequiredService<IAntiforgery> ()
@@ -168,6 +159,16 @@ let render pageTitle (_ : HttpFunc) (ctx : HttpContext) content = task {
     return! ctx.WriteHtmlViewAsync (renderFunc renderCtx)
 }
 
+let renderBare (_ : HttpFunc) (ctx : HttpContext) content =
+    ({  IsLoggedOn = Option.isSome (tryUser ctx)
+        CurrentUrl = ctx.Request.Path.Value
+        PageTitle  = ""
+        Content    = content
+        Messages   = []
+    } : Layout.PageRenderContext)
+    |> Layout.bare
+    |> ctx.WriteHtmlViewAsync
+
 /// Render as a composable HttpHandler
 let renderHandler pageTitle content : HttpHandler = fun next ctx ->
     render pageTitle next ctx content
@@ -194,3 +195,7 @@ let redirectToGet (url : string) next ctx = task {
         else RequestErrors.BAD_REQUEST "Invalid redirect URL"
     return! action next ctx
 }
+
+/// Shorthand for Error.notFound for use in handler functions
+let notFound ctx =
+    Error.notFound earlyReturn ctx

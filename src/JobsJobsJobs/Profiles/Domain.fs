@@ -27,14 +27,14 @@ module SkillForm =
 /// The data required to update a profile
 [<CLIMutable; NoComparison; NoEquality>]
 type EditProfileForm =
-    {   /// Whether the citizen to whom this profile belongs is actively seeking employment
-        IsSeekingEmployment : bool
-        
-        /// The ID of the continent on which the citizen is located
+    {   /// The ID of the continent on which the citizen is located
         ContinentId : string
         
         /// The area within that continent where the citizen is located
         Region : string
+        
+        /// Whether the citizen to whom this profile belongs is actively seeking employment
+        IsSeekingEmployment : bool
         
         /// If the citizen is available for remote work
         RemoteWork : bool
@@ -45,17 +45,11 @@ type EditProfileForm =
         /// The user's professional biography
         Biography : string
         
-        /// The skills for the user
-        Skills : SkillForm array
-
         /// The user's past experience
         Experience : string option
         
-        /// Whether this profile should appear in the public search
-        IsPubliclySearchable : bool
-        
-        /// Whether this profile should be shown publicly
-        IsPubliclyLinkable : bool
+        /// The visibility for this profile
+        Visibility : string
     }
 
 /// Support functions for the ProfileForm type
@@ -63,30 +57,26 @@ module EditProfileForm =
 
     /// An empty view model (used for new profiles)
     let empty =
-        {   IsSeekingEmployment  = false
-            ContinentId          = ""
-            Region               = ""
-            RemoteWork           = false
-            FullTime             = false
-            Biography            = ""
-            Skills               = [||]
-            Experience           = None
-            IsPubliclySearchable = false
-            IsPubliclyLinkable   = false
+        {   ContinentId         = ""
+            Region              = ""
+            IsSeekingEmployment = false
+            RemoteWork          = false
+            FullTime            = false
+            Biography           = ""
+            Experience          = None
+            Visibility          = ProfileVisibility.toString Private
         }
     
     /// Create an instance of this form from the given profile
     let fromProfile (profile : Profile) =
-        {   IsSeekingEmployment  = profile.IsSeekingEmployment
-            ContinentId          = ContinentId.toString profile.ContinentId
-            Region               = profile.Region
-            RemoteWork           = profile.IsRemote
-            FullTime             = profile.IsFullTime
-            Biography            = MarkdownString.toString profile.Biography
-            Skills               = profile.Skills |> List.map SkillForm.fromSkill |> Array.ofList
-            Experience           = profile.Experience |> Option.map MarkdownString.toString
-            IsPubliclySearchable = profile.IsPubliclySearchable
-            IsPubliclyLinkable   = profile.IsPubliclyLinkable
+        {   ContinentId         = ContinentId.toString profile.ContinentId
+            Region              = profile.Region
+            IsSeekingEmployment = profile.IsSeekingEmployment
+            RemoteWork          = profile.IsRemote
+            FullTime            = profile.IsFullTime
+            Biography           = MarkdownString.toString profile.Biography
+            Experience          = profile.Experience |> Option.map MarkdownString.toString
+            Visibility          = ProfileVisibility.toString profile.Visibility
         }
 
 

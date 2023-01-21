@@ -25,6 +25,34 @@ module CitizenId =
     let value = function CitizenId guid -> guid
 
 
+/// Types of contacts supported by Jobs, Jobs, Jobs
+type ContactType =
+    /// E-mail addresses
+    | Email
+    /// Phone numbers (home, work, cell, etc.)
+    | Phone
+    /// Websites (personal, social, etc.)
+    | Website
+
+/// Functions to support contact types
+module ContactType =
+    
+    /// Parse a contact type from a string
+    let parse typ =
+        match typ with
+        | "Email" -> Email
+        | "Phone" -> Phone
+        | "Website" -> Website
+        | it -> invalidOp $"{it} is not a valid contact type"
+    
+    /// Convert a contact type to its string representation
+    let toString =
+        function
+        | Email -> "Email"
+        | Phone -> "Phone"
+        | Website -> "Website"
+
+
 /// The ID of a continent
 type ContinentId = ContinentId of Guid
 
@@ -112,34 +140,6 @@ module ListingId =
     let value = function ListingId guid -> guid
 
 
-/// Types of contacts supported by Jobs, Jobs, Jobs
-type ContactType =
-    /// E-mail addresses
-    | Email
-    /// Phone numbers (home, work, cell, etc.)
-    | Phone
-    /// Websites (personal, social, etc.)
-    | Website
-
-/// Functions to support contact types
-module ContactType =
-    
-    /// Parse a contact type from a string
-    let parse typ =
-        match typ with
-        | "Email" -> Email
-        | "Phone" -> Phone
-        | "Website" -> Website
-        | it -> invalidOp $"{it} is not a valid contact type"
-    
-    /// Convert a contact type to its string representation
-    let toString =
-        function
-        | Email -> "Email"
-        | Phone -> "Phone"
-        | Website -> "Website"
-
-
 /// Another way to contact a citizen from this site 
 [<NoComparison; NoEquality>]
 type OtherContact =
@@ -155,6 +155,34 @@ type OtherContact =
         /// Whether this contact is visible in public employment profiles and job listings
         IsPublic : bool
     }
+
+
+/// Visibility options for an employment profile
+type ProfileVisibility =
+    /// Profile is only visible to authenticated users
+    | Private
+    /// Anonymous information is visible to public users
+    | Anonymous
+    /// The full employment profile is visible to public users
+    | Public
+
+/// Support functions for profile visibility
+module ProfileVisibility =
+
+    /// Parse a string into a profile visibility
+    let parse viz =
+        match viz with
+        | "Private" -> Private
+        | "Anonymous" -> Anonymous
+        | "Public" -> Public
+        | it -> invalidOp $"{it} is not a valid profile visibility value"
+    
+    /// Convert a profile visibility to its string representation
+    let toString =
+        function
+        | Private -> "Private"
+        | Anonymous -> "Anonymous"
+        | Public -> "Public"
 
 
 /// A skill the job seeker possesses
@@ -370,25 +398,19 @@ type Profile =
     {   /// The ID of the citizen to whom this profile belongs
         Id : CitizenId
         
-        /// Whether this citizen is actively seeking employment
-        IsSeekingEmployment : bool
-        
-        /// Whether this citizen allows their profile to be a part of the publicly-viewable, anonymous data
-        IsPubliclySearchable : bool
-        
-        /// Whether this citizen allows their profile to be viewed via a public link
-        IsPubliclyLinkable : bool
-        
         /// The ID of the continent on which the citizen resides
         ContinentId : ContinentId
         
         /// The region in which the citizen resides
         Region : string
         
-        /// Whether the citizen is looking for remote work
+        /// Whether this citizen is actively seeking employment
+        IsSeekingEmployment : bool
+        
+        /// Whether the citizen is interested in remote work
         IsRemote : bool
         
-        /// Whether the citizen is looking for full-time work
+        /// Whether the citizen is interested in full-time work
         IsFullTime : bool
         
         /// The citizen's professional biography
@@ -403,6 +425,9 @@ type Profile =
         /// The citizen's experience (topical / chronological)
         Experience : MarkdownString option
         
+        /// The visibility of this profile
+        Visibility : ProfileVisibility
+        
         /// When the citizen last updated their profile
         LastUpdatedOn : Instant
         
@@ -415,20 +440,19 @@ module Profile =
     
     // An empty profile
     let empty = {
-        Id                   = CitizenId Guid.Empty
-        IsSeekingEmployment  = false
-        IsPubliclySearchable = false
-        IsPubliclyLinkable   = false
-        ContinentId          = ContinentId Guid.Empty
-        Region               = ""
-        IsRemote             = false
-        IsFullTime           = false
-        Biography            = Text ""
-        Skills               = []
-        History              = []
-        Experience           = None
-        LastUpdatedOn        = Instant.MinValue
-        IsLegacy             = false
+        Id                  = CitizenId Guid.Empty
+        ContinentId         = ContinentId Guid.Empty
+        Region              = ""
+        IsSeekingEmployment = false
+        IsRemote            = false
+        IsFullTime          = false
+        Biography           = Text ""
+        Skills              = []
+        History             = []
+        Experience          = None
+        Visibility          = Private
+        LastUpdatedOn       = Instant.MinValue
+        IsLegacy            = false
     }
 
 

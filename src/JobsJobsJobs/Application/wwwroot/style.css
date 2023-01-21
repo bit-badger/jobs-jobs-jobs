@@ -13,6 +13,9 @@ label.jjj-required::after {
   color: red;
   content: ' *';
 }
+label[for]:hover {
+  cursor: pointer;
+}
 .jjj-heading-label {
   display: inline-block;
   font-size: 1rem;

@@ -129,24 +129,24 @@ task {
         |> List.map (fun p ->
             let experience = p["experience"].Value<string> ()
             { Profile.empty with
-                Id                   = CitizenId.ofString (p["id"].Value<string> ())
-                IsSeekingEmployment  = p["seekingEmployment"].Value<bool> ()
-                IsPubliclySearchable = p["isPublic"].Value<bool> ()
-                ContinentId          = ContinentId.ofString (p["continentId"].Value<string> ())
-                Region               = p["region"].Value<string> ()
-                IsRemote             = p["remoteWork"].Value<bool> ()
-                IsFullTime           = p["fullTime"].Value<bool> ()
-                Biography            = Text (p["biography"].Value<string> ())
-                LastUpdatedOn        = getInstant p "lastUpdatedOn"
-                Experience           = if isNull experience then None else Some (Text experience)
-                Skills               = p["skills"].Children()
-                                       |> Seq.map (fun s ->
-                                            let notes = s["notes"].Value<string> ()
-                                            {   Description = s["description"].Value<string> ()
-                                                Notes       = if isNull notes then None else Some notes
-                                            })
+                Id                  = CitizenId.ofString (p["id"].Value<string> ())
+                ContinentId         = ContinentId.ofString (p["continentId"].Value<string> ())
+                Region              = p["region"].Value<string> ()
+                IsSeekingEmployment = p["seekingEmployment"].Value<bool> ()
+                IsRemote            = p["remoteWork"].Value<bool> ()
+                IsFullTime          = p["fullTime"].Value<bool> ()
+                Biography           = Text (p["biography"].Value<string> ())
+                Experience          = if isNull experience then None else Some (Text experience)
+                Skills              = p["skills"].Children()
+                                      |> Seq.map (fun s ->
+                                           let notes = s["notes"].Value<string> ()
+                                           {   Description = s["description"].Value<string> ()
+                                               Notes       = if isNull notes then None else Some notes
+                                           })
                                        |> List.ofSeq
-                IsLegacy             = true
+                Visibility          = if p["isPublic"].Value<bool> () then Anonymous else Private
+                LastUpdatedOn       = getInstant p "lastUpdatedOn"
+                IsLegacy            = true
             })
     for profile in newProfiles do
         do! Profiles.Data.save profile

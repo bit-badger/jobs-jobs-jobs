@@ -1,11 +1,14 @@
 /// Views for /profile URLs
 module JobsJobsJobs.Profiles.Views
 
+open Giraffe.Htmx.Common
 open Giraffe.ViewEngine
 open Giraffe.ViewEngine.Htmx
 open JobsJobsJobs.Common.Views
 open JobsJobsJobs.Domain
 open JobsJobsJobs.Profiles.Domain
+
+// ~~~ PROFILE EDIT ~~~ //
 
 /// The profile edit menu page
 let edit (profile : Profile) =
@@ -45,44 +48,32 @@ let edit (profile : Profile) =
                     i [ _class "mdi mdi-file-account-outline" ] []; txt "&nbsp; View Your User Profile"
                 ]
             ]
+            hr []
+            p [ _class "text-muted" ] [
+                txt "If you want to delete your profile, or your entire account, "
+                a [ _href "/citizen/so-long" ] [ txt "see your deletion options here" ]; txt "."
+            ]
     ]
 
 
-/// Render the skill edit template and existing skills
-let skillEdit (skills : SkillForm array) =
-    let mapToInputs (idx : int) (skill : SkillForm) =
-        div [ _id $"skillRow{idx}"; _class "row pb-3" ] [
-            div [ _class "col-2 col-md-1 align-self-center" ] [
-                button [ _class "btn btn-sm btn-outline-danger rounded-pill"; _title "Delete"
-                         _onclick $"jjj.profile.removeSkill(idx)" ] [ txt "&nbsp;&minus;&nbsp;" ]
-            ]
-            div [ _class "col-10 col-md-6" ] [
-                div [ _class "form-floating" ] [
-                    input [ _type "text"; _id $"skillDesc{idx}"; _name $"Skills[{idx}].Description"
-                            _class "form-control"; _placeholder "A skill (language, design technique, process, etc.)"
-                            _maxlength "200"; _value skill.Description; _required ]
-                    label [ _class "jjj-required"; _for $"skillDesc{idx}" ] [ txt "Skill" ]
-                ]
-                if idx < 1 then div [ _class "form-text" ] [ txt "A skill (language, design technique, process, etc.)" ]
-            ]
-            div [ _class "col-12 col-md-5" ] [
-                div [ _class "form-floating" ] [
-                    input [ _type "text"; _id $"skillNotes{idx}"; _name $"Skills[{idx}].Notes"; _class "form-control"
-                            _maxlength "1000"; _placeholder "A further description of the skill (1,000 characters max)"
-                            _value skill.Notes ]
-                    label [ _class "jjj-label"; _for $"skillNotes{idx}" ] [ txt "Notes" ]
-                ]
-                if idx < 1 then div [ _class "form-text" ] [ txt "A further description of the skill" ]
-            ]
-        ]
-    template [ _id "newSkill" ] [ mapToInputs -1 { Description = ""; Notes = "" } ]
-    :: (skills |> Array.mapi mapToInputs |> List.ofArray)
+/// A link to allow the user to return to the profile edit menu page
+let backToEdit =
+    p [ _class "mx-3" ] [ a [ _href "/profile/edit" ] [ txt "&laquo; Back to Profile Edit Menu" ] ]
+
 
 /// The profile edit page
-let editGeneralInfo (m : EditProfileForm) continents isNew citizenId csrf =
-    pageWithTitle "My Employment Profile" [
+let editGeneralInfo (m : EditProfileForm) continents csrf =
+    pageWithTitle "Employment Profile: General Information" [
+        backToEdit
         form [ _class "row g-3"; _action "/profile/save"; _hxPost "/profile/save" ] [
             antiForgery csrf
+            div [ _class "col-12 col-sm-6 col-md-4" ] [
+                continentList [] (nameof m.ContinentId) continents None m.ContinentId true
+            ]
+            div [ _class "col-12 col-sm-6 col-md-8" ] [
+                textBox [ _type "text"; _maxlength "255" ] (nameof m.Region) m.Region "Region" true
+                div [ _class "form-text" ] [ txt "Country, state, geographic area, etc." ]
+            ]
             div [ _class "col-12" ] [
                 checkBox [] (nameof m.IsSeekingEmployment) m.IsSeekingEmployment "I am currently seeking employment"
                 if m.IsSeekingEmployment then
@@ -91,65 +82,157 @@ let editGeneralInfo (m : EditProfileForm) continents isNew citizenId csrf =
                         a [ _href "/success-story/new/edit" ] [ txt "telling your fellow citizens about it!" ]
                     ]
             ]
-            div [ _class "col-12 col-sm-6 col-md-4" ] [
-                continentList [] (nameof m.ContinentId) continents None m.ContinentId true
-            ]
-            div [ _class "col-12 col-sm-6 col-md-8" ] [
-                textBox [ _type "text"; _maxlength "255" ] (nameof m.Region) m.Region "Region" true
-                div [ _class "form-text" ] [ txt "Country, state, geographic area, etc." ]
-            ]
-            markdownEditor [ _required ] (nameof m.Biography) m.Biography "Professional Biography"
             div [ _class "col-12 col-offset-md-2 col-md-4" ] [
-                checkBox [] (nameof m.RemoteWork) m.RemoteWork "I am looking for remote work"
+                checkBox [] (nameof m.RemoteWork) m.RemoteWork "I am interested in remote work"
             ]
             div [ _class "col-12 col-md-4" ] [
-                checkBox [] (nameof m.FullTime) m.FullTime "I am looking for full-time work"
+                checkBox [] (nameof m.FullTime) m.FullTime "I am interested in full-time work"
             ]
-            div [ _class "col-12" ] [
-                hr []
-                h4 [ _class "pb-2" ] [
-                    txt "Skills &nbsp; "
-                    button [ _type "button"; _class "btn btn-sm btn-outline-primary rounded-pill"
-                             _onclick "jjj.profile.addSkill()" ] [ txt "Add a Skill" ]
-                ]
-            ]
-            yield! skillEdit m.Skills
+            markdownEditor [ _required ] (nameof m.Biography) m.Biography "Professional Biography"
             div [ _class "col-12" ] [
                 hr []
                 h4 [] [ txt "Experience" ]
                 p [] [
-                    txt "This application does not have a place to individually list your chronological job history; "
-                    txt "however, you can use this area to list prior jobs, their dates, and anything else you want to "
-                    txt "include that&rsquo;s not already a part of your Professional Biography above."
+                    txt "The information in this box is displayed after the list of skills and chronological job "
+                    txt "history, with no heading; it can be used to highlight your experiences apart from the history "
+                    txt "entries, provide closing notes, etc."
                 ]
             ]
             markdownEditor [] (nameof m.Experience) (defaultArg m.Experience "") "Experience"
-            div [ _class "col-12 col-xl-6" ] [
-                checkBox [] (nameof m.IsPubliclySearchable) m.IsPubliclySearchable
-                         "Allow my profile to be searched publicly"
-            ]
-            div [ _class "col-12 col-xl-6" ] [
-                checkBox [] (nameof m.IsPubliclyLinkable) m.IsPubliclyLinkable
-                         "Show my profile to anyone who has the direct link to it"
-            ]
             div [ _class "col-12" ] [
-                submitButton "content-save-outline" "Save"
-                if not isNew then
-                    txt "&nbsp; &nbsp; "
-                    a [ _class "btn btn-outline-secondary"; _href $"/profile/{CitizenId.toString citizenId}/view" ] [
-                        i [ _color "#6c757d"; _class "mdi mdi-file-account-outline" ] []
-                        txt "&nbsp; View Your User Profile"
+                hr []
+                h4 [] [ txt "Visibility" ]
+                div [ _class "form-check" ] [
+                    let pvt = ProfileVisibility.toString Private
+                    input [ _type "radio"; _id $"{nameof m.Visibility}Private"; _name (nameof m.Visibility)
+                            _class "form-check-input"; _value pvt; if m.Visibility = pvt then _checked ]
+                    label [ _class "form-check-label"; _for $"{nameof m.Visibility}Private" ] [
+                        strong [] [ txt "Private" ]
+                        txt " &ndash; only show my employment profile to other authenticated users"
                     ]
+                ]
+                div [ _class "form-check" ] [
+                    let anon = ProfileVisibility.toString Anonymous
+                    input [ _type "radio"; _id $"{nameof m.Visibility}Anonymous"; _name (nameof m.Visibility)
+                            _class "form-check-input"; _value anon; if m.Visibility = anon then _checked ]
+                    label [ _class "form-check-label"; _for $"{nameof m.Visibility}Anonymous" ] [
+                        strong [] [ txt "Anonymous" ]
+                        txt " &ndash; show my location and skills to public users anonymously"
+                    ]
+                ]
+                div [ _class "form-check" ] [
+                    let pub = ProfileVisibility.toString Public
+                    input [ _type "radio"; _id $"{nameof m.Visibility}Public"; _name (nameof m.Visibility)
+                            _class "form-check-input"; _value pub; if m.Visibility = pub then _checked ]
+                    label [ _class "form-check-label"; _for $"{nameof m.Visibility}Public" ] [
+                        strong [] [ txt "Public" ]; txt " &ndash; show my full profile to public users"
+                    ]
+                ]
             ]
+            div [ _class "col-12" ] [ submitButton "content-save-outline" "Save" ]
         ]
-        hr []
-        p [ _class "text-muted fst-italic" ] [
-            txt "(If you want to delete your profile, or your entire account, "
-            a [ _href "/citizen/so-long" ] [ txt "see your deletion options here" ]; txt ".)"
-        ]
-        jsOnLoad $"jjj.profile.nextIndex = {m.Skills.Length}"
     ]
 
+
+/// Render the skill edit template and existing skills
+let skillForm (m : SkillForm) isNew =
+    [   h4 [] [ txt $"""{if isNew then "Add a" else "Edit"} Skill""" ]
+        div [ _class "col-12 col-md-6" ] [
+            div [ _class "form-floating" ] [
+                textBox [ _type "text"; _maxlength "200"; _autofocus ] (nameof m.Description) m.Description "Skill" true
+            ]
+            div [ _class "form-text" ] [ txt "A skill (language, design technique, process, etc.)" ]
+        ]
+        div [ _class "col-12 col-md-6" ] [
+            div [ _class "form-floating" ] [
+                textBox [ _type "text"; _maxlength "1000" ] (nameof m.Notes) m.Notes "Notes" false
+            ]
+            div [ _class "form-text" ] [ txt "A further description of the skill" ]
+        ]
+        div [ _class "col-12" ] [
+            submitButton "content-save-outline" "Save"; txt " &nbsp; &nbsp; "
+            a [ _href "/profile/edit/skills/list"; _hxGet "/profile/edit/skills/list"; _hxTarget "#skillList"
+                _class "btn btn-secondary" ] [ i [ _class "mdi mdi-cancel"] []; txt "&nbsp; Cancel" ]
+        ]
+    ]
+
+
+/// List the skills for an employment profile
+let skillTable (skills : Skill list) editIdx csrf =
+    let editingIdx = defaultArg editIdx -2
+    let isEditing  = editingIdx >= -1
+    let renderTable () =
+        let editSkillForm skill idx =
+            tr [] [
+                td [ _colspan "3" ] [
+                    form [ _class "row g-3"; _hxPost $"/profile/edit/skill/{idx}"; _hxTarget "#skillList" ] [
+                        antiForgery csrf
+                        yield! skillForm (SkillForm.fromSkill skill) (idx = -1)
+                    ]
+                ]
+            ]
+        table [ _class "table table-sm table-hover pt-3" ] [
+            thead [] [
+                [ "Action"; "Skill"; "Notes" ]
+                |> List.map (fun it -> th [ _scope "col" ] [ txt it ])
+                |> tr []
+            ]
+            tbody [] [
+                if isEditing && editingIdx = -1 then editSkillForm { Skill.Description = ""; Notes = None } -1
+                yield! skills |> List.mapi (fun idx skill ->
+                    if isEditing && editingIdx = idx then editSkillForm skill idx
+                    else
+                        tr [] [
+                            td [ if isEditing then _class "text-muted" ] [
+                                if isEditing then txt "Edit ~ Delete"
+                                else
+                                    let link = $"/profile/edit/skill/{idx}"
+                                    a [ _href link; _hxGet link ] [ txt "Edit" ]; txt " ~ "
+                                    a [ _href $"{link}/delete"; _hxPost $"{link}/delete"; _class "text-danger"
+                                        _hxConfirm "Are you sure you want to delete this skill?" ] [ txt "Delete" ]
+                            ]
+                            td [] [ str skill.Description ]
+                            td [ if Option.isNone skill.Notes then _class "text-muted fst-italic" ] [
+                                str (defaultArg skill.Notes "None")
+                            ]
+                        ])
+            ]
+        ]
+
+    if List.isEmpty skills && not isEditing then
+        p [ _id "skillList"; _class "text-muted fst-italic pt-3" ] [ txt "Your profile has no skills defined" ]
+    else if List.isEmpty skills then
+        form [ _id "skillList"; _hxTarget "this"; _hxPost "/profile/edit/skill/-1"; _hxSwap HxSwap.OuterHtml
+               _class "row g-3" ] [
+            antiForgery csrf
+            yield! skillForm { Description = ""; Notes = "" } true
+        ]
+    else if isEditing then div [ _id "skillList" ] [ renderTable () ]
+    else // not editing, there are skills to show
+        form [ _id "skillList"; _hxTarget "this"; _hxSwap HxSwap.OuterHtml ] [
+            antiForgery csrf
+            renderTable ()
+        ]
+
+
+/// The profile skills maintenance page
+let skills (skills : Skill list) csrf =
+    pageWithTitle "Employment Profile: Skills" [
+        backToEdit
+        p [] [
+            a [ _href "/profile/edit/skill/-1"; _hxGet "/profile/edit/skill/-1"; _hxTarget "#skillList"
+                _hxSwap HxSwap.OuterHtml; _class "btn btn-sm btn-outline-primary rounded-pill" ] [ txt "Add a Skill" ]
+        ]
+        skillTable skills None csrf
+    ]
+
+
+/// The skill edit component
+let editSkill (skills : Skill list) idx csrf =
+    skillTable skills (Some idx) csrf
+
+
+// ~~~ PROFILE SEARCH ~~~ //
 
 /// The public search page
 let publicSearch (m : PublicSearchForm) continents (results : PublicSearchResult list option) =

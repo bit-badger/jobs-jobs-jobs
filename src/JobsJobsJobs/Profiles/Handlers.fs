@@ -23,25 +23,21 @@ let edit : HttpHandler = requireUser >=> fun next ctx -> task {
 
 // GET: /profile/edit/general
 let editGeneralInfo : HttpHandler = requireUser >=> fun next ctx -> task {
-    let  citizenId  = currentCitizenId ctx
-    let! profile    = Data.findById citizenId
+    let! profile    = Data.findById (currentCitizenId ctx)
     let! continents = Common.Data.Continents.all ()
-    let  isNew      = Option.isNone profile
-    let  form       = if isNew then EditProfileForm.empty else EditProfileForm.fromProfile profile.Value
-    let  title      = $"""{if isNew then "Create" else "Edit"} Profile"""
-    return! Views.editGeneralInfo form continents isNew citizenId (csrf ctx) |> render title next ctx
+    let  form       = if Option.isNone profile then EditProfileForm.empty else EditProfileForm.fromProfile profile.Value
+    return!
+        Views.editGeneralInfo form continents (csrf ctx) |> render "General Information | Employment Profile" next ctx
 }
 
 // POST: /profile/save
-let save : HttpHandler = requireUser >=> fun next ctx -> task {
+let saveGeneralInfo : HttpHandler = requireUser >=> fun next ctx -> task {
     let  citizenId = currentCitizenId ctx
-    let! theForm   = ctx.BindFormAsync<EditProfileForm> ()
-    let  form      = { theForm with Skills = theForm.Skills |> Array.filter (box >> isNull >> not) }
+    let! form      = ctx.BindFormAsync<EditProfileForm> ()
     let  errors    = [
         if form.ContinentId = "" then "Continent is required"
         if form.Region      = "" then "Region is required"
         if form.Biography   = "" then "Professional Biography is required"
-        if form.Skills |> Array.exists (fun s -> s.Description = "") then "All skill Descriptions are required"
     ]
     let! profile = task {
         match! Data.findById citizenId with
@@ -52,20 +48,15 @@ let save : HttpHandler = requireUser >=> fun next ctx -> task {
     if List.isEmpty errors then
         do! Data.save
                 { profile with
-                    IsSeekingEmployment  = form.IsSeekingEmployment
-                    ContinentId          = ContinentId.ofString form.ContinentId
-                    Region               = form.Region
-                    IsRemote             = form.RemoteWork
-                    IsFullTime           = form.FullTime
-                    Biography            = Text form.Biography
-                    LastUpdatedOn        = now ctx
-                    Skills               = form.Skills
-                                            |> Array.filter (fun s -> (box >> isNull >> not) s)
-                                            |> Array.map SkillForm.toSkill
-                                            |> List.ofArray
-                    Experience           = noneIfBlank form.Experience |> Option.map Text
-                    IsPubliclySearchable = form.IsPubliclySearchable
-                    IsPubliclyLinkable   = form.IsPubliclyLinkable
+                    ContinentId         = ContinentId.ofString form.ContinentId
+                    Region              = form.Region
+                    IsSeekingEmployment = form.IsSeekingEmployment
+                    IsRemote            = form.RemoteWork
+                    IsFullTime          = form.FullTime
+                    Biography           = Text form.Biography
+                    LastUpdatedOn       = now ctx
+                    Experience          = noneIfBlank form.Experience |> Option.map Text
+                    Visibility          = ProfileVisibility.parse form.Visibility
                 }
         let action = if isNew then "cre" else "upd"
         do! addSuccess $"Employment Profile {action}ated successfully" ctx
@@ -74,8 +65,8 @@ let save : HttpHandler = requireUser >=> fun next ctx -> task {
         do! addErrors errors ctx
         let! continents = Common.Data.Continents.all ()
         return!
-            Views.editGeneralInfo form continents isNew citizenId (csrf ctx)
-            |> render $"""{if isNew then "Create" else "Edit"} Profile""" next ctx
+            Views.editGeneralInfo form continents (csrf ctx)
+            |> render "General Information | Employment Profile" next ctx
 }
 
 // GET: /profile/search
@@ -110,18 +101,63 @@ let seeking : HttpHandler = fun next ctx -> task {
     return! Views.publicSearch form continents results |> render "Profile Search" next ctx
 }
 
+// GET: /profile/edit/skills
+let skills : HttpHandler = requireUser >=> fun next ctx -> task {
+    match! Data.findById (currentCitizenId ctx) with
+    | Some profile -> return! Views.skills profile.Skills (csrf ctx) |> render "Skills | Employment Profile" next ctx
+    | None -> return! notFound ctx
+}
+
+// GET: /profile/edit/skill/[idx]
+let editSkill idx : HttpHandler = requireUser >=> fun next ctx -> task {
+    match! Data.findById (currentCitizenId ctx) with
+    | Some profile ->
+        if idx < -1 || idx >= List.length profile.Skills then return! notFound ctx
+        else return! Views.editSkill profile.Skills idx (csrf ctx) |> renderBare next ctx
+    | None -> return! notFound ctx
+}
+
+// POST: /profile/edit/skill/[idx]
+let saveSkill idx : HttpHandler = requireUser >=> validateCsrf >=> fun next ctx -> task {
+    match! Data.findById (currentCitizenId ctx) with
+    | Some profile ->
+        if idx < -1 || idx >= List.length profile.Skills then return! notFound ctx
+        else
+            let! form  = ctx.BindFormAsync<SkillForm> ()
+            let  skill = SkillForm.toSkill form
+            let  skills =
+                if idx = -1 then skill :: profile.Skills
+                else profile.Skills |> List.mapi (fun skillIdx it -> if skillIdx = idx then skill else it)
+                |> List.sortBy (fun it -> it.Description.ToLowerInvariant ())
+            do! Data.save { profile with Skills = skills }
+            return! Views.skillTable skills None (csrf ctx) |> renderBare next ctx
+    | None -> return! notFound ctx
+}
+
+// POST: /profile/edit/skill/[idx]/delete
+let deleteSkill idx : HttpHandler = requireUser >=> validateCsrf >=> fun next ctx -> task {
+    match! Data.findById (currentCitizenId ctx) with
+    | Some profile ->
+        if idx < 0 || idx >= List.length profile.Skills then return! notFound ctx
+        else
+            let skills = profile.Skills |> List.indexed |> List.filter (fun it -> fst it <> idx) |> List.map snd
+            do! Data.save { profile with Skills = skills }
+            return! Views.skillTable skills None (csrf ctx) |> renderBare next ctx
+    | None -> return! notFound ctx
+}
+
 // GET: /profile/[id]/view
 let view citizenId : HttpHandler = fun next ctx -> task {
     let citId = CitizenId citizenId
     match! Data.findByIdForView citId with
     | Some profile ->
         let currentCitizen = tryUser ctx |> Option.map CitizenId.ofString
-        if not profile.Profile.IsPubliclyLinkable && Option.isNone currentCitizen then
+        if not (profile.Profile.Visibility = Public) && Option.isNone currentCitizen then
             return! Error.notAuthorized next ctx
         else
             let title = $"Employment Profile for {Citizen.name profile.Citizen}"
             return! Views.view profile currentCitizen |> render title next ctx
-    | None -> return! Error.notFound next ctx
+    | None -> return! notFound ctx
 }
 
 
@@ -131,14 +167,18 @@ open Giraffe.EndpointRouting
 let endpoints =
     subRoute "/profile" [
         GET_HEAD [
-            routef "/%O/view"      view
-            route  "/edit"         edit
-            route  "/edit/general" editGeneralInfo
-            route  "/search"       search
-            route  "/seeking"      seeking
+            routef "/%O/view"       view
+            route  "/edit"          edit
+            route  "/edit/general"  editGeneralInfo
+            routef "/edit/skill/%i" editSkill
+            route  "/edit/skills"   skills
+            route  "/search"        search
+            route  "/seeking"       seeking
         ]
         POST [
-            route "/delete" delete
-            route "/save"   save
+            route  "/delete"               delete
+            routef "/edit/skill/%i"        saveSkill
+            routef "/edit/skill/%i/delete" deleteSkill
+            route  "/save"                 saveGeneralInfo
         ]
     ]
