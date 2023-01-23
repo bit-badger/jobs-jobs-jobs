@@ -546,10 +546,13 @@ let private displayProfile (it : ProfileForView) isPublic isPrint =
                             match entry.Position with Some pos -> br []; str pos | None -> ()
                         ]
                         div [ _class "text-end" ] [
-                            span [ _class "text-nowrap" ] [ str (monthAndYear.Format entry.StartDate) ]; txt " to "
-                            match entry.EndDate with
-                            | Some dt -> span [ _class "text-nowrap" ] [ str (monthAndYear.Format dt) ]
-                            | None -> txt "Present"
+                            span [ _class "text-nowrap" ] [ str (monthAndYear.Format entry.StartDate) ]
+                            span [ _class "text-nowrap" ] [
+                                txt " to "
+                                match entry.EndDate with
+                                | Some dt ->  str (monthAndYear.Format dt)
+                                | None -> txt "Present"
+                            ]
                         ]
                     ]
                     match entry.Description with Some d -> div [] [ md2html d ] | None -> ()
