@@ -24,6 +24,11 @@ label[for]:hover {
 .material-icons {
   vertical-align: bottom;
 }
+@media print {
+  .jjj-hide-from-printer {
+    display: none;
+  }
+}
 /* Material Design Icon / Bootstrap styling */
 .mdi::before {
   font-size: 24px;

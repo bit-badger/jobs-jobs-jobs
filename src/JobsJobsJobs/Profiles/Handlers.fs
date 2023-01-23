@@ -27,7 +27,8 @@ let editGeneralInfo : HttpHandler = requireUser >=> fun next ctx -> task {
     let! continents = Common.Data.Continents.all ()
     let  form       = if Option.isNone profile then EditProfileForm.empty else EditProfileForm.fromProfile profile.Value
     return!
-        Views.editGeneralInfo form continents (csrf ctx) |> render "General Information | Employment Profile" next ctx
+        Views.editGeneralInfo form continents (isHtmx ctx) (csrf ctx)
+        |> render "General Information | Employment Profile" next ctx
 }
 
 // POST: /profile/save
@@ -65,7 +66,7 @@ let saveGeneralInfo : HttpHandler = requireUser >=> fun next ctx -> task {
         do! addErrors errors ctx
         let! continents = Common.Data.Continents.all ()
         return!
-            Views.editGeneralInfo form continents (csrf ctx)
+            Views.editGeneralInfo form continents (isHtmx ctx) (csrf ctx)
             |> render "General Information | Employment Profile" next ctx
 }
 
@@ -157,14 +158,16 @@ let deleteSkill idx : HttpHandler = requireUser >=> validateCsrf >=> fun next ct
 let history : HttpHandler = requireUser >=> fun next ctx -> task {
     match! Data.findById (currentCitizenId ctx) with
     | Some profile ->
-        return! Views.history profile.History (csrf ctx) |> render "Employment History | Employment Profile" next ctx
+        return!
+            Views.history profile.History (isHtmx ctx) (csrf ctx)
+            |> render "Employment History | Employment Profile" next ctx
     | None -> return! notFound ctx
 }
 
 // GET: /profile/edit/history/list
 let historyList : HttpHandler = requireUser >=> fun next ctx -> task {
     match! Data.findById (currentCitizenId ctx) with
-    | Some profile -> return! Views.historyTable profile.History None (csrf ctx) |> renderBare next ctx
+    | Some profile -> return! Views.historyTable profile.History None (isHtmx ctx) (csrf ctx) |> renderBare next ctx
     | None -> return! notFound ctx
 }
 
@@ -173,7 +176,7 @@ let editHistory idx : HttpHandler = requireUser >=> fun next ctx -> task {
     match! Data.findById (currentCitizenId ctx) with
     | Some profile ->
         if idx < -1 || idx >= List.length profile.History then return! notFound ctx
-        else return! Views.editHistory profile.History idx (csrf ctx) |> renderBare next ctx
+        else return! Views.editHistory profile.History idx (isHtmx ctx) (csrf ctx) |> renderBare next ctx
     | None -> return! notFound ctx
 }
 
@@ -190,7 +193,7 @@ let saveHistory idx : HttpHandler = requireUser >=> validateCsrf >=> fun next ct
                 else profile.History |> List.mapi (fun histIdx it -> if histIdx = idx then entry else it)
                 |> List.sortByDescending (fun it -> defaultArg it.EndDate NodaTime.LocalDate.MaxIsoValue)
             do! Data.save { profile with History = history }
-            return! Views.historyTable history None (csrf ctx) |> renderBare next ctx
+            return! Views.historyTable history None (isHtmx ctx) (csrf ctx) |> renderBare next ctx
     | None -> return! notFound ctx
 }
 
@@ -202,7 +205,7 @@ let deleteHistory idx : HttpHandler = requireUser >=> validateCsrf >=> fun next 
         else
             let history = profile.History |> List.indexed |> List.filter (fun it -> fst it <> idx) |> List.map snd
             do! Data.save { profile with History = history }
-            return! Views.historyTable history None (csrf ctx) |> renderBare next ctx
+            return! Views.historyTable history None (isHtmx ctx) (csrf ctx) |> renderBare next ctx
     | None -> return! notFound ctx
 }
 
@@ -220,6 +223,20 @@ let view citizenId : HttpHandler = fun next ctx -> task {
     | None -> return! notFound ctx
 }
 
+// GET: /profile/[id]/print
+let print citizenId : HttpHandler = fun next ctx -> task {
+    let citId = CitizenId citizenId
+    match! Data.findByIdForView citId with
+    | Some profile ->
+        let currentCitizen = tryUser ctx |> Option.map CitizenId.ofString
+        if not (profile.Profile.Visibility = Public) && Option.isNone currentCitizen then
+            return! Error.notAuthorized next ctx
+        else
+            let pageTitle = $"Employment Profile for {Citizen.name profile.Citizen}"
+            return! Views.print profile (Option.isNone currentCitizen) |> renderPrint pageTitle next ctx
+    | None -> return! notFound ctx
+}
+
 
 open Giraffe.EndpointRouting
 
@@ -228,6 +245,7 @@ let endpoints =
     subRoute "/profile" [
         GET_HEAD [
             routef "/%O/view"           view
+            routef "/%O/print"          print
             route  "/edit"              edit
             route  "/edit/general"      editGeneralInfo
             routef "/edit/history/%i"   editHistory

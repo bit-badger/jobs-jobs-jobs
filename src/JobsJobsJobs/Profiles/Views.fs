@@ -62,7 +62,7 @@ let backToEdit =
 
 
 /// The profile edit page
-let editGeneralInfo (m : EditProfileForm) continents csrf =
+let editGeneralInfo (m : EditProfileForm) continents isHtmx csrf =
     pageWithTitle "Employment Profile: General Information" [
         backToEdit
         form [ _class "row g-3"; _action "/profile/save"; _hxPost "/profile/save" ] [
@@ -88,7 +88,7 @@ let editGeneralInfo (m : EditProfileForm) continents csrf =
             div [ _class "col-12 col-md-4" ] [
                 checkBox [] (nameof m.FullTime) m.FullTime "I am interested in full-time work"
             ]
-            markdownEditor [ _required ] (nameof m.Biography) m.Biography "Professional Biography"
+            markdownEditor [ _required ] (nameof m.Biography) m.Biography "Professional Biography" isHtmx
             div [ _class "col-12" ] [
                 hr []
                 h4 [] [ txt "Experience" ]
@@ -98,7 +98,7 @@ let editGeneralInfo (m : EditProfileForm) continents csrf =
                     txt "entries, provide closing notes, etc."
                 ]
             ]
-            markdownEditor [] (nameof m.Experience) (defaultArg m.Experience "") "Experience"
+            markdownEditor [] (nameof m.Experience) (defaultArg m.Experience "") "Experience" isHtmx
             div [ _class "col-12" ] [
                 hr []
                 h4 [] [ txt "Visibility" ]
@@ -230,7 +230,7 @@ let editSkill (skills : Skill list) idx csrf =
 open NodaTime
 
 /// Render the employment history edit template
-let historyForm (m : HistoryForm) isNew =
+let historyForm (m : HistoryForm) isNew isHtmx =
     let maxDate = HistoryForm.dateFormat.Format (LocalDate.FromDateTime System.DateTime.Today)
     [   h4 [] [ txt $"""{if isNew then "Add" else "Edit"} Employment History""" ]
         div [ _class "col-12 col-md-6" ] [
@@ -239,7 +239,7 @@ let historyForm (m : HistoryForm) isNew =
         div [ _class "col-12 col-md-6" ] [
             textBox [ _type "text"; _maxlength "200" ] (nameof m.Position) m.Position "Title or Position" true
         ]
-        p [ _class "col-12 text-center" ] [
+        p [ _class "col-12 text-center mb-0" ] [
             txt "Select any date within the month; only the month and year will be displayed"
         ]
         div [ _class "col-12 col-md-6 col-xl-4 offset-xl-1" ] [
@@ -248,7 +248,7 @@ let historyForm (m : HistoryForm) isNew =
         div [ _class "col-12 col-md-6 col-xl-4 offset-xl-2" ] [
             textBox [ _type "date"; _max maxDate ] (nameof m.EndDate) m.EndDate "End Date" false
         ]
-        markdownEditor [] (nameof m.Description) m.Description "Description"
+        markdownEditor [] (nameof m.Description) m.Description "Description" isHtmx
         div [ _class "col-12" ] [
             submitButton "content-save-outline" "Save"; txt " &nbsp; &nbsp; "
             a [ _href "/profile/edit/history/list"; _hxGet "/profile/edit/history/list"; _hxTarget "#historyList"
@@ -256,19 +256,19 @@ let historyForm (m : HistoryForm) isNew =
         ]
     ]
 
+let private monthAndYear = Text.LocalDatePattern.CreateWithInvariantCulture "MMMM yyyy"
 
 /// List the employment history entries for an employment profile
-let historyTable (history : EmploymentHistory list) editIdx csrf =
-    let editingIdx   = defaultArg editIdx -2
-    let isEditing    = editingIdx >= -1
-    let monthAndYear = Text.LocalDatePattern.CreateWithInvariantCulture "MMMM yyyy"
+let historyTable (history : EmploymentHistory list) editIdx isHtmx csrf =
+    let editingIdx = defaultArg editIdx -2
+    let isEditing  = editingIdx >= -1
     let renderTable () =
         let editHistoryForm entry idx =
             tr [] [
                 td [ _colspan "4" ] [
                     form [ _class "row g-3"; _hxPost $"/profile/edit/history/{idx}"; _hxTarget "#historyList" ] [
                         antiForgery csrf
-                        yield! historyForm (HistoryForm.fromHistory entry) (idx = -1)
+                        yield! historyForm (HistoryForm.fromHistory entry) (idx = -1) isHtmx
                     ]
                 ]
             ]
@@ -314,7 +314,7 @@ let historyTable (history : EmploymentHistory list) editIdx csrf =
         form [ _id "historyList"; _hxTarget "this"; _hxPost "/profile/edit/history/-1"; _hxSwap HxSwap.OuterHtml
                _class "row g-3" ] [
             antiForgery csrf
-            yield! historyForm (HistoryForm.fromHistory EmploymentHistory.empty) true
+            yield! historyForm (HistoryForm.fromHistory EmploymentHistory.empty) true isHtmx
         ]
     else if isEditing then div [ _id "historyList" ] [ renderTable () ]
     else // not editing, there is history to show
@@ -325,7 +325,7 @@ let historyTable (history : EmploymentHistory list) editIdx csrf =
 
 
 /// The employment history maintenance page
-let history (history : EmploymentHistory list) csrf =
+let history (history : EmploymentHistory list) isHtmx csrf =
     pageWithTitle "Employment Profile: Employment History" [
         backToEdit
         p [] [
@@ -334,7 +334,7 @@ let history (history : EmploymentHistory list) csrf =
                 txt "Add an Employment History Entry"
             ]
         ]
-        historyTable history None csrf
+        historyTable history None isHtmx csrf
     ]
 
 
@@ -507,11 +507,9 @@ let search (m : ProfileSearchForm) continents tz (results : ProfileSearchResult 
         | None -> ()
     ]
 
-
-/// Profile view template
-let view (it : ProfileForView) currentId =
-    article [] [
-        h2 [] [
+/// Display a profile
+let private displayProfile (it : ProfileForView) isPublic isPrint =
+    [   h2 [] [
             str (Citizen.name it.Citizen)
             if it.Profile.IsSeekingEmployment then
                 span [ _class "jjj-heading-label" ] [
@@ -519,17 +517,15 @@ let view (it : ProfileForView) currentId =
                 ]
         ]
         h4 [] [ str $"{it.Continent.Name}, {it.Profile.Region}" ]
-        contactInfo it.Citizen (Option.isNone currentId)
+        (if isPrint then contactInfoPrint else contactInfo) it.Citizen isPublic
         |> div [ _class "pb-3" ]
         p [] [
             txt (if it.Profile.IsFullTime then "I" else "Not i"); txt "nterested in full-time employment &bull; "
             txt (if it.Profile.IsRemote then "I" else "Not i"); txt "nterested in remote opportunities"
         ]
-        hr []
         div [] [ md2html it.Profile.Biography ]
         if not (List.isEmpty it.Profile.Skills) then
-            hr []
-            h4 [ _class "pb-3" ] [ txt "Skills" ]
+            h4 [ _class "pb-3 border-top border-3" ] [ txt "Skills" ]
             it.Profile.Skills
             |> List.map (fun skill ->
                 li [] [
@@ -537,12 +533,55 @@ let view (it : ProfileForView) currentId =
                     match skill.Notes with Some notes -> txt " &nbsp;("; str notes; txt ")" | None -> ()
                 ])
             |> ul []
+        if not (List.isEmpty it.Profile.History) then
+            h4 [ _class "mb-3 border-top border-3" ] [ txt "Employment History" ]
+            yield!
+                it.Profile.History
+                |> List.indexed
+                |> List.collect (fun (idx, entry) -> [
+                    let maybeBorder = if idx > 0 then " border-top" else ""
+                    div [ _class $"d-flex flex-row flex-wrap justify-content-between align-items-start mt-4 mb-2{maybeBorder}" ] [
+                        div [] [
+                            strong [] [ str entry.Employer ]
+                            match entry.Position with Some pos -> br []; str pos | None -> ()
+                        ]
+                        div [ _class "text-end" ] [
+                            span [ _class "text-nowrap" ] [ str (monthAndYear.Format entry.StartDate) ]; txt " to "
+                            match entry.EndDate with
+                            | Some dt -> span [ _class "text-nowrap" ] [ str (monthAndYear.Format dt) ]
+                            | None -> txt "Present"
+                        ]
+                    ]
+                    match entry.Description with Some d -> div [] [ md2html d ] | None -> ()
+                ])
         match it.Profile.Experience with
-        | Some exp -> hr []; h4 [ _class "pb-3" ] [ txt "Experience / Employment History" ]; div [] [ md2html exp ]
+        | Some exp -> div [ _class "border-top border-3" ] [ md2html exp ]
         | None -> ()
+    ]
+
+
+/// Profile view template
+let view (it : ProfileForView) currentId =
+    article [] [
+        yield! displayProfile it (Option.isNone currentId) false
         if Option.isSome currentId && currentId.Value = it.Citizen.Id then
             br []; br []
             a [ _href "/profile/edit"; _class "btn btn-primary" ] [
                 i [ _class "mdi mdi-pencil" ] []; txt "&nbsp; Edit Your Profile"
             ]
+            txt " &nbsp; &nbsp; "
+        a [ _href $"/profile/{CitizenId.toString it.Profile.Id}/print"; _target "_blank"
+            _class "btn btn-outline-secondary" ] [
+            i [ _class "mdi mdi-printer-outline" ] []; txt "&nbsp; View Print Version"
+        ]
+    ]
+
+
+/// Printable profile view template
+let print (it : ProfileForView) isPublic =
+    article [] [
+        yield! displayProfile it isPublic true
+        button [ _type "button"; _class "btn btn-sm btn-secondary jjj-hide-from-printer"; _onclick "window.print()" ] [
+            i [ _class "mdi mdi-printer-outline" ] []; txt "&nbsp; Print"
+        ]
     ]

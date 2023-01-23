@@ -19,7 +19,8 @@ let edit successId : HttpHandler = requireUser >=> fun next ctx -> task {
     | Some success when success.CitizenId = citizenId ->
         let pgTitle = $"""{if isNew then "Tell Your" else "Edit"} Success Story"""
         return!
-            Views.edit (EditSuccessForm.fromSuccess success) (success.Id = SuccessId Guid.Empty) pgTitle (csrf ctx)
+            Views.edit (EditSuccessForm.fromSuccess success) (success.Id = SuccessId Guid.Empty) pgTitle (isHtmx ctx)
+                       (csrf ctx)
             |> render pgTitle next ctx
     | Some _ -> return! Error.notAuthorized next ctx
     | None -> return! Error.notFound next ctx

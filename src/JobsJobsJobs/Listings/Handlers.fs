@@ -23,7 +23,7 @@ let edit listId : HttpHandler = requireUser >=> fun next ctx -> task {
     | Some listing when listing.CitizenId = citizenId ->
         let! continents = Common.Data.Continents.all ()
         return!
-            Views.edit (EditListingForm.fromListing listing listId) continents (listId = "new") (csrf ctx)
+            Views.edit (EditListingForm.fromListing listing listId) continents (listId = "new") (isHtmx ctx) (csrf ctx)
             |> render $"""{if listId = "new" then "Add a" else "Edit"} Job Listing""" next ctx
     | Some _ -> return! Error.notAuthorized next ctx
     | None -> return! Error.notFound next ctx
@@ -38,7 +38,7 @@ let expire listingId : HttpHandler = requireUser >=> fun next ctx -> task {
             return! redirectToGet "/listings/mine" next ctx
         else
             let form = { Id = ListingId.toString listing.Id; FromHere = false; SuccessStory = "" }
-            return! Views.expire form listing (csrf ctx) |> render "Expire Job Listing" next ctx
+            return! Views.expire form listing (isHtmx ctx) (csrf ctx) |> render "Expire Job Listing" next ctx
     | Some _ -> return! Error.notAuthorized next ctx
     | None -> return! Error.notFound next ctx
 }

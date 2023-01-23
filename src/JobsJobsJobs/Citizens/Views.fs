@@ -61,7 +61,7 @@ let contactEdit (contacts : OtherContactForm array) =
     :: (contacts |> Array.mapi mapToInputs |> List.ofArray)
 
 /// The account edit page
-let account (m : AccountProfileForm) csrf =
+let account (m : AccountProfileForm) isHtmx csrf =
     pageWithTitle "Account Profile" [
         p [] [
             txt "This information is visible to all fellow logged-on citizens. For publicly-visible employment "
@@ -107,7 +107,7 @@ let account (m : AccountProfileForm) csrf =
         ]
         jsOnLoad $"
             jjj.citizen.nextIndex = {m.Contacts.Length}
-            jjj.citizen.validatePasswords('{nameof m.NewPassword}', '{nameof m.NewPasswordConfirm}', false)"
+            jjj.citizen.validatePasswords('{nameof m.NewPassword}', '{nameof m.NewPasswordConfirm}', false)" isHtmx
     ]
 
 
@@ -305,7 +305,7 @@ let logOn (m : LogOnForm) csrf =
     ]
 
 /// The registration page
-let register q1 q2 (m : RegisterForm) csrf =
+let register q1 q2 (m : RegisterForm) isHtmx csrf =
     pageWithTitle "Register" [
         form [ _class  "row g-3"; _hxPost "/citizen/register" ] [
             antiForgery csrf
@@ -343,7 +343,7 @@ let register q1 q2 (m : RegisterForm) csrf =
                 input [ _type "hidden"; _name (nameof m.Question2Index); _value (string m.Question2Index ) ]
             ]
             div [ _class "col-12" ] [ submitButton "content-save-outline" "Save" ]
-            jsOnLoad $"jjj.citizen.validatePasswords('{nameof m.Password}', 'ConfirmPassword', true)"
+            jsOnLoad $"jjj.citizen.validatePasswords('{nameof m.Password}', 'ConfirmPassword', true)" isHtmx
         ]
     ]
 
@@ -376,7 +376,7 @@ let resetCanceled wasCanceled =
 
 
 /// The password reset page
-let resetPassword (m : ResetPasswordForm) csrf =
+let resetPassword (m : ResetPasswordForm) isHtmx csrf =
     pageWithTitle "Reset Password" [
         p [] [ txt "Enter your new password in the fields below" ]
         form [ _class "row g-3"; _method "POST"; _action "/citizen/reset-password" ] [
@@ -390,6 +390,6 @@ let resetPassword (m : ResetPasswordForm) csrf =
                 textBox [ _type "password"; _minlength "8" ] "ConfirmPassword" "" "Confirm New Password" true
             ]
             div [ _class "col-12" ] [ submitButton "lock-reset" "Reset Password" ]
-            jsOnLoad $"jjj.citizen.validatePasswords('{nameof m.Password}', 'ConfirmPassword', true)"
+            jsOnLoad $"jjj.citizen.validatePasswords('{nameof m.Password}', 'ConfirmPassword', true)" isHtmx
         ]
     ]

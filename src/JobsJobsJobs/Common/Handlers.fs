@@ -7,7 +7,7 @@ open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.Logging
 
 [<AutoOpen>]
-module private HtmxHelpers =
+module HtmxHelpers =
     
     /// Is the request from htmx?
     let isHtmx (ctx : HttpContext) =
@@ -145,27 +145,32 @@ let addErrors (errors : string list) ctx = task {
 
 open JobsJobsJobs.Common.Views
 
-/// Render a page-level view
-let render pageTitle (_ : HttpFunc) (ctx : HttpContext) content = task {
-    let! messages = popMessages ctx
-    let  renderCtx : Layout.PageRenderContext = {
-        IsLoggedOn = Option.isSome (tryUser ctx)
+/// Create the render context for an HTML response
+let private createContext (ctx : HttpContext) pageTitle content messages : Layout.PageRenderContext =
+    {   IsLoggedOn = Option.isSome (tryUser ctx)
         CurrentUrl = ctx.Request.Path.Value
         PageTitle  = pageTitle
         Content    = content
         Messages   = messages
     }
-    let renderFunc = if isHtmx ctx then Layout.partial else Layout.full
+
+/// Render a page-level view
+let render pageTitle (_ : HttpFunc) (ctx : HttpContext) content = task {
+    let! messages   = popMessages ctx
+    let  renderCtx  = createContext ctx pageTitle content messages
+    let  renderFunc = if isHtmx ctx then Layout.partial else Layout.full
     return! ctx.WriteHtmlViewAsync (renderFunc renderCtx)
 }
 
+/// Render a printable view (content with styles, but no layout)
+let renderPrint pageTitle (_ : HttpFunc) (ctx : HttpContext) content =
+    createContext ctx pageTitle content []
+    |> Layout.print
+    |> ctx.WriteHtmlViewAsync
+
+/// Render a bare (component) view
 let renderBare (_ : HttpFunc) (ctx : HttpContext) content =
-    ({  IsLoggedOn = Option.isSome (tryUser ctx)
-        CurrentUrl = ctx.Request.Path.Value
-        PageTitle  = ""
-        Content    = content
-        Messages   = []
-    } : Layout.PageRenderContext)
+    createContext ctx "" content []
     |> Layout.bare
     |> ctx.WriteHtmlViewAsync
 

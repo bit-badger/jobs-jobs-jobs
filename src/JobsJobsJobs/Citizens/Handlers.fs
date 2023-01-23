@@ -64,7 +64,9 @@ module private Auth =
 let account : HttpHandler = fun next ctx -> task {
     match! Data.findById (currentCitizenId ctx) with
     | Some citizen ->
-        return! Views.account (AccountProfileForm.fromCitizen citizen) (csrf ctx) |> render "Account Profile" next ctx
+        return!
+            Views.account (AccountProfileForm.fromCitizen citizen) (isHtmx ctx) (csrf ctx)
+            |> render "Account Profile" next ctx
     | None -> return! Error.notFound next ctx
 }
 
@@ -176,7 +178,7 @@ let register next ctx =
         q2Index <- System.Random.Shared.Next(0, 5)
     let qAndA = Auth.questions ctx
     Views.register (fst qAndA[q1Index]) (fst qAndA[q2Index])
-        { RegisterForm.empty with Question1Index = q1Index; Question2Index = q2Index } (csrf ctx)
+        { RegisterForm.empty with Question1Index = q1Index; Question2Index = q2Index } (isHtmx ctx) (csrf ctx)
     |> render "Register" next ctx
 
 // POST: /citizen/register
@@ -199,7 +201,7 @@ let doRegistration : HttpHandler = validateCsrf >=> fun next ctx -> task {
     ]
     let refreshPage () =
         Views.register (fst qAndA[form.Question1Index]) (fst qAndA[form.Question2Index]) { form with Password = "" }
-                       (csrf ctx)
+                       (isHtmx ctx) (csrf ctx)
         |> renderHandler "Register"
             
     if badForm then
@@ -246,7 +248,8 @@ let resetPassword token : HttpHandler = fun next ctx -> task {
     match! Data.trySecurityByToken token with
     | Some security ->
         return!
-            Views.resetPassword { Id = CitizenId.toString security.Id; Token = token; Password = "" } (csrf ctx)
+            Views.resetPassword { Id = CitizenId.toString security.Id; Token = token; Password = "" } (isHtmx ctx)
+                                (csrf ctx)
             |> render "Reset Password" next ctx
     | None -> return! Error.notFound next ctx
 }
@@ -273,7 +276,7 @@ let doResetPassword : HttpHandler = validateCsrf >=> fun next ctx -> task {
         | None -> return! Error.notFound next ctx
     else
         do! addErrors errors ctx 
-        return! Views.resetPassword form (csrf ctx) |> render "Reset Password" next ctx
+        return! Views.resetPassword form (isHtmx ctx) (csrf ctx) |> render "Reset Password" next ctx
 }
 
 // POST: /citizen/save-account
@@ -314,7 +317,7 @@ let saveAccount : HttpHandler = requireUser >=> validateCsrf >=> fun next ctx ->
         | None -> return! Error.notFound next ctx
     else
         do! addErrors errors ctx
-        return! Views.account form (csrf ctx) |> render "Account Profile" next ctx
+        return! Views.account form (isHtmx ctx) (csrf ctx) |> render "Account Profile" next ctx
 }
 
 // GET: /citizen/so-long

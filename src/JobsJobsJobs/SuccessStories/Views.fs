@@ -7,7 +7,7 @@ open JobsJobsJobs.Domain
 open JobsJobsJobs.SuccessStories.Domain
 
 /// The add/edit success story page
-let edit (m : EditSuccessForm) isNew pgTitle csrf =
+let edit (m : EditSuccessForm) isNew pgTitle isHtmx csrf =
     pageWithTitle pgTitle [
         if isNew then
             p [] [
@@ -21,7 +21,7 @@ let edit (m : EditSuccessForm) isNew pgTitle csrf =
             div [ _class "col-12" ] [
                 checkBox [] (nameof m.FromHere) m.FromHere "I found my employment here"
             ]
-            markdownEditor [] (nameof m.Story) m.Story "The Success Story"
+            markdownEditor [] (nameof m.Story) m.Story "The Success Story" isHtmx
             div [ _class "col-12" ] [
                 submitButton "content-save-outline" "Save"
                 if isNew then

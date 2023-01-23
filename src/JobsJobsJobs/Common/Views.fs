@@ -68,11 +68,14 @@ let emptyP =
     p [] [ txt "&nbsp;" ]
 
 /// Register JavaScript code to run in the DOMContentLoaded event on the page
-let jsOnLoad js =
-    script [] [ txt """document.addEventListener("DOMContentLoaded", function () { """; txt js; txt " })" ]
+let jsOnLoad js isHtmx =
+    script [] [
+        let (target, event) = if isHtmx then "document.body", "htmx:afterSettle" else "document", "DOMContentLoaded"
+        txt (sprintf """%s.addEventListener("%s", () => { %s }, { once: true })""" target event js)
+    ]
 
 /// Create a Markdown editor
-let markdownEditor attrs name value editorLabel =
+let markdownEditor attrs name value editorLabel isHtmx =
     div [ _class "col-12"; _id $"{name}EditRow" ] [
         nav [ _class "nav nav-pills pb-1" ] [
             button [ _type "button"; _id $"{name}EditButton"; _class "btn btn-primary btn-sm rounded-pill" ] [
@@ -93,7 +96,7 @@ let markdownEditor attrs name value editorLabel =
             ]
             label [ _for name ] [ txt editorLabel ]
         ]
-        jsOnLoad $"jjj.markdownOnLoad('{name}')"
+        jsOnLoad $"jjj.markdownOnLoad('{name}')" isHtmx
     ]
 
 /// Wrap content in a collapsing panel
@@ -124,19 +127,41 @@ let contactInfo citizen isPublic =
     |> List.collect (fun contact ->
         match contact.ContactType with
         | Website ->
-            [   i [ _class "mdi mdi-sm mdi-web" ] []; rawText " "
+            [   i [ _class "mdi mdi-sm mdi-web" ] []; txt " "
                 a [ _href contact.Value; _target "_blank"; _rel "noopener"; _class "me-4" ] [
                     str (defaultArg contact.Name "Website")
                 ]
             ]
         | Email ->
-            [   i [ _class "mdi mdi-sm mdi-email-outline" ] []; rawText " "
+            [   i [ _class "mdi mdi-sm mdi-email-outline" ] []; txt " "
                 a [ _href $"mailto:{contact.Value}"; _class "me-4" ] [ str (defaultArg contact.Name "E-mail") ]
             ]
         | Phone ->
             [   span [ _class "me-4" ] [
-                    i [ _class "mdi mdi-sm mdi-phone" ] []; rawText " "; str contact.Value
+                    i [ _class "mdi mdi-sm mdi-phone" ] []; txt " "; str contact.Value
                     match contact.Name with Some name -> str $" ({name})" | None -> ()
+                ]
+            ])
+
+/// Display a citizen's contact information
+let contactInfoPrint citizen isPublic =
+    citizen.OtherContacts
+    |> List.filter (fun it -> (isPublic && it.IsPublic) || not isPublic)
+    |> List.collect (fun contact ->
+        match contact.ContactType with
+        | Website ->
+            [   i [ _class "mdi mdi-sm mdi-web" ] []; txt " "; str (defaultArg contact.Name "Website"); txt " &ndash; "
+                str contact.Value; br []
+            ]
+        | Email ->
+            [   i [ _class "mdi mdi-sm mdi-email-outline" ] []; txt " "; str (defaultArg contact.Name "E-mail")
+                txt " &ndash; "; str contact.Value; br []
+            ]
+        | Phone ->
+            [   span [ _class "me-4" ] [
+                    i [ _class "mdi mdi-sm mdi-phone" ] []; rawText " "
+                    match contact.Name with Some name -> str name; txt " &ndash; " | None -> ()
+                    str contact.Value; br []
                 ]
             ])
 
@@ -351,6 +376,13 @@ module Layout =
                     htmlFoot
                 ]
             ]
+        ]
+    
+    /// Render a print view (styles, but no other layout)
+    let print ctx =
+        html [ _lang "en" ] [
+            htmlHead ctx
+            body [ _class "m-1" ] [ ctx.Content ]
         ]
     
     /// Render a bare view (used for components)

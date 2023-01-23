@@ -8,7 +8,7 @@ open JobsJobsJobs.Listings.Domain
 
 
 /// Job listing edit page
-let edit (m : EditListingForm) continents isNew csrf =
+let edit (m : EditListingForm) continents isNew isHtmx csrf =
     pageWithTitle $"""{if isNew then "Add a" else "Edit"} Job Listing""" [
         form [ _class "row g-3"; _method "POST"; _action "/listing/save" ] [
             antiForgery csrf
@@ -29,7 +29,7 @@ let edit (m : EditListingForm) continents isNew csrf =
             div [ _class "col-12" ] [
                 checkBox [] (nameof m.RemoteWork) m.RemoteWork "This opportunity is for remote work"
             ]
-            markdownEditor [ _required ] (nameof m.Text) m.Text "Job Description"
+            markdownEditor [ _required ] (nameof m.Text) m.Text "Job Description" isHtmx
             div [ _class "col-12 col-md-4" ] [
                 textBox [ _type "date" ] (nameof m.NeededBy) m.NeededBy "Needed By" false
             ]
@@ -41,7 +41,7 @@ let edit (m : EditListingForm) continents isNew csrf =
 open System.Net
 
 /// Page to expire a job listing
-let expire (m : ExpireListingForm) (listing : Listing) csrf =
+let expire (m : ExpireListingForm) (listing : Listing) isHtmx csrf =
     pageWithTitle $"Expire Job Listing ({WebUtility.HtmlEncode listing.Title})" [
         p [ _class "fst-italic" ] [
             txt "Expiring this listing will remove it from search results. You will be able to see it via your "
@@ -60,10 +60,10 @@ let expire (m : ExpireListingForm) (listing : Listing) csrf =
                     txt "visible to logged-on users here, but not to the general public."
                 ]
             ]
-            markdownEditor [] (nameof m.SuccessStory) m.SuccessStory "Your Success Story"
+            markdownEditor [] (nameof m.SuccessStory) m.SuccessStory "Your Success Story" isHtmx
             div [ _class "col-12" ] [ submitButton "text-box-remove-outline" "Expire Listing" ]
         ]
-        jsOnLoad "jjj.listing.toggleFromHere()"
+        jsOnLoad "jjj.listing.toggleFromHere()" isHtmx
     ]
 
 
