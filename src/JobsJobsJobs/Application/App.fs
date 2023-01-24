@@ -62,7 +62,7 @@ let main args =
     // Unify the endpoints from all features
     let endpoints = [
         Citizens.Handlers.endpoints
-        Home.Handlers.endpoints
+        yield! Home.Handlers.endpoints
         yield! Listings.Handlers.endpoints
         Profiles.Handlers.endpoints
         SuccessStories.Handlers.endpoints

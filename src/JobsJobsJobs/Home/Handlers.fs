@@ -8,10 +8,6 @@ open JobsJobsJobs.Common.Handlers
 let home : HttpHandler =
     renderHandler "Welcome" Views.home
 
-// GET: /how-it-works
-let howItWorks : HttpHandler =
-    renderHandler "How It Works" Views.howItWorks
-
 // GET: /privacy-policy
 let privacyPolicy : HttpHandler =
     renderHandler "Privacy Policy" Views.privacyPolicy
@@ -20,14 +16,28 @@ let privacyPolicy : HttpHandler =
 let termsOfService : HttpHandler =
     renderHandler "Terms of Service" Views.termsOfService
 
+// GET: /how-it-works
+let howItWorks : HttpHandler =
+    renderHandler "How It Works" Views.Help.index
+
+// GET: /how-it-works/accounts
+let accountHelp : HttpHandler =
+    renderHandler "How It Works: Accounts" Views.Help.accounts
+
 
 open Giraffe.EndpointRouting
 
 /// All endpoints for this feature
 let endpoints =
-    GET_HEAD [
-        route "/"                 home
-        route "/how-it-works"     howItWorks
-        route "/privacy-policy"   privacyPolicy
-        route "/terms-of-service" termsOfService
+    [   GET_HEAD [
+            route "/"                 home
+            route "/privacy-policy"   privacyPolicy
+            route "/terms-of-service" termsOfService
+        ]
+        subRoute "/how-it-works" [
+            GET_HEAD [
+                route ""          howItWorks
+                route "/accounts" accountHelp
+            ]
+        ]
     ]
