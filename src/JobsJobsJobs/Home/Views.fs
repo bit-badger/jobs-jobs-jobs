@@ -537,6 +537,7 @@ let termsOfService =
         ]
     ]
 
+/// Help page templates
 module Help =
     
     /// CSS classes to indicate a reference to a particular page within Jobs, Jobs, Jobs
@@ -548,13 +549,20 @@ module Help =
     /// CSS classes for main headings within the documentation
     let private mainHeading = _class "border-top border-2 mt-4 pt-1"
 
+    /// A link to return to the help index
+    let private backToIndex =
+        p [] [ a [ _href "/how-it-works" ] [ txt "&laquo; Back to Help Index" ] ]
+    
+    /// Account help page
     let accounts =
-        pageWithTitle "How It Works: Accounts" [
-            p [ _class "fst-italic" ] [
-                txt "On this page: "; a [ _href "#registration" ] [ txt "Registration" ]; txt " &bull; "
-                a [ _href "#log-on" ] [ txt "Logging On" ]; txt " &bull; "
-                a [ _href "#updating" ] [ txt "Updating Your Account" ]; txt " &bull; "
-                a [ _href "#deleting" ] [ txt "Deleting Your Account" ]
+        [   backToIndex
+            p [] [
+                span [ _class "fst-italic" ] [
+                    txt "On this page: "; a [ _href "#registration" ] [ txt "Registration" ]; txt " &bull; "
+                    a [ _href "#log-on" ] [ txt "Logging On" ]; txt " &bull; "
+                    a [ _href "#updating" ] [ txt "Updating Your Account" ]; txt " &bull; "
+                    a [ _href "#deleting" ] [ txt "Deleting Your Account" ]
+                ]
             ]
 
             h4 [ _id "registration"; mainHeading ] [ txt "Registering for an Account" ]
@@ -607,8 +615,117 @@ module Help =
                 txt "and &ldquo;E-mail&rdquo;, respectively. For phone numbers, the name will appear in parentheses "
                 txt "after the number."
             ]
-        ]
 
+            h4 [ _id "deleting"; mainHeading ] [ txt "Deleting Your Account" ]
+            p [] [
+                txt "Though we hate to see it, we realize that there may come a time when you want to delete either "
+                txt "your employment profile or your complete account. On both the "
+                span [ linkedPage ] [ txt "Account Update" ]; txt " and "; span [ linkedPage ] [ txt "Profile Edit" ]
+                txt " pages, there is a link to a page with deletion options."
+            ]
+            p [] [
+                txt "The first red button will delete your employment profile. This means that no searches for "
+                txt "employment profiles will return your information. If you had shared a direct link to your "
+                txt "profile, it will return a &ldquo;Not Found&rdquo; page &ndash; unless you take steps to create "
+                txt "your employment profile again, in which case the same link will work again. If you want to "
+                txt "obtain the same effect without deleting your profile, update it and select the "
+                txt "&ldquo;Invisible&rdquo; visibility option."
+            ]
+            p [] [
+                txt "The second red button will delete your entire account. In addition to your employment profile "
+                txt "being deleted, it will delete any job listings you may have posted, any success stories you may "
+                txt "have recorded, and your account information. It will make it like you were never a user of this "
+                txt "system. If you re-register, you will be given a different ID, so direct links to your previous "
+                txt "employment profile will not work, even if you create an employment profile for your new account."
+            ]
+            p [] [
+                strong [] [ txt "Use both these options with extreme care!" ]; txt " There is no &ldquo;undo&rdquo; "
+                txt "for these actions; if you change your mind, you will have to recreate what you have deleted."
+            ]
+        ]
+        |> pageWithTitle "How It Works: Accounts"
+
+    /// Profile help page
+    let profiles =
+        [   backToIndex
+            p [] [
+                span [ _class "fst-italic" ] [
+                    txt "On this page: "
+                    a [ _href "#creating" ] [ txt "Creating, Editing, and Sharing Your Employment Profile" ]
+                    txt " &bull; "; a [ _href "#searching" ] [ txt "Searching Employment Profiles" ]; txt " &bull; "
+                    a [ _href "#viewing" ] [ txt "Viewing and Printing Employment Profiles" ]
+                ]
+            ]
+
+            h4 [ _id "creating"; mainHeading ] [ txt "Creating, Editing, and Sharing Your Employment Profile" ]
+            
+            // TODO: this is substantially different
+            // p [] [
+            //     The employment profile is your r&eacute;sum&eacute;, visible to other citizens here. It also allows you to specify
+            //     your real name, if you so desire; if that is filled in, that is how you will be identified in search results,
+            //     profile views, etc. If not, you will be identified as you are on your Mastodon instance; this system updates your
+            //     current display name each time you log on.
+            // ]
+
+            // h5 Completing Your Profile
+            // p.
+            //     The #[span.link My Employment Profile] page lets you establish or modify your employment profile; the
+            //     #[span.link Dashboard] page also has buttons that let you create, edit, and view your profile.
+            // ul
+            //     li.
+            //     The #[span.link Professional Biography] is the &ldquo;Objective&rdquo; part of a traditional r&eacute;sum&eacute;.
+            //     This section supports #[a(href="#markdown") Markdown], so you can include actual headings, formatting, etc.
+            //     li.
+            //     Skills are optional, but they are the place to record skills you have. Along with each skill, there is a
+            //     #[span.link Notes] field, which can be used to indicate the time you&rsquo;ve practiced a particular skill, the
+            //     mastery you have of that skill, etc. It is free-form text, so it is all up to you how you utilize the field.
+            //     li.
+            //     The #[span.link Experience] field is intended to capture a chronological or topical employment history. This
+            //     Markdown space can be used to capture chronological history, certifications, or any other information &ndash;
+            //     however you would like it presented to fellow citizens.
+            //     #[em.text-muted (If you would like a chronological job builder, reach out and let us know.)]
+            //     li.
+            //     If you check the #[span.link Allow my profile to be searched publicly] checkbox #[strong and] you are seeking
+            //     employment, your continent, region, and skills fields will be searchable and displayed to public users of the
+            //     site. They will not be tied to your Mastodon handle or real name; they are there to let people peek behind the
+            //     curtain a bit, and hopefully inspire them to join us.
+
+            // h5 Viewing and Sharing Your Profile
+            // p.
+            //     Once your profile has been established, the #[span.link My Employment Profile] page will have a button at the bottom
+            //     that will let you view your profile the way all other validated users will be able to see it. (There will also be a
+            //     link to this page from the #[span.link Dashboard].) The URL of this page can be shared on any No Agenda-affiliated
+            //     Mastodon instance, if you would like to share it there. Just as with job listings, existing users will go straight
+            //     there, while others will get there once they authorize this application.
+            // p.
+            //     The name on employment profiles is a link to that user&rsquo;s profile on their Mastodon instance; from there,
+            //     others can communicate further with you using the tools Mastodon provides.
+
+            // h5 &ldquo;I Found a Job!&rdquo;
+            // p.
+            //     If your profile indicates that you are seeking employment, and you secure employment, that is something you will
+            //     want to update (and &ndash; congratulations!). From both the #[span.link Dashboard] and
+            //     #[span.link My Employment Profile] pages, you will see a link that encourages you to tell us about it. Click either
+            //     of those links, and you will be brought to a page that allows you to indicate whether your employment actually came
+            //     from someone finding your profile on Jobs, Jobs, Jobs, and gives you a place to write about the experience. These
+            //     stories are only viewable by validated users, so feel free to use as much (or as little) identifying information as
+            //     you&rsquo;d like. You can also submit this page with all the fields blank; in that case, your &ldquo;Seeking
+            //     Employment&rdquo; flag is cleared, and the blank story is recorded.
+            // p.
+            //     As a validated user, you can also view others success stories. Clicking #[span.link Success Stories] in the sidebar
+            //     will display a list of all the stories that have been recorded. If there is a story to be read, there will be a link
+            //     to read it; if you submitted the story, there will also be an #[span.link Edit] link.
+
+            // h5 Publicly Available Information
+            // p.
+            //     The #[span.link Job Seekers] page for profile information will allow users to search for and display the continent,
+            //     region, skills, and notes of users who are seeking employment #[strong and] have opted in to their information being
+            //     publicly searchable. If you are a public user, this information is always the latest we have; check out the link at
+            //     the top of the search results for how you can learn more about these fine human resources!
+
+        ]
+        |> pageWithTitle "How It Works: Employment Profiles"
+    
     /// Online help / documentation index page
     let index =
         pageWithTitle "How It Works" [
@@ -618,6 +735,16 @@ module Help =
                 a [ _href "#listing" ] [ txt "list a job opportunity" ]; txt " &bull; "
                 a [ _href "#profile-search" ] [ txt "find people to hire" ]; txt " &bull; "
                 a [ _href "#profile" ] [ txt "create an employment profile" ]
+            ]
+
+            p [] [
+                strong [] [ a [ _href "/how-it-works/accounts" ] [ txt "Accounts" ] ]; br []
+                txt "How to sign up as a user, get logged on, update your information, or remove your account"
+            ]
+            p [] [
+                strong [] [ a [ _href "/how-it-works/profiles" ] [ txt "Employment Profiles" ] ]; br []
+                txt "Creating, updating, and sharing your own employment profile; and searching, viewing, and printing "
+                txt "profiles for yourself or your fellow citizens"
             ]
 
             h4 [ _id "listing-search"; mainHeading] [ txt "Find a Job Listing" ]
@@ -686,70 +813,6 @@ module Help =
             ]
 
             h4 [ _id "profile"; mainHeading ] [ txt "Your Employment Profile" ]
-            // TODO: this is substantially different
-            // p [] [
-            //     The employment profile is your r&eacute;sum&eacute;, visible to other citizens here. It also allows you to specify
-            //     your real name, if you so desire; if that is filled in, that is how you will be identified in search results,
-            //     profile views, etc. If not, you will be identified as you are on your Mastodon instance; this system updates your
-            //     current display name each time you log on.
-            // ]
-
-            // h5 Completing Your Profile
-            // p.
-            //     The #[span.link My Employment Profile] page lets you establish or modify your employment profile; the
-            //     #[span.link Dashboard] page also has buttons that let you create, edit, and view your profile.
-            // ul
-            //     li.
-            //     The #[span.link Professional Biography] is the &ldquo;Objective&rdquo; part of a traditional r&eacute;sum&eacute;.
-            //     This section supports #[a(href="#markdown") Markdown], so you can include actual headings, formatting, etc.
-            //     li.
-            //     Skills are optional, but they are the place to record skills you have. Along with each skill, there is a
-            //     #[span.link Notes] field, which can be used to indicate the time you&rsquo;ve practiced a particular skill, the
-            //     mastery you have of that skill, etc. It is free-form text, so it is all up to you how you utilize the field.
-            //     li.
-            //     The #[span.link Experience] field is intended to capture a chronological or topical employment history. This
-            //     Markdown space can be used to capture chronological history, certifications, or any other information &ndash;
-            //     however you would like it presented to fellow citizens.
-            //     #[em.text-muted (If you would like a chronological job builder, reach out and let us know.)]
-            //     li.
-            //     If you check the #[span.link Allow my profile to be searched publicly] checkbox #[strong and] you are seeking
-            //     employment, your continent, region, and skills fields will be searchable and displayed to public users of the
-            //     site. They will not be tied to your Mastodon handle or real name; they are there to let people peek behind the
-            //     curtain a bit, and hopefully inspire them to join us.
-
-            // h5 Viewing and Sharing Your Profile
-            // p.
-            //     Once your profile has been established, the #[span.link My Employment Profile] page will have a button at the bottom
-            //     that will let you view your profile the way all other validated users will be able to see it. (There will also be a
-            //     link to this page from the #[span.link Dashboard].) The URL of this page can be shared on any No Agenda-affiliated
-            //     Mastodon instance, if you would like to share it there. Just as with job listings, existing users will go straight
-            //     there, while others will get there once they authorize this application.
-            // p.
-            //     The name on employment profiles is a link to that user&rsquo;s profile on their Mastodon instance; from there,
-            //     others can communicate further with you using the tools Mastodon provides.
-
-            // h5 &ldquo;I Found a Job!&rdquo;
-            // p.
-            //     If your profile indicates that you are seeking employment, and you secure employment, that is something you will
-            //     want to update (and &ndash; congratulations!). From both the #[span.link Dashboard] and
-            //     #[span.link My Employment Profile] pages, you will see a link that encourages you to tell us about it. Click either
-            //     of those links, and you will be brought to a page that allows you to indicate whether your employment actually came
-            //     from someone finding your profile on Jobs, Jobs, Jobs, and gives you a place to write about the experience. These
-            //     stories are only viewable by validated users, so feel free to use as much (or as little) identifying information as
-            //     you&rsquo;d like. You can also submit this page with all the fields blank; in that case, your &ldquo;Seeking
-            //     Employment&rdquo; flag is cleared, and the blank story is recorded.
-            // p.
-            //     As a validated user, you can also view others success stories. Clicking #[span.link Success Stories] in the sidebar
-            //     will display a list of all the stories that have been recorded. If there is a story to be read, there will be a link
-            //     to read it; if you submitted the story, there will also be an #[span.link Edit] link.
-
-            // h5 Publicly Available Information
-            // p.
-            //     The #[span.link Job Seekers] page for profile information will allow users to search for and display the continent,
-            //     region, skills, and notes of users who are seeking employment #[strong and] have opted in to their information being
-            //     publicly searchable. If you are a public user, this information is always the latest we have; check out the link at
-            //     the top of the search results for how you can learn more about these fine human resources!
-
             h4 [ _id "markdown"; mainHeading ] [ txt "A Bit about Markdown" ]
             p [] [
                 txt "Markdown is a plain-text way to specify formatting quite similar to that provided by word processors. "

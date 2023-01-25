@@ -22,7 +22,11 @@ let howItWorks : HttpHandler =
 
 // GET: /how-it-works/accounts
 let accountHelp : HttpHandler =
-    renderHandler "How It Works: Accounts" Views.Help.accounts
+    renderHandler "Accounts | How It Works" Views.Help.accounts
+
+// GET: /how-it-works/profiles
+let profileHelp : HttpHandler =
+    renderHandler "Employment Profiles | How It Works" Views.Help.profiles
 
 
 open Giraffe.EndpointRouting
@@ -38,6 +42,7 @@ let endpoints =
             GET_HEAD [
                 route ""          howItWorks
                 route "/accounts" accountHelp
+                route "/profiles" profileHelp
             ]
         ]
     ]
