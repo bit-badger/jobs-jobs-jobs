@@ -658,7 +658,58 @@ module Help =
             ]
 
             h4 [ _id "creating"; mainHeading ] [ txt "Creating, Editing, and Sharing Your Employment Profile" ]
-            
+            p [] [
+                txt "The employment profile is your r&eacute;sum&eacute;, visible to other citizens here. On your "
+                txt "dashboard, there we be either a "; span [ actionButton ] [ txt "Create Profile" ]; txt " or an "
+                span [ actionButton ] [ txt "Edit Profile" ]; txt " button, depending on whether you have a profile "
+                txt "established yet. There is also a "; span [ linkedPage ] [ txt "My Employment Profile" ]
+                txt " entry in the menu when you are logged on."
+            ]
+            p [] [ txt "The employment profile itself is divided into three sections." ]
+
+            h5 [] [ txt "General Information" ]
+            p [] [
+                txt "The "; span [ linkedPage ] [ txt "General Information" ]; txt " section of the Employment Profile "
+                txt "contains the following fields:"
+            ]
+            ul [] [
+                li [] [
+                    strong [] [ txt "Continent" ]; txt " (required): The continent on which you most frequently reside"
+                ]
+                li [] [
+                    strong [] [ txt "Region" ]; txt " (required): A smaller geographic area within the continent you "
+                    txt "selected. This is free-form text; describe it as narrowly or broadly as you like."
+                ]
+                li [] [
+                    strong [] [ txt "Three Yes/No Questions" ]; txt ": If you are actively seeking work, check the "
+                    txt "&ldquo;I am currently seeking employment&rdquo; box; if you are interested in full-time or "
+                    txt "remote work, check those boxes. Leaving them unchecked impmlies &ldquo;No&rdquo;."
+                ]
+                li [] [
+                    strong [] [ txt "Professional Biography" ]; txt " (required): Your description of what type of job "
+                    txt "you are seeking, an overview of your professional history, etc. This is the main "
+                    txt "r&eacute;sum&eacute; portion of the profile. It supports "
+                    a [ _href "/how-it-works#markdown" ] [ txt "Markdown" ]; txt " formatting, which allows you to add "
+                    txt "headings, bold/emphasized text, links, etc."
+                ]
+                li [] [
+                    strong [] [ txt "Experience" ]; txt ": This Markdown block will be placed at the bottom of the "
+                    txt "employment profile, below your skills and employment history. It is optional (as are skills "
+                    txt "and employment history). This area can be omitted; used to display skills or employment "
+                    txt "history in a different way than this application provides; or used to provide a closing "
+                    txt "appeal, the text &ldquo;References available upon request&rdquo;, or any other information "
+                    txt "you want displayed at the bottom of your profile."
+                ]
+                li [] [
+                    strong [] [ txt "Visibility" ]; txt " (required): There are four visibility options for your "
+                    txt "profile. "; em [] [ txt "Hidden" ]; txt " will restrict your profile to yourself only; this "
+                    txt "can be used while you are initially building your profile, or to remove your profile from "
+                    txt "search results without deleting it. "; em [] [ txt "Private" ]; txt " will restrict your "
+                    txt "profile to logged-on users of this community. "; em [] [ txt "Anonymous"]; txt " will allow "
+                    txt "your continent, region, and skills to be displayed in public searches, without linking to "
+                    txt "your profile or disclosing any additional information."
+                ]
+            ]
             // TODO: this is substantially different
             // p [] [
             //     The employment profile is your r&eacute;sum&eacute;, visible to other citizens here. It also allows you to specify
