@@ -209,31 +209,38 @@ let deleteHistory idx : HttpHandler = requireUser >=> validateCsrf >=> fun next 
     | None -> return! notFound ctx
 }
 
-// GET: /profile/[id]/view
-let view citizenId : HttpHandler = fun next ctx -> task {
+/// Get a profile for view, and enforce visibility restrictions against the current user
+let private getProfileForView citizenId ctx = task {
     let citId = CitizenId citizenId
     match! Data.findByIdForView citId with
     | Some profile ->
         let currentCitizen = tryUser ctx |> Option.map CitizenId.ofString
-        if not (profile.Profile.Visibility = Public) && Option.isNone currentCitizen then
-            return! Error.notAuthorized next ctx
-        else
-            let title = $"Employment Profile for {Citizen.name profile.Citizen}"
-            return! Views.view profile currentCitizen |> render title next ctx
+        let canView =
+            match profile.Profile.Visibility, currentCitizen with
+            | Private, Some _
+            | Anonymous, Some _
+            | Public, _ -> true
+            | Hidden, Some citizenId when profile.Citizen.Id = citizenId -> true
+            | _ -> false
+        return if canView then Some (profile, currentCitizen) else None
+    | None -> return None
+}
+
+// GET: /profile/[id]/view
+let view citizenId : HttpHandler = fun next ctx -> task {
+    match! getProfileForView citizenId ctx with
+    | Some (profile, currentCitizen) ->
+        let title = $"Employment Profile for {Citizen.name profile.Citizen}"
+        return! Views.view profile currentCitizen |> render title next ctx
     | None -> return! notFound ctx
 }
 
 // GET: /profile/[id]/print
 let print citizenId : HttpHandler = fun next ctx -> task {
-    let citId = CitizenId citizenId
-    match! Data.findByIdForView citId with
-    | Some profile ->
-        let currentCitizen = tryUser ctx |> Option.map CitizenId.ofString
-        if not (profile.Profile.Visibility = Public) && Option.isNone currentCitizen then
-            return! Error.notAuthorized next ctx
-        else
-            let pageTitle = $"Employment Profile for {Citizen.name profile.Citizen}"
-            return! Views.print profile (Option.isNone currentCitizen) |> renderPrint pageTitle next ctx
+    match! getProfileForView citizenId ctx with
+    | Some (profile, currentCitizen) ->
+        let pageTitle = $"Employment Profile for {Citizen.name profile.Citizen}"
+        return! Views.print profile (Option.isNone currentCitizen) |> renderPrint pageTitle next ctx
     | None -> return! notFound ctx
 }
 

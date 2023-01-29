@@ -103,6 +103,15 @@ let editGeneralInfo (m : EditProfileForm) continents isHtmx csrf =
                 hr []
                 h4 [] [ txt "Visibility" ]
                 div [ _class "form-check" ] [
+                    let hid = ProfileVisibility.toString Hidden
+                    input [ _type "radio"; _id $"{nameof m.Visibility}Hidden"; _name (nameof m.Visibility)
+                            _class "form-check-input"; _value hid; if m.Visibility = hid then _checked ]
+                    label [ _class "form-check-label"; _for $"{nameof m.Visibility}Hidden" ] [
+                        strong [] [ txt "Hidden" ]
+                        txt " &ndash; do not show my employment profile to anyone else"
+                    ]
+                ]
+                div [ _class "form-check" ] [
                     let pvt = ProfileVisibility.toString Private
                     input [ _type "radio"; _id $"{nameof m.Visibility}Private"; _name (nameof m.Visibility)
                             _class "form-check-input"; _value pvt; if m.Visibility = pvt then _checked ]

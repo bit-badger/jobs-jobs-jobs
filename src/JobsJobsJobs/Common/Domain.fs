@@ -159,6 +159,8 @@ type OtherContact =
 
 /// Visibility options for an employment profile
 type ProfileVisibility =
+    /// Profile is only visible to the citizen to whom it belongs
+    | Hidden
     /// Profile is only visible to authenticated users
     | Private
     /// Anonymous information is visible to public users
@@ -172,6 +174,7 @@ module ProfileVisibility =
     /// Parse a string into a profile visibility
     let parse viz =
         match viz with
+        | "Hidden" -> Hidden
         | "Private" -> Private
         | "Anonymous" -> Anonymous
         | "Public" -> Public
@@ -180,6 +183,7 @@ module ProfileVisibility =
     /// Convert a profile visibility to its string representation
     let toString =
         function
+        | Hidden -> "Hidden"
         | Private -> "Private"
         | Anonymous -> "Anonymous"
         | Public -> "Public"
