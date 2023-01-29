@@ -651,13 +651,13 @@ module Help =
             p [] [
                 span [ _class "fst-italic" ] [
                     txt "On this page: "
-                    a [ _href "#creating" ] [ txt "Creating, Editing, and Sharing Your Employment Profile" ]
+                    a [ _href "#creating" ] [ txt "Creating and Editing Your Employment Profile" ]
                     txt " &bull; "; a [ _href "#searching" ] [ txt "Searching Employment Profiles" ]; txt " &bull; "
-                    a [ _href "#viewing" ] [ txt "Viewing and Printing Employment Profiles" ]
+                    a [ _href "#viewing" ] [ txt "Viewing, Printing, and Sharing Employment Profiles" ]
                 ]
             ]
 
-            h4 [ _id "creating"; mainHeading ] [ txt "Creating, Editing, and Sharing Your Employment Profile" ]
+            h4 [ _id "creating"; mainHeading ] [ txt "Creating and Editing Your Employment Profile" ]
             p [] [
                 txt "The employment profile is your r&eacute;sum&eacute;, visible to other citizens here. On your "
                 txt "dashboard, there we be either a "; span [ actionButton ] [ txt "Create Profile" ]; txt " or an "
@@ -665,7 +665,12 @@ module Help =
                 txt "established yet. There is also a "; span [ linkedPage ] [ txt "My Employment Profile" ]
                 txt " entry in the menu when you are logged on."
             ]
-            p [] [ txt "The employment profile itself is divided into three sections." ]
+            p [] [
+                txt "The employment profile itself is divided into three sections, and the main edit page serves as a "
+                txt "menu for them. If you have a profile established, there is a button labeled "
+                span [ actionButton ] [ txt "View Your Employment Profile" ]; txt " which will show you your profile "
+                txt "the way other users will see it."
+            ]
 
             h5 [] [ txt "General Information" ]
             p [] [
@@ -683,7 +688,7 @@ module Help =
                 li [] [
                     strong [] [ txt "Three Yes/No Questions" ]; txt ": If you are actively seeking work, check the "
                     txt "&ldquo;I am currently seeking employment&rdquo; box; if you are interested in full-time or "
-                    txt "remote work, check those boxes. Leaving them unchecked impmlies &ldquo;No&rdquo;."
+                    txt "remote work, check those boxes. Leaving them unchecked implies &ldquo;No&rdquo;."
                 ]
                 li [] [
                     strong [] [ txt "Professional Biography" ]; txt " (required): Your description of what type of job "
@@ -701,46 +706,86 @@ module Help =
                     txt "you want displayed at the bottom of your profile."
                 ]
                 li [] [
-                    strong [] [ txt "Visibility" ]; txt " (required): There are four visibility options for your "
-                    txt "profile. "; em [] [ txt "Hidden" ]; txt " will restrict your profile to yourself only; this "
-                    txt "can be used while you are initially building your profile, or to remove your profile from "
-                    txt "search results without deleting it. "; em [] [ txt "Private" ]; txt " will restrict your "
-                    txt "profile to logged-on users of this community. "; em [] [ txt "Anonymous"]; txt " will allow "
-                    txt "your continent, region, and skills to be displayed in public searches, without linking to "
-                    txt "your profile or disclosing any additional information."
+                    strong [] [ txt "Visibility" ]; txt " (required):"
+                    ul [] [
+                        li [] [
+                            em [] [ txt "Hidden" ]; txt " will restrict your profile to yourself only; this "
+                            txt "can be used while you are initially building your profile, or to remove your profile "
+                            txt "from search results without deleting it."
+                        ]
+                        li [] [
+                            em [] [ txt "Private" ]; txt " (the default) will restrict your profile to logged-on users "
+                            txt "of this community."
+                        ]
+                        li [] [
+                            em [] [ txt "Anonymous"]; txt " will allow your continent, region, and skills to be "
+                            txt "displayed in public searches, without linking to your profile or disclosing any "
+                            txt "additional information."
+                        ]
+                        li [] [
+                            em [] [ txt "Public" ]; txt " will allow public users to search, view, and print your "
+                            txt "profile, just as you or logged-on users can. It also allows you to share the link to "
+                            txt "your employment profile with the general public."
+                        ]
+                    ]
                 ]
             ]
+
+            h5 [] [ txt "Skills" ]
+            p [] [
+                txt "The "; span [ linkedPage ] [ txt "Skills" ]; txt " section allows you to record skills you have "
+                txt "obtained. Each skill has an associated &ldquo;Notes&rdquo; field, which can be used to document "
+                txt "your level of proficiency, years practiced, etc. Skills will be sorted alphabetically, and "
+                txt "displayed in the profile just below the &ldquo;Professional Biography&rdquo;."
+            ]
+            p [] [
+                txt "Note that if you select &ldquo;Anonymous&rdquo; visibility, what you enter in these fields will "
+                txt "visible in public search results. In this case, be sure to omit any identifying information from "
+                txt "either field."
+            ]
+
+            h5 [] [ txt "Employment History" ]
+            p [] [
+                txt "The "; span [ linkedPage ] [ txt "Employment History" ]; txt " section allows you to record a "
+                txt "chronological listing of your previous or current employment. This section is sorted descendingly "
+                txt "(most recent first) by end date, with ongoing jobs listed first. If any entries are present, "
+                txt "they will be displayed below the list of skills (or below the &ldquo;Professional "
+                txt "Biography&rdquo;, if no skills are present)."
+            ]
+            p [] [
+                txt "Each employment history entry consists of the following fields:"
+            ]
+            ul [] [
+                li [] [
+                    strong [] [ txt "Employer" ]; txt " (required): The name of the entity by which you were employed"
+                ]
+                li [] [
+                    strong [] [ txt "Title or Position" ]; txt " (required): The title or job position you held with "
+                    txt "the employer, usually the most recent or senior"
+                ]
+                li [] [
+                    strong [] [ txt "Start Date" ]; txt " (required): The date you began this period of employment. "
+                    txt "While you will see a full calendar, only the month and year will be displayed on the "
+                    txt "employment profile, so you may select any day within the month."
+                ]
+                li [] [
+                    strong [] [ txt "End Date" ]; txt ": The date you ended this period of employment. As with the "
+                    txt "&ldquo;Start Date&rdquo; field, it will only display month and year. Also, if you still have "
+                    txt "this job, leave this blank, and &ldquo;to Present&rdquo; will be displayed for the end date."
+                ]
+                li [] [
+                    strong [] [ txt "Description" ]; txt ": An optional description of your employment. This field "
+                    txt "supports Markdown, and will appear below the employer, position, and dates if present."
+                ]
+            ]
+
+            h4 [ _id "searching"; mainHeading ] [ txt "Searching Employment Profiles" ]
+            p [] [
+                txt "The employment profile search form will be slightly different depending on whether there is a "
+                txt "user logged on or not. There are "
+            ]
+
             // TODO: this is substantially different
-            // p [] [
-            //     The employment profile is your r&eacute;sum&eacute;, visible to other citizens here. It also allows you to specify
-            //     your real name, if you so desire; if that is filled in, that is how you will be identified in search results,
-            //     profile views, etc. If not, you will be identified as you are on your Mastodon instance; this system updates your
-            //     current display name each time you log on.
-            // ]
-
-            // h5 Completing Your Profile
-            // p.
-            //     The #[span.link My Employment Profile] page lets you establish or modify your employment profile; the
-            //     #[span.link Dashboard] page also has buttons that let you create, edit, and view your profile.
-            // ul
-            //     li.
-            //     The #[span.link Professional Biography] is the &ldquo;Objective&rdquo; part of a traditional r&eacute;sum&eacute;.
-            //     This section supports #[a(href="#markdown") Markdown], so you can include actual headings, formatting, etc.
-            //     li.
-            //     Skills are optional, but they are the place to record skills you have. Along with each skill, there is a
-            //     #[span.link Notes] field, which can be used to indicate the time you&rsquo;ve practiced a particular skill, the
-            //     mastery you have of that skill, etc. It is free-form text, so it is all up to you how you utilize the field.
-            //     li.
-            //     The #[span.link Experience] field is intended to capture a chronological or topical employment history. This
-            //     Markdown space can be used to capture chronological history, certifications, or any other information &ndash;
-            //     however you would like it presented to fellow citizens.
-            //     #[em.text-muted (If you would like a chronological job builder, reach out and let us know.)]
-            //     li.
-            //     If you check the #[span.link Allow my profile to be searched publicly] checkbox #[strong and] you are seeking
-            //     employment, your continent, region, and skills fields will be searchable and displayed to public users of the
-            //     site. They will not be tied to your Mastodon handle or real name; they are there to let people peek behind the
-            //     curtain a bit, and hopefully inspire them to join us.
-
             // h5 Viewing and Sharing Your Profile
             // p.
             //     Once your profile has been established, the #[span.link My Employment Profile] page will have a button at the bottom
@@ -766,14 +811,6 @@ module Help =
             //     As a validated user, you can also view others success stories. Clicking #[span.link Success Stories] in the sidebar
             //     will display a list of all the stories that have been recorded. If there is a story to be read, there will be a link
             //     to read it; if you submitted the story, there will also be an #[span.link Edit] link.
-
-            // h5 Publicly Available Information
-            // p.
-            //     The #[span.link Job Seekers] page for profile information will allow users to search for and display the continent,
-            //     region, skills, and notes of users who are seeking employment #[strong and] have opted in to their information being
-            //     publicly searchable. If you are a public user, this information is always the latest we have; check out the link at
-            //     the top of the search results for how you can learn more about these fine human resources!
-
         ]
         |> pageWithTitle "How It Works: Employment Profiles"
     
