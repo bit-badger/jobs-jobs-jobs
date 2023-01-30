@@ -60,14 +60,19 @@ let search (search : ProfileSearchForm) = backgroundTask {
             "p.data ->> 'continentId' = @continentId", [ "@continentId", Sql.string search.ContinentId ]
         if search.RemoteWork <> "" then
             "p.data ->> 'isRemote' = @remote", [ "@remote", jsonBool (search.RemoteWork = "yes") ]
-        if search.Skill <> "" then
-            "EXISTS (
-                SELECT 1 FROM jsonb_array_elements(p.data['skills']) x(elt)
-                    WHERE x ->> 'description' ILIKE @description)",
-            [ "@description", like search.Skill ]
-        if search.BioExperience <> "" then
-            "(p.data ->> 'biography' ILIKE @text OR p.data ->> 'experience' ILIKE @text)",
-            [ "@text", like search.BioExperience ]
+        if search.Text <> "" then
+            "   p.data ->> 'region'     ILIKE @text
+             OR p.data ->> 'biography'  ILIKE @text
+             OR p.data ->> 'experience' ILIKE @text
+             OR EXISTS (
+                    SELECT 1 FROM jsonb_array_elements(p.data['skills']) x(elt)
+                     WHERE x ->> 'description' ILIKE @text)
+             OR EXISTS (
+                    SELECT 1 FROM jsonb_array_elements(p.data['history']) x(elt)
+                     WHERE x ->> 'employer'    ILIKE @text
+                        OR x ->> 'position'    ILIKE @text
+                        OR x ->> 'description' ILIKE @text)",
+            [ "@text", like search.Text ]
     ]
     let! results =
         dataSource ()
@@ -75,7 +80,8 @@ let search (search : ProfileSearchForm) = backgroundTask {
             SELECT p.*, c.data AS cit_data
                 FROM {Table.Profile} p
                     INNER JOIN {Table.Citizen} c ON c.id = p.id
-                WHERE p.data ->> 'isLegacy' = 'false'
+                WHERE p.data ->> 'isLegacy'    = 'false'
+                  AND p.data ->> 'visibility' <> '{ProfileVisibility.toString Hidden}'
                 {searchSql searches}"
         |> Sql.parameters (searches |> List.collect snd)
         |> Sql.executeAsync (fun row ->

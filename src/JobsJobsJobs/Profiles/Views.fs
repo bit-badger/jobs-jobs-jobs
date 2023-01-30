@@ -438,8 +438,7 @@ let publicSearch (m : PublicSearchForm) continents (results : PublicSearchResult
 
 /// Logged-on search page
 let search (m : ProfileSearchForm) continents tz (results : ProfileSearchResult list option) =
-    pageWithTitle "Search Profiles" [
-        if Option.isNone results then
+    [   if Option.isNone results then
             p [] [
                 txt "Enter one or more criteria to filter results, or just click &ldquo;Search&rdquo; to list all "
                 txt "profiles."
@@ -448,10 +447,10 @@ let search (m : ProfileSearchForm) continents tz (results : ProfileSearchResult 
             form [ _class "container"; _method "GET"; _action "/profile/search" ] [
                 input [ _type "hidden"; _name "searched"; _value "true" ]
                 div [ _class "row" ] [
-                    div [ _class "col-12 col-sm-6 col-md-4 col-lg-3" ] [
+                    div [ _class "col-12 col-sm-6 col-md-4 col-lg-3 mb-3" ] [
                         continentList [] "ContinentId" continents (Some "Any") m.ContinentId false
                     ]
-                    div [ _class "col-12 col-sm-6 col-offset-md-2 col-lg-3 col-offset-lg-0" ] [
+                    div [ _class "col-12 col-sm-6 col-offset-md-2 col-lg-3 col-offset-lg-0 mb-3" ] [
                         label [ _class "jjj-label" ] [ txt "Seeking Remote Work?" ]; br []
                         div [ _class "form-check form-check-inline" ] [
                             input [ _type "radio"; _id "remoteNull"; _name (nameof m.RemoteWork); _value ""
@@ -469,13 +468,11 @@ let search (m : ProfileSearchForm) continents tz (results : ProfileSearchResult 
                             label [ _class "form-check-label"; _for "remoteNo" ] [ txt "No" ]
                         ]
                     ]
-                    div [ _class "col-12 col-sm-6 col-lg-3" ] [
-                        textBox [ _maxlength "1000" ] (nameof m.Skill) m.Skill "Skill" false
-                        div [ _class "form-text" ] [ txt "(free-form text)" ]
-                    ]
-                    div [ _class "col-12 col-sm-6 col-lg-3" ] [
-                        textBox [ _maxlength "1000" ] (nameof m.BioExperience) m.BioExperience "Bio / Experience" false
-                        div [ _class "form-text" ] [ txt "(free-form text)" ]
+                    div [ _class "col-12 col-sm-12 col-lg-6 mb-3" ] [
+                        textBox [ _maxlength "1000" ] (nameof m.Text) m.Text "Text Search" false
+                        div [ _class "form-text" ] [
+                            txt "searches Region, Professional Biography, Skills, Employment History, and Experience"
+                        ]
                     ]
                 ]
                 div [ _class "row" ] [
@@ -515,6 +512,8 @@ let search (m : ProfileSearchForm) continents tz (results : ProfileSearchResult 
             ]
         | None -> ()
     ]
+    |> pageWithTitle "Search Profiles"
+
 
 /// Display a profile
 let private displayProfile (it : ProfileForView) isPublic isPrint =

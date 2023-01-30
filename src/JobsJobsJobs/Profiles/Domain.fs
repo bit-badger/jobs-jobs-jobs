@@ -107,14 +107,11 @@ type ProfileSearchForm =
     {   /// Retrieve citizens from this continent
         ContinentId : string
         
-        /// Text for a search within a citizen's skills
-        Skill : string
-        
-        /// Text for a search with a citizen's professional biography and experience fields
-        BioExperience : string
-        
         /// Whether to retrieve citizens who do or do not want remote work
         RemoteWork : string
+        
+        /// Text for a search within a citizen's region, professional bio, skills, experience, and employment history
+        Text : string
     }
 
 

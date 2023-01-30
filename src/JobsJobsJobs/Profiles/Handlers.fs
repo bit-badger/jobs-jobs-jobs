@@ -76,7 +76,7 @@ let search : HttpHandler = requireUser >=> fun next ctx -> task {
     let form =
         match ctx.TryBindQueryString<ProfileSearchForm> () with
         | Ok f -> f
-        | Error _ -> { ContinentId = ""; RemoteWork = ""; Skill = ""; BioExperience = "" }
+        | Error _ -> { ContinentId = ""; RemoteWork = ""; Text = "" }
     let! results = task {
         if string ctx.Request.Query["searched"] = "true" then
             let! it = Data.search form
