@@ -353,163 +353,131 @@ let editHistory (history : EmploymentHistory list) idx csrf =
 
 // ~~~ PROFILE SEARCH ~~~ //
 
-/// The public search page
-let publicSearch (m : PublicSearchForm) continents (results : PublicSearchResult list option) =
-    pageWithTitle "People Seeking Work" [
-        if Option.isNone results then
-            p [] [
-                txt "Enter one or more criteria to filter results, or just click &ldquo;Search&rdquo; to list all "
-                txt "publicly searchable profiles."
-            ]
-        collapsePanel "Search Criteria" [
-            form [ _class "container"; _method "GET"; _action "/profile/seeking" ] [
-                input [ _type "hidden"; _name "searched"; _value "true" ]
-                div [ _class "row" ] [
-                    div [ _class "col-12 col-sm-6 col-md-4 col-lg-3" ] [
-                        continentList [] "ContinentId" continents (Some "Any") m.ContinentId false
+/// The search form
+let private searchForm (m : ProfileSearchForm) continents =
+    collapsePanel "Search Criteria" [
+        form [ _class "container"; _method "GET"; _action "/profile/search" ] [
+            input [ _type "hidden"; _name "searched"; _value "true" ]
+            div [ _class "row" ] [
+                div [ _class "col-12 col-sm-6 col-md-4 col-lg-3 mb-3" ] [
+                    continentList [] "ContinentId" continents (Some "Any") m.ContinentId false
+                ]
+                div [ _class "col-12 col-sm-6 col-offset-md-2 col-lg-3 col-offset-lg-0 mb-3" ] [
+                    label [ _class "jjj-label" ] [ txt "Seeking Remote Work?" ]; br []
+                    div [ _class "form-check form-check-inline" ] [
+                        input [ _type "radio"; _id "remoteNull"; _name (nameof m.RemoteWork); _value ""
+                                _class "form-check-input"; if m.RemoteWork = "" then _checked ]
+                        label [ _class "form-check-label"; _for "remoteNull" ] [ txt "No Selection" ]
                     ]
-                    div [ _class "col-12 col-sm-6 col-md-4 col-lg-3" ] [
-                        textBox [ _maxlength "1000" ] (nameof m.Region) m.Region "Region" false
-                        div [ _class "form-text" ] [ txt "(free-form text)" ]
+                    div [ _class "form-check form-check-inline" ] [
+                        input [ _type "radio"; _id "remoteYes"; _name (nameof m.RemoteWork); _value "yes"
+                                _class "form-check-input"; if m.RemoteWork = "yes" then _checked ]
+                        label [ _class "form-check-label"; _for "remoteYes" ] [ txt "Yes" ]
                     ]
-                    div [ _class "col-12 col-sm-6 col-offset-md-2 col-lg-3 col-offset-lg-0" ] [
-                        label [ _class "jjj-label" ] [ txt "Seeking Remote Work?" ]; br []
-                        div [ _class "form-check form-check-inline" ] [
-                            input [ _type "radio"; _id "remoteNull"; _name (nameof m.RemoteWork); _value ""
-                                    _class "form-check-input"; if m.RemoteWork = "" then _checked ]
-                            label [ _class "form-check-label"; _for "remoteNull" ] [ txt "No Selection" ]
-                        ]
-                        div [ _class "form-check form-check-inline" ] [
-                            input [ _type "radio"; _id "remoteYes"; _name (nameof m.RemoteWork); _value "yes"
-                                    _class "form-check-input"; if m.RemoteWork = "yes" then _checked ]
-                            label [ _class "form-check-label"; _for "remoteYes" ] [ txt "Yes" ]
-                        ]
-                        div [ _class "form-check form-check-inline" ] [
-                            input [ _type "radio"; _id "remoteNo"; _name (nameof m.RemoteWork); _value "no"
-                                    _class "form-check-input"; if m.RemoteWork = "no" then _checked ]
-                            label [ _class "form-check-label"; _for "remoteNo" ] [ txt "No" ]
-                        ]
-                    ]
-                    div [ _class "col-12 col-sm-6 col-lg-3" ] [
-                        textBox [ _maxlength "1000" ] (nameof m.Skill) m.Skill "Skill" false
-                        div [ _class "form-text" ] [ txt "(free-form text)" ]
+                    div [ _class "form-check form-check-inline" ] [
+                        input [ _type "radio"; _id "remoteNo"; _name (nameof m.RemoteWork); _value "no"
+                                _class "form-check-input"; if m.RemoteWork = "no" then _checked ]
+                        label [ _class "form-check-label"; _for "remoteNo" ] [ txt "No" ]
                     ]
                 ]
-                div [ _class "row" ] [
-                    div [ _class "col" ] [
-                        br []
-                        button [ _type "submit"; _class "btn btn-outline-primary" ] [ txt "Search" ]
+                div [ _class "col-12 col-sm-12 col-lg-6 mb-3" ] [
+                    textBox [ _maxlength "1000" ] (nameof m.Text) m.Text "Text Search" false
+                    div [ _class "form-text" ] [
+                        txt "searches Region, Professional Biography, Skills, Employment History, and Experience"
                     ]
+                ]
+            ]
+            div [ _class "row" ] [
+                div [ _class "col" ] [
+                    br []
+                    button [ _type "submit"; _class "btn btn-outline-primary" ] [ txt "Search" ]
                 ]
             ]
         ]
-        match results with
-        | Some r when List.isEmpty r -> p [ _class "pt-3" ] [ txt "No results found for the specified criteria" ]
-        | Some r ->
-            p [ _class "py-3" ] [
-                txt "These profiles match your search criteria. To learn more about these people, join the merry band "
-                txt "of human resources in the "
-                a [ _href "https://noagendashow.net"; _target "_blank"; _rel "noopener" ] [ txt "No Agenda" ]
-                txt " tribe!"
-            ]
-            table [ _class "table table-sm table-hover" ] [
-                thead [] [
-                    tr [] [
-                        th [ _scope "col" ] [ txt "Continent" ]
-                        th [ _scope "col"; _class "text-center" ] [ txt "Region" ]
-                        th [ _scope "col"; _class "text-center" ] [ txt "Remote?" ]
-                        th [ _scope "col"; _class "text-center" ] [ txt "Skills" ]
-                    ]
-                ]
-                r |> List.map (fun profile ->
-                    tr [] [
-                        td [] [ str profile.Continent ]
-                        td [] [ str profile.Region ]
-                        td [ _class "text-center" ] [ txt (yesOrNo profile.RemoteWork) ]
-                        profile.Skills
-                        |> List.collect (fun skill -> [ str skill; br [] ])
-                        |> td []
-                    ])
-                |> tbody []
-            ]
-        | None -> ()
     ]
 
+/// Display search results for public users
+let private publicResults (results : ProfileForView list) =
+    [   p [ _class "py-3" ] [
+            txt "These profiles match your search criteria. To learn more about these people, join the merry band "
+            txt "of human resources in the "
+            a [ _href "https://noagendashow.net"; _target "_blank"; _rel "noopener" ] [ txt "No Agenda" ]
+            txt " tribe!"
+        ]
+        table [ _class "table table-sm table-hover" ] [
+            thead [] [
+                tr [] [
+                    th [ _scope "col" ] [ txt "Profile" ]
+                    th [ _scope "col" ] [ txt "Continent / Region" ]
+                    th [ _scope "col"; _class "text-center" ] [ txt "Remote?" ]
+                    th [ _scope "col"; _class "text-center" ] [ txt "Skills" ]
+                ]
+            ]
+            results
+            |> List.map (fun it ->
+                tr [] [
+                    td [] [
+                        match it.Profile.Visibility with
+                        | Public -> a [ _href $"/profile/{CitizenId.toString it.Profile.Id}/view" ] [ txt "View" ]
+                        | _ -> txt "&nbsp;"
+                    ]
+                    td [] [ txt $"{it.Continent.Name} / "; str it.Profile.Region ]
+                    td [ _class "text-center" ] [ txt (yesOrNo it.Profile.IsRemote) ]
+                    match it.Profile.Visibility with
+                    | Public -> td [ _class "text-muted fst-italic" ] [ txt "See Profile" ]
+                    | _ when List.isEmpty it.Profile.Skills ->
+                        td [ _class "text-muted fst-italic" ] [ txt "None Listed" ]
+                    | _ ->
+                        it.Profile.Skills
+                        |> List.collect (fun skill ->
+                            let notes = match skill.Notes with Some n -> $" ({n})" | None -> ""
+                            [ str $"{skill.Description}{notes}"; br [] ])
+                        |> td []
+                ])
+            |> tbody []
+        ]
+    ]
+
+/// Display search results for logged-on users
+let private privateResults (results : ProfileForView list) tz =
+    // Bootstrap utility classes to only show at medium or above
+    let isWide = "d-none d-md-table-cell"
+    table [ _class "table table-sm table-hover pt-3" ] [
+        thead [] [
+            tr [] [
+                th [ _scope "col" ] [ txt "Profile" ]
+                th [ _scope "col" ] [ txt "Name" ]
+                th [ _scope "col"; _class $"{isWide} text-center" ] [ txt "Seeking?" ]
+                th [ _scope "col"; _class "text-center" ] [ txt "Remote?" ]
+                th [ _scope "col"; _class $"{isWide} text-center" ] [ txt "Full-Time?" ]
+                th [ _scope "col"; _class isWide ] [ txt "Last Updated" ]
+            ]
+        ]
+        results
+        |> List.map (fun it ->
+            tr [] [
+                td [] [ a [ _href $"/profile/{CitizenId.toString it.Profile.Id}/view" ] [ txt "View" ] ]
+                td [ if it.Profile.IsSeekingEmployment then _class "fw-bold" ] [ str (Citizen.name it.Citizen) ]
+                td [ _class $"{isWide} text-center" ] [ txt (yesOrNo it.Profile.IsSeekingEmployment) ]
+                td [ _class "text-center" ] [ txt (yesOrNo it.Profile.IsRemote) ]
+                td [ _class $"{isWide} text-center" ] [ txt (yesOrNo it.Profile.IsFullTime) ]
+                td [ _class isWide ] [ str (fullDate it.Profile.LastUpdatedOn tz) ]
+            ])
+        |> tbody []
+    ]
 
 /// Logged-on search page
-let search (m : ProfileSearchForm) continents tz (results : ProfileSearchResult list option) =
+let search m continents tz (results : ProfileForView list option) isPublic =
     [   if Option.isNone results then
             p [] [
                 txt "Enter one or more criteria to filter results, or just click &ldquo;Search&rdquo; to list all "
+                if isPublic then txt "publicly searchable or viewable "
                 txt "profiles."
             ]
-        collapsePanel "Search Criteria" [
-            form [ _class "container"; _method "GET"; _action "/profile/search" ] [
-                input [ _type "hidden"; _name "searched"; _value "true" ]
-                div [ _class "row" ] [
-                    div [ _class "col-12 col-sm-6 col-md-4 col-lg-3 mb-3" ] [
-                        continentList [] "ContinentId" continents (Some "Any") m.ContinentId false
-                    ]
-                    div [ _class "col-12 col-sm-6 col-offset-md-2 col-lg-3 col-offset-lg-0 mb-3" ] [
-                        label [ _class "jjj-label" ] [ txt "Seeking Remote Work?" ]; br []
-                        div [ _class "form-check form-check-inline" ] [
-                            input [ _type "radio"; _id "remoteNull"; _name (nameof m.RemoteWork); _value ""
-                                    _class "form-check-input"; if m.RemoteWork = "" then _checked ]
-                            label [ _class "form-check-label"; _for "remoteNull" ] [ txt "No Selection" ]
-                        ]
-                        div [ _class "form-check form-check-inline" ] [
-                            input [ _type "radio"; _id "remoteYes"; _name (nameof m.RemoteWork); _value "yes"
-                                    _class "form-check-input"; if m.RemoteWork = "yes" then _checked ]
-                            label [ _class "form-check-label"; _for "remoteYes" ] [ txt "Yes" ]
-                        ]
-                        div [ _class "form-check form-check-inline" ] [
-                            input [ _type "radio"; _id "remoteNo"; _name (nameof m.RemoteWork); _value "no"
-                                    _class "form-check-input"; if m.RemoteWork = "no" then _checked ]
-                            label [ _class "form-check-label"; _for "remoteNo" ] [ txt "No" ]
-                        ]
-                    ]
-                    div [ _class "col-12 col-sm-12 col-lg-6 mb-3" ] [
-                        textBox [ _maxlength "1000" ] (nameof m.Text) m.Text "Text Search" false
-                        div [ _class "form-text" ] [
-                            txt "searches Region, Professional Biography, Skills, Employment History, and Experience"
-                        ]
-                    ]
-                ]
-                div [ _class "row" ] [
-                    div [ _class "col" ] [
-                        br []
-                        button [ _type "submit"; _class "btn btn-outline-primary" ] [ txt "Search" ]
-                    ]
-                ]
-            ]
-        ]
+        searchForm m continents
         match results with
         | Some r when List.isEmpty r -> p [ _class "pt-3" ] [ txt "No results found for the specified criteria" ]
-        | Some r ->
-            // Bootstrap utility classes to only show at medium or above
-            let isWide = "d-none d-md-table-cell"
-            table [ _class "table table-sm table-hover pt-3" ] [
-                thead [] [
-                    tr [] [
-                        th [ _scope "col" ] [ txt "Profile" ]
-                        th [ _scope "col" ] [ txt "Name" ]
-                        th [ _scope "col"; _class $"{isWide} text-center" ] [ txt "Seeking?" ]
-                        th [ _scope "col"; _class "text-center" ] [ txt "Remote?" ]
-                        th [ _scope "col"; _class $"{isWide} text-center" ] [ txt "Full-Time?" ]
-                        th [ _scope "col"; _class isWide ] [ txt "Last Updated" ]
-                    ]
-                ]
-                r |> List.map (fun profile ->
-                    tr [] [
-                        td [] [ a [ _href $"/profile/{CitizenId.toString profile.CitizenId}/view" ] [ txt "View" ] ]
-                        td [ if profile.SeekingEmployment then _class "fw-bold" ] [ str profile.DisplayName ]
-                        td [ _class $"{isWide} text-center" ] [ txt (yesOrNo profile.SeekingEmployment) ]
-                        td [ _class "text-center" ] [ txt (yesOrNo profile.RemoteWork) ]
-                        td [ _class $"{isWide} text-center" ] [ txt (yesOrNo profile.FullTime) ]
-                        td [ _class isWide ] [ str (fullDate profile.LastUpdatedOn tz) ]
-                    ])
-                |> tbody []
-            ]
+        | Some r -> if isPublic then yield! publicResults r else privateResults r tz
         | None -> ()
     ]
     |> pageWithTitle "Search Profiles"

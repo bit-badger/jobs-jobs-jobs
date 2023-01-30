@@ -45,7 +45,7 @@ module DataConnection =
     let dataSource () =
         match theDataSource with
         | Some ds -> Sql.fromDataSource ds
-        | None -> invalidOp "Connection.setUp() must be called before accessing the database"
+        | None -> invalidOp "DataConnection.setUp() must be called before accessing the database"
     
     /// Create tables
     let private createTables () = backgroundTask {

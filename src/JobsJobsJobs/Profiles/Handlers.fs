@@ -71,35 +71,20 @@ let saveGeneralInfo : HttpHandler = requireUser >=> fun next ctx -> task {
 }
 
 // GET: /profile/search
-let search : HttpHandler = requireUser >=> fun next ctx -> task {
+let search : HttpHandler = fun next ctx -> task {
     let! continents = Common.Data.Continents.all ()
     let form =
         match ctx.TryBindQueryString<ProfileSearchForm> () with
         | Ok f -> f
         | Error _ -> { ContinentId = ""; RemoteWork = ""; Text = "" }
+    let isPublic = tryUser ctx |> Option.isNone
     let! results = task {
         if string ctx.Request.Query["searched"] = "true" then
-            let! it = Data.search form
+            let! it = Data.search form isPublic
             return Some it
         else return None
     }
-    return! Views.search form continents (timeZone ctx) results |> render "Profile Search" next ctx
-}
-
-// GET: /profile/seeking
-let seeking : HttpHandler = fun next ctx -> task {
-    let! continents = Common.Data.Continents.all ()
-    let form =
-        match ctx.TryBindQueryString<PublicSearchForm> () with
-        | Ok f -> f
-        | Error _ -> { ContinentId = ""; Region = ""; RemoteWork = ""; Skill = "" }
-    let! results = task {
-        if string ctx.Request.Query["searched"] = "true" then
-            let! it = Data.publicSearch form
-            return Some it
-        else return None
-    }
-    return! Views.publicSearch form continents results |> render "Profile Search" next ctx
+    return! Views.search form continents (timeZone ctx) results isPublic |> render "Profile Search" next ctx
 }
 
 // GET: /profile/edit/skills
@@ -262,7 +247,6 @@ let endpoints =
             route  "/edit/skills"       skills
             route  "/edit/skills/list"  skillList
             route  "/search"            search
-            route  "/seeking"           seeking
         ]
         POST [
             route  "/delete"                 delete

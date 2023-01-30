@@ -251,9 +251,9 @@ module Layout =
                 div [ _class "separator" ] []
                 navLink "/citizen/log-off" "logout-variant" "Log Off"
             else
-                navLink "/"                "home"              "Home"
-                navLink "/profile/seeking" "view-list-outline" "Job Seekers"
-                navLink "/citizen/log-on"  "login-variant"     "Log On"
+                navLink "/"               "home"              "Home"
+                navLink "/profile/search" "view-list-outline" "Employment Profiles"
+                navLink "/citizen/log-on" "login-variant"     "Log On"
             navLink "/how-it-works" "help-circle-outline" "How It Works"
         ]
 

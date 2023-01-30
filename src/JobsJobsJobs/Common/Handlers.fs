@@ -195,7 +195,7 @@ let isLocal = Regex """^/[^\/\\].*"""
 let redirectToGet (url : string) next ctx = task {
     do! saveSession ctx
     let action =
-        if Option.isSome (noneIfEmpty url) && isLocal.IsMatch url then
+        if Option.isSome (noneIfEmpty url) && (url = "/" || isLocal.IsMatch url) then
             if isHtmx ctx then withHxRedirect url else redirectTo false url
         else RequestErrors.BAD_REQUEST "Invalid redirect URL"
     return! action next ctx
