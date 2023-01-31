@@ -24,6 +24,10 @@ let howItWorks : HttpHandler =
 let accountHelp : HttpHandler =
     renderHandler "Accounts | How It Works" Views.Help.accounts
 
+// GET: /how-it-works/listings
+let listingHelp : HttpHandler =
+    renderHandler "Job Listings | How It Works" Views.Help.listings
+
 // GET: /how-it-works/profiles
 let profileHelp : HttpHandler =
     renderHandler "Employment Profiles | How It Works" Views.Help.profiles
@@ -42,6 +46,7 @@ let endpoints =
             GET_HEAD [
                 route ""          howItWorks
                 route "/accounts" accountHelp
+                route "/listings" listingHelp
                 route "/profiles" profileHelp
             ]
         ]

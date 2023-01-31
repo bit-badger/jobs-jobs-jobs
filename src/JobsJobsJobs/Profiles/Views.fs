@@ -45,7 +45,7 @@ let edit (profile : Profile) =
         if hasProfile then
             p [] [
                 a [ _class "btn btn-primary"; _href $"/profile/{CitizenId.toString profile.Id}/view" ] [
-                    i [ _class "mdi mdi-file-account-outline" ] []; txt "&nbsp; View Your User Profile"
+                    i [ _class "mdi mdi-file-account-outline" ] []; txt "&nbsp; View Your Employment Profile"
                 ]
             ]
             hr []

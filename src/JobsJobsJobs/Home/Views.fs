@@ -645,6 +645,76 @@ module Help =
         ]
         |> pageWithTitle "How It Works: Accounts"
 
+    /// Job listings help page
+    let listings =
+        [   backToIndex
+            p [] [
+                span [ _class "fst-italic" ] [
+                    txt "On this page: "
+                    a [ _href "#creating" ] [ txt "Creating a Job Listing" ]; txt " &bull; "
+                    a [ _href "#maintaining" ] [ txt "Maintaining" ]; txt " &bull; "
+                    a [ _href "#searching" ] [ txt "Searching" ]
+                ]
+            ]
+            
+            h4 [ _id "creating"; mainHeading ] [ txt "Creating a Job Listing" ]
+            p [] [
+                txt "The "; span [ linkedPage] [ txt "My Job Listings" ]; txt " page shows all of the job listings you "
+                txt "have created. To add a new one, click the "; span [ actionButton] [ txt "Add a New Listing" ]
+                txt " button. This page allows you to specify a title for the listing; the continent and region; "
+                txt "whether it is a remote opportunity; the date by which a job needs to be filled; and a full "
+                txt "description of the position, using "; a [ _href "/how-it-works#markdown" ] [ txt "Markdown" ]
+                txt ". Once you save the listing, it will be visible to the other citizens here."
+            ]
+
+            h4 [ _id "maintaining"; mainHeading ] [ txt "Maintaining and Sharing Your Job Listings" ]
+            p [] [
+                txt "The "; span [ linkedPage] [ txt "My Job Listings" ]; txt " page will show you all of your active "
+                txt "job listings just below the "; span [ actionButton] [ txt "Add a Job Listing" ]; txt " button. "
+                txt "Within this table, you can edit the listing, view it, or expire it (more on that below). The "
+                span [ linkedPage] [ txt "View" ]; txt " link will show you the job listing just as other users will "
+                txt "see it. You can share the link from your browser, and other Jobs, Jobs, Jobs users will be able "
+                txt "to log on and view it."
+            ]
+
+            h5 [] [ txt "Expire a Job Listing" ]
+            p [] [
+                txt "Once the job is filled, or the opportunity has passed, you will want to expire the listing; this "
+                txt "is what the "; span [ linkedPage] [ txt "Expire" ]; txt " link allows you to do. When you click "
+                txt "it, you will be presented with a single question &ndash; was the job filled due to its listing "
+                txt "here? If not, leave that blank, click the "; span [ actionButton] [ txt "Expire" ]; txt " button, "
+                txt "and the listing will be expired. If you click that box, though, another Markdown editor will "
+                txt "appear, where you can share a story of the experience. This is not required, but if you put text "
+                txt "there, it will be recorded as a Success Story, and other users will be able to read about your "
+                txt "success."
+            ]
+            p [] [
+                txt "Once you have at least one expired job listing, the "; span [ linkedPage] [ txt "My Job Listing" ]
+                txt " page will have a new section below your active listings, where you can see your expired ones. "
+                txt "You can still view the expired listing, and links that you may have shared will still pull up the "
+                txt "listing; there will be an &ldquo;expired&rdquo; label beside the title, so that whoever is "
+                txt "viewing it knows that they are reading about a job that is no longer available."
+            ]
+            
+            h4 [ _id "searching"; mainHeading] [ txt "Searching Job Listings" ]
+            p [] [
+                txt "Active job listings are found on the "; span [ linkedPage ] [ txt "Help Wanted!" ]; txt " page. "
+                txt "When you first bring up this page, you will see several criteria by which you can narrow your "
+                txt "results, though none are required. When you click the "; span [ actionButton ] [ txt "Search" ]
+                txt " button, you will see open job listings filtered by whatever criteria you specified. Each job "
+                txt "displays its title, its location, whether it is a remote opportunity, and (if specified) the date "
+                txt "by which the job needs to be filled."
+            ]
+            p [] [
+                txt "Clicking the "; span [ linkedPage] [ txt "View" ]; txt " link on a listing brings up the full "
+                txt "view page for a listing. This page displays all of the information from the search results, along "
+                txt "with the citizen who posted it, and the full details of the job. All the citizen&rsquo;s contact "
+                txt "information is displayed, and you can use any of these means to get in touch with them to inquire "
+                txt "about the position."
+            ]
+        ]
+        |> pageWithTitle "How It Works: Job Listings"
+    
     /// Profile help page
     let profiles =
         [   backToIndex
@@ -652,8 +722,9 @@ module Help =
                 span [ _class "fst-italic" ] [
                     txt "On this page: "
                     a [ _href "#creating" ] [ txt "Creating and Editing Your Employment Profile" ]
-                    txt " &bull; "; a [ _href "#searching" ] [ txt "Searching Employment Profiles" ]; txt " &bull; "
-                    a [ _href "#viewing" ] [ txt "Viewing, Printing, and Sharing Employment Profiles" ]
+                    txt " &bull; "; a [ _href "#searching" ] [ txt "Searching" ]; txt " &bull; "
+                    a [ _href "#viewing" ] [ txt "Viewing, Printing, and Sharing" ]; txt " &bull; "
+                    a [ _href "#finding" ] [ txt "Finding Employment" ]
                 ]
             ]
 
@@ -780,49 +851,106 @@ module Help =
             ]
 
             h4 [ _id "searching"; mainHeading ] [ txt "Searching Employment Profiles" ]
+            
+            h5 [] [ txt "Search Criteria" ]
             p [] [
-                txt "The employment profile search form will be slightly different depending on whether there is a "
-                txt "user logged on or not. There are "
+                txt "The employment profile search form is the same whether there is a user logged on or not; however, "
+                txt "the results are different. There are three sections to the search form. "
+                strong [] [ txt "Continent" ]; txt " will select profiles from the selected continent, while "
+                strong [] [ txt "Seeking Remote Work?" ]; txt " will select profiles based whether the citizen has "
+                txt "selected remote work in their profile. "; strong [] [ txt "Text Search" ]; txt " will search "
+                txt "several aspects of the employment profile for matches; it is case-insensitive and will match "
+                txt "partial words (ex. searching for &ldquo;ing&rdquo; will match &ldquo;working&rdquo;, "
+                txt "&ldquo;BEING&rdquo;, or &ldquo;singsong&rdquo;)."
+            ]
+            p [] [
+                txt "If more than one field has a value selected, profiles must match all of those selections to be "
+                txt "returned. Additionally, &ldquo;Hidden&rdquo; profiles will never be returned in searches, and "
+                txt "if no user is logged on, only &ldquo;Public&rdquo; and &ldquo;Anonymous&rdquo; profiles will be "
+                txt "considered as candidates for search results."
             ]
 
-            // TODO: this is substantially different
-            // h5 Viewing and Sharing Your Profile
-            // p.
-            //     Once your profile has been established, the #[span.link My Employment Profile] page will have a button at the bottom
-            //     that will let you view your profile the way all other validated users will be able to see it. (There will also be a
-            //     link to this page from the #[span.link Dashboard].) The URL of this page can be shared on any No Agenda-affiliated
-            //     Mastodon instance, if you would like to share it there. Just as with job listings, existing users will go straight
-            //     there, while others will get there once they authorize this application.
-            // p.
-            //     The name on employment profiles is a link to that user&rsquo;s profile on their Mastodon instance; from there,
-            //     others can communicate further with you using the tools Mastodon provides.
+            h5 [] [ txt "Search Results" ]
+            p [] [
+                txt "If the visibility of the profile allows you to view it, the first column will contain a "
+                span [ linkedPage ] [ txt "View" ]; txt " link. The remaining columns will display other attributes "
+                txt "of the employment profile. In public search results for profiles with &ldquo;Anonymous&rdquo; "
+                txt "visibility, the last column of the search results will show the citizen&rsquo;s skills."
+            ]
 
-            // h5 &ldquo;I Found a Job!&rdquo;
-            // p.
-            //     If your profile indicates that you are seeking employment, and you secure employment, that is something you will
-            //     want to update (and &ndash; congratulations!). From both the #[span.link Dashboard] and
-            //     #[span.link My Employment Profile] pages, you will see a link that encourages you to tell us about it. Click either
-            //     of those links, and you will be brought to a page that allows you to indicate whether your employment actually came
-            //     from someone finding your profile on Jobs, Jobs, Jobs, and gives you a place to write about the experience. These
-            //     stories are only viewable by validated users, so feel free to use as much (or as little) identifying information as
-            //     you&rsquo;d like. You can also submit this page with all the fields blank; in that case, your &ldquo;Seeking
-            //     Employment&rdquo; flag is cleared, and the blank story is recorded.
-            // p.
-            //     As a validated user, you can also view others success stories. Clicking #[span.link Success Stories] in the sidebar
-            //     will display a list of all the stories that have been recorded. If there is a story to be read, there will be a link
-            //     to read it; if you submitted the story, there will also be an #[span.link Edit] link.
+            h4 [ _id "viewing"; mainHeading ] [ txt "Viewing, Printing, and Sharing Employment Profiles" ]
+            p [] [
+                txt "An employment profile can be viewed via the "; span [ linkedPage ] [ txt "View" ]; txt " link in "
+                txt "search results, and logged-on users can find this view via the "
+                span [ actionButton ] [ txt "View Your Employment Profile" ]; txt " button on the "
+                span [ linkedPage ] [ txt "My Employment Profile" ]; txt " page. The profile view page displays the "
+                txt "following information in order:"
+            ]
+            ul [] [
+                li [] [
+                    txt "Display Name "; em [] [ txt "(with a tag if the citizen is actively seeking employment)" ]
+                ]
+                li [] [ txt "Continent / Region" ]
+                li [] [ txt "Contact Information "; em [] [ txt "(only public items if viewing publicly)" ] ]
+                li [] [ txt "Remote / Full-Time selections" ]
+                li [] [ txt "Professional Biography" ]
+                li [] [ txt "Skill list" ]
+                li [] [ txt "Employment History" ]
+                li [] [ txt "Experience" ]
+            ]
+            p [] [
+                txt "If a user is logged on and is viewing their own profile, there will be an "
+                span [ actionButton ] [ txt "Edit Your Profile" ]; txt " button at the bottom of the page. Either way, "
+                txt "there will also be a "; span [ actionButton ] [ txt "View Print Version" ]; txt " button that "
+                txt "will open a printable version in a new browser tab. This version is constructed the same way as "
+                txt "the previous page; however, contact information will be fully displayed rather than linked. There "
+                txt "will be no menu, header, or footer on the page, but there will be a "
+                span [ actionButton ] [ txt "Print" ]; txt " button at the bottom of the page, which will not show on "
+                txt "the actual printed version."
+            ]
+            p [] [
+                txt "Both the view and print versions may be shared by copying the full URL from the browser&rsquo;s "
+                txt "address bar. When using this URL, &ldquo;Public&rdquo; visibility profiles will display for "
+                txt "anyone, while &ldquo;Anonymous&rdquo; and &ldquo;Private&rdquo; visibility profiles will require "
+                txt "a citizen to log on first. &ldquo;Hidden&rdquo; visibility profiles will return a &ldquo;page not "
+                txt "found&rdquo; error for anyone other than the citizen to which they belong."
+            ]
+
+            h4 [ _id "finding"; mainHeading ] [ txt "Finding Employment" ]
+            p [] [
+                txt "If your profile indicates that you are seeking employment, and you secure employment, you will "
+                txt "want to update that (and &ndash; congratulations!). From both the "
+                span [ linkedPage ] [ txt "Dashboard" ]; txt " and the "
+                span [ linkedPage ] [ txt "General Information" ]; txt " Employment Profile pages, you will see a link "
+                txt "that encourages you to tell us about it. Click either of those links, and you will be brought to "
+                txt "a page that allows you to indicate whether your employment actually came from hosting your "
+                txt "employment profile on Jobs, Jobs, Jobs, and gives you a place to write about the experience. "
+                txt "These stories are only viewable by logged-on citizens, so feel free to use as much (or as little) "
+                txt "identifying information as you&rsquo;d like. You can also submit this page with all the fields "
+                txt "blank; in that case, your &ldquo;Seeking Employment&rdquo; flag is cleared, and the blank story "
+                txt "is recorded."
+            ]
+            p [] [
+                txt "As a validated user, you can also view others&rsquo; success stories from both their employment "
+                txt "profiles or job listings. Clicking "; span [ linkedPage ] [ txt "Success Stories" ]; txt " in the "
+                txt "sidebar will display a list of all the stories that have been recorded. If there is a story to be "
+                txt "read, there will be a link to read it; if you submitted the story, there will also be an "
+                span [ linkedPage ] [ txt "Edit" ]; txt " link."
+            ]
         ]
         |> pageWithTitle "How It Works: Employment Profiles"
     
     /// Online help / documentation index page
     let index =
-        pageWithTitle "How It Works" [
-            h5 [ _class "pb-3 text-muted fst-italic" ] [ txt "Last Updated January 22<sup>nd</sup>, 2023" ]
+        article [] [
+            h3 [ _class "mb-0" ] [ txt "How It Works" ]
+            h6 [ _class "mb-3 text-muted fst-italic" ] [ txt "Last Updated January 22<sup>nd</sup>, 2023" ]
+            
             p [ _class "fst-italic" ] [
-                txt "Show me how to "; a [ _href "#listing-search" ] [ txt "find a job" ]; txt " &bull; "
-                a [ _href "#listing" ] [ txt "list a job opportunity" ]; txt " &bull; "
-                a [ _href "#profile-search" ] [ txt "find people to hire" ]; txt " &bull; "
-                a [ _href "#profile" ] [ txt "create an employment profile" ]
+                txt "Show me how to "; a [ _href "/how-it-works/listings#searching" ] [ txt "find a job" ]
+                txt " &bull; "; a [ _href "/how-it-works/listings#creating" ] [ txt "list a job opportunity" ]
+                txt " &bull; "; a [ _href "/how-it-works/profiles#searching" ] [ txt "find people to hire" ]
+                txt " &bull; "; a [ _href "/how-it-works/profiles#creating" ] [ txt "create an employment profile" ]
             ]
 
             p [] [
@@ -830,77 +958,15 @@ module Help =
                 txt "How to sign up as a user, get logged on, update your information, or remove your account"
             ]
             p [] [
+                strong [] [ a [ _href "/how-it-works/listings" ] [ txt "Job Listings" ] ]; br []
+                txt "Creating, maintaining, and sharing job opportunities with fellow citizens"
+            ]
+            p [] [
                 strong [] [ a [ _href "/how-it-works/profiles" ] [ txt "Employment Profiles" ] ]; br []
                 txt "Creating, updating, and sharing your own employment profile; and searching, viewing, and printing "
                 txt "profiles for yourself or your fellow citizens"
             ]
 
-            h4 [ _id "listing-search"; mainHeading] [ txt "Find a Job Listing" ]
-            p [] [
-                txt "Active job listings are found on the "; span [ linkedPage ] [ txt "Help Wanted!" ]; txt " page. When "
-                txt "you first bring up this page, you will see several criteria by which you can narrow your results, "
-                txt "though none are required. When you click the "; span [ actionButton ] [ txt "Search" ]; txt " button, "
-                txt "you will see open job listings filtered by whatever criteria you specified. Each job  displays its "
-                txt "title, its location, whether it is a remote opportunity, and (if specified) the date by which the job "
-                txt "needs to be filled."
-            ]
-            p [] [
-                txt "Clicking the "; span [ linkedPage] [ txt "View" ]; txt " link on a listing brings up the full view "
-                txt "page for a listing. This page displays all of the information from the search results, along with the "
-                txt "citizen who posted it, and the full details of the job. All the citizen&rsquo;s contact information "
-                txt "is displayed, and you can use any of these means to get in touch with them to inquire about the "
-                txt "position."
-            ]
-
-            h4 [ _id "listing"; mainHeading ] [ txt "Job Listings" ]
-            h5 [] [ txt "Create a Job Listing" ]
-            p [] [
-                txt "The "; span [ linkedPage] [ txt "My Job Listings" ]; txt " page shows all of the job listings you "
-                txt "have created. To add a new one, click the "; span [ actionButton] [ txt "Add a New Listing" ]
-                txt " button. This page allows you to specify a title for the listing; the continent and region; whether "
-                txt "it is a remote opportunity; the date by which a job needs to be filled; and a full description of the "
-                txt "position, using "; a [ _href "#markdown" ] [ txt "Markdown" ]; txt ". Once you save the listing, it "
-                txt "will be visible to the other citizens here."
-            ]
-
-            h5 [] [ txt "Maintain and Share Your Job Listings" ]
-            p [] [
-                txt "The "; span [ linkedPage] [ txt "My Job Listings" ]; txt " page will show you all of your active job "
-                txt "listings just below the "; span [ actionButton] [ txt "Add a Job Listing" ]; txt " button. Within "
-                txt "this table, you can edit the listing, view it, or expire it (more on that below). The "
-                span [ linkedPage] [ txt "View" ]; txt " link will show you the job listing just as other users will see "
-                txt "it. You can share the link from your browser, and Jobs, Jobs, Jobs users will be able to log on and "
-                txt "view it."
-            ]
-
-            h5 [] [ txt "Expire a Job Listing" ]
-            p [] [
-                txt "Once the job is filled, or the opportunity has passed, you will want to expire the listing; this is "
-                txt "what the "; span [ linkedPage] [ txt "Expire" ]; txt " link allows you to do. When you click it, you "
-                txt "will be presented with a single question &ndash; was the job filled due to its listing here? If not, "
-                txt "leave that blank, click the "; span [ actionButton] [ txt "Expire" ]; txt " button, and the listing "
-                txt "will be expired. If you click that box, though, another Markdown editor will appear, where you can "
-                txt "share a story of the experience. This is not required, but if you put text there, it will be recorded "
-                txt "as a Success Story, and other users will be able to read about your success."
-            ]
-            p [] [
-                txt "Once you have at least one expired job listing, the "; span [ linkedPage] [ txt "My Job Listing" ]
-                txt " page will have a new section below your active listings, where you can see your expired ones. You "
-                txt "can still view the expired listing, and links that you may have shared will still pull up the "
-                txt "listing; there will be an &ldquo;expired&rdquo; label beside the title, so that whoever is viewing it "
-                txt "knows that they are reading about a job that is no longer available."
-            ]
-
-            h4 [ _id "profile-search"; mainHeading ] [ txt "Searching Profiles" ]
-            p [] [
-                txt "The "; span [ linkedPage] [ txt "Employment Profiles"]; txt " link at the side allows you to search "
-                txt "for profiles by continent, the citizen&rsquo;s desire for remote work, a skill, or any text in their "
-                txt "professional biography and experience. If you find someone with whom you&rsquo;d like to discuss "
-                txt "potential opportunities, their contact information is displayed below their name at the top of the "
-                txt "profile."
-            ]
-
-            h4 [ _id "profile"; mainHeading ] [ txt "Your Employment Profile" ]
             h4 [ _id "markdown"; mainHeading ] [ txt "A Bit about Markdown" ]
             p [] [
                 txt "Markdown is a plain-text way to specify formatting quite similar to that provided by word processors. "
