@@ -204,6 +204,6 @@ let trySecurityByToken token = backgroundTask {
 let legacy () = backgroundTask {
     return!
         dataSource ()
-        |> Sql.query $"SELECT * FROM {Table.Citizen} WHERE c.data ->> 'isLegacy' = 'true'"
+        |> Sql.query $"SELECT * FROM {Table.Citizen} WHERE data ->> 'isLegacy' = 'true'"
         |> Sql.executeAsync toDocument<Citizen>
 }
