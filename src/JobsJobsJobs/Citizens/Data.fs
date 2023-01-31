@@ -197,3 +197,13 @@ let trySecurityByToken token = backgroundTask {
         |> Sql.executeAsync toDocument<SecurityInfo>
     return List.tryHead results
 }
+
+// ~~~ LEGACY MIGRATION ~~~ //
+
+/// Get all legacy citizens
+let legacy () = backgroundTask {
+    return!
+        dataSource ()
+        |> Sql.query $"SELECT * FROM {Table.Citizen} WHERE c.data ->> 'isLegacy' = 'true'"
+        |> Sql.executeAsync toDocument<Citizen>
+}

@@ -393,3 +393,23 @@ let resetPassword (m : ResetPasswordForm) isHtmx csrf =
             jsOnLoad $"jjj.citizen.validatePasswords('{nameof m.Password}', 'ConfirmPassword', true)" isHtmx
         ]
     ]
+
+// ~~~ LEGACY MIGRATION ~~~ //
+
+let listLegacy (m : Citizen list) =
+    [   table [ _class "table table-sm table-hover" ] [
+            thead [] [
+                tr [] [
+                    th [ _scope "col" ] [ txt "Action" ]
+                    th [ _scope "col" ] [ txt "NAS Profile" ]
+                ]
+            ]
+            m |> List.map (fun it ->
+                tr [] [
+                    td [] [ a [ _href $"/citizen/legacy/{CitizenId.toString it.Id}/associate" ] [ txt "Migrate" ] ]
+                    td [] [ str it.Email ]
+                ])
+            |> tbody []
+        ]
+    ]
+    |> pageWithTitle "Migrate Legacy Account"

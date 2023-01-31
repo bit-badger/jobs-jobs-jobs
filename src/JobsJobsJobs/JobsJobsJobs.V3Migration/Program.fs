@@ -93,7 +93,7 @@ task {
     let! _ =
         pgConn
         |> Sql.executeTransactionAsync [
-            $"INSERT INTO jjj.{Table.SecurityInfo} VALUES (@id, @data)",
+            $"INSERT INTO {Table.SecurityInfo} VALUES (@id, @data)",
             newCitizens |> List.map (fun c ->
                 let info = { SecurityInfo.empty with Id = c.Id; AccountLocked = true }
                 [   "@id",   Sql.string (CitizenId.toString c.Id)
@@ -114,7 +114,7 @@ task {
     let! _ =
         pgConn
         |> Sql.executeTransactionAsync [
-            "INSERT INTO jjj.continent VALUES (@id, @data)",
+            $"INSERT INTO {Table.Continent} VALUES (@id, @data)",
             newContinents |> List.map (fun c -> [
                 "@id",   Sql.string (ContinentId.toString c.Id)
                 "@data", Sql.jsonb (JsonSerializer.Serialize (c, Json.options))
@@ -204,10 +204,10 @@ task {
     let! deleted =
         pgConn
         |> Sql.query $"
-            DELETE FROM jjj.{Table.Citizen}
-             WHERE id NOT IN (SELECT id FROM jjj.{Table.Profile})
-               AND id NOT IN (SELECT DISTINCT data->>'citizenId' FROM jjj.{Table.Listing})
-               AND id NOT IN (SELECT DISTINCT data->>'citizenId' FROM jjj.{Table.Success})"
+            DELETE FROM {Table.Citizen}
+             WHERE id NOT IN (SELECT id FROM {Table.Profile})
+               AND id NOT IN (SELECT DISTINCT data ->> 'citizenId' FROM {Table.Listing})
+               AND id NOT IN (SELECT DISTINCT data ->> 'citizenId' FROM {Table.Success})"
         |> Sql.executeNonQueryAsync
     printfn $"** Deleted {deleted} citizens who had no profile, listings, or success stories"
     

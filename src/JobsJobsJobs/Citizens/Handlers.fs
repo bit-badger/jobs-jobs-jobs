@@ -59,6 +59,15 @@ module private Auth =
             | PasswordVerificationResult.SuccessRehashNeeded -> Some true
             | _ -> None
 
+    /// Require an administrative user (used for legacy migration endpoints)
+    let requireAdmin : HttpHandler = requireUser >=> fun next ctx -> task {
+        // let adminUser = (config ctx)["AdminUser"]
+        // if adminUser = defaultArg (tryUser ctx) "" then return! next ctx
+        // else return! Error.notAuthorized next ctx
+        // TODO: uncomment the above, remove the line below
+        return! next ctx
+    }
+
 
 // GET: /citizen/account
 let account : HttpHandler = fun next ctx -> task {
@@ -324,6 +333,13 @@ let saveAccount : HttpHandler = requireUser >=> validateCsrf >=> fun next ctx ->
 let soLong : HttpHandler = requireUser >=> fun next ctx ->
     Views.deletionOptions (csrf ctx) |> render "Account Deletion Options" next ctx
 
+// ~~~ LEGACY MIGRATION ~~~ //
+
+// GET: /citizen/legacy/list
+let listLegacy : HttpHandler = Auth.requireAdmin >=> fun next ctx -> task {
+    let! users = Data.legacy ()
+    return! Views.listLegacy users |> render "Migrate Legacy Account" next ctx
+}
 
 open Giraffe.EndpointRouting
 
@@ -342,6 +358,7 @@ let endpoints =
             route  "/register"          register
             routef "/reset-password/%s" resetPassword
             route  "/so-long"           soLong
+            route  "/legacy/list"       listLegacy
         ]
         POST [
             route "/delete"          delete
