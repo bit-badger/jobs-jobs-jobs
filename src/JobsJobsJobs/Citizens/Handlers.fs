@@ -335,10 +335,22 @@ let soLong : HttpHandler = requireUser >=> fun next ctx ->
 
 // ~~~ LEGACY MIGRATION ~~~ //
 
-// GET: /citizen/legacy/list
-let listLegacy : HttpHandler = Auth.requireAdmin >=> fun next ctx -> task {
-    let! users = Data.legacy ()
-    return! Views.listLegacy users |> render "Migrate Legacy Account" next ctx
+// GET: /citizen/legacy
+let legacy : HttpHandler = Auth.requireAdmin >=> fun next ctx -> task {
+    let! currentUsers = Data.current ()
+    let! legacyUsers  = Data.legacy ()
+    return! Views.legacy currentUsers legacyUsers (csrf ctx) |> render "Migrate Legacy Account" next ctx
+}
+
+// POST: /citizen/legacy/migrate
+let migrateLegacy : HttpHandler = Auth.requireAdmin >=> validateCsrf >=> fun next ctx -> task {
+    let! form      = ctx.BindFormAsync<LegacyMigrationForm> ()
+    let  currentId = CitizenId.ofString form.Id
+    let  legacyId  = CitizenId.ofString form.LegacyId
+    match! Data.migrateLegacy currentId legacyId with
+    | Ok _ -> do! addSuccess "Migration successful" ctx
+    | Error err -> do! addError err ctx
+    return! redirectToGet "/citizen/legacy" next ctx
 }
 
 open Giraffe.EndpointRouting
@@ -358,7 +370,7 @@ let endpoints =
             route  "/register"          register
             routef "/reset-password/%s" resetPassword
             route  "/so-long"           soLong
-            route  "/legacy/list"       listLegacy
+            route  "/legacy"            legacy
         ]
         POST [
             route "/delete"          delete
@@ -367,5 +379,6 @@ let endpoints =
             route "/register"        doRegistration
             route "/reset-password"  doResetPassword
             route "/save-account"    saveAccount
+            route "/legacy/migrate"  migrateLegacy
         ]
     ]

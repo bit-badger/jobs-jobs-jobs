@@ -204,6 +204,71 @@ let trySecurityByToken token = backgroundTask {
 let legacy () = backgroundTask {
     return!
         dataSource ()
-        |> Sql.query $"SELECT * FROM {Table.Citizen} WHERE data ->> 'isLegacy' = 'true'"
+        |> Sql.query $"SELECT * FROM {Table.Citizen} WHERE data ->> 'isLegacy' = 'true' ORDER BY data ->> 'firstName'"
         |> Sql.executeAsync toDocument<Citizen>
+}
+
+/// Get all current citizens with verified accounts but without a profile
+let current () = backgroundTask {
+    return!
+        dataSource ()
+        |> Sql.query $"
+            SELECT c.*
+              FROM {Table.Citizen} c
+                   INNER JOIN {Table.SecurityInfo} si ON si.id = c.id
+             WHERE c.data  ->> 'isLegacy'      = 'false'
+               AND si.data ->> 'accountLocked' = 'false'
+               AND NOT EXISTS (SELECT 1 FROM {Table.Profile} p WHERE p.id = c.id)"
+        |> Sql.executeAsync toDocument<Citizen>
+}
+
+let migrateLegacy currentId legacyId = backgroundTask {
+    let  curId     = CitizenId.toString currentId
+    let  legId     = CitizenId.toString legacyId
+    let  connProps = dataSource ()
+    use  conn      = Sql.createConnection connProps
+    use! txn       = conn.BeginTransactionAsync ()
+    try
+        // Add legacy data to current user
+        let! _ =
+            conn
+            |> Sql.existingConnection
+            |> Sql.query $"INSERT INTO {Table.Profile} SELECT @id, data FROM {Table.Profile} WHERE id = @oldId"
+            |> Sql.parameters [ "@id", Sql.string curId; "@oldId", Sql.string legId ]
+            |> Sql.executeNonQueryAsync
+        let! listings =
+            conn
+            |> Sql.existingConnection
+            |> Sql.query $"SELECT * FROM {Table.Listing} WHERE data ->> 'citizenId' = @oldId"
+            |> Sql.parameters [ "@oldId", Sql.string legId ]
+            |> Sql.executeAsync toDocument<Listing>
+        for listing in listings do
+            let newListing = { listing with Id = ListingId.create (); CitizenId = currentId }
+            do! saveDocument
+                    Table.Listing (ListingId.toString newListing.Id) (Sql.existingConnection conn) (mkDoc newListing)
+        let! successes =
+            conn
+            |> Sql.existingConnection
+            |> Sql.query $"SELECT * FROM {Table.Success} WHERE data ->> 'citizenId' = @oldId"
+            |> Sql.parameters [ "@oldId", Sql.string legId ]
+            |> Sql.executeAsync toDocument<Success>
+        for success in successes do
+            let newSuccess = { success with Id = SuccessId.create (); CitizenId = currentId }
+            do! saveDocument
+                    Table.Success (SuccessId.toString newSuccess.Id) (Sql.existingConnection conn) (mkDoc newSuccess)
+        // Delete legacy data
+        let! _ =
+            conn
+            |> Sql.existingConnection
+            |> Sql.query $"
+                DELETE FROM {Table.Success} WHERE data ->> 'citizenId' = @oldId;
+                DELETE FROM {Table.Listing} WHERE data ->> 'citizenId' = @oldId;
+                DELETE FROM {Table.Citizen} WHERE id = @oldId"
+            |> Sql.parameters [ "@oldId", Sql.string legId ]
+            |> Sql.executeNonQueryAsync
+        do! txn.CommitAsync ()
+        return Ok ""
+    with :? Npgsql.PostgresException as ex ->
+        do! txn.RollbackAsync ()
+        return Error ex.MessageText
 }

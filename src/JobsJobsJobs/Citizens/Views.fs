@@ -396,20 +396,49 @@ let resetPassword (m : ResetPasswordForm) isHtmx csrf =
 
 // ~~~ LEGACY MIGRATION ~~~ //
 
-let listLegacy (m : Citizen list) =
-    [   table [ _class "table table-sm table-hover" ] [
+let legacy (current : Citizen list) (legacy : Citizen list) csrf =
+    form [ _class "container"; _hxPost "/citizen/legacy/migrate" ] [
+        antiForgery csrf
+        let canProcess = not (List.isEmpty current)
+        div [ _class "row" ] [
+            if canProcess then
+                div [ _class "col-12 col-lg-6 col-xxl-4" ] [
+                    div [ _class "form-floating" ] [
+                        select [ _id "current"; _name "Id"; _class "form-control" ] [
+                            option [ _value "" ] [ txt "&ndash; Select &ndash;" ]
+                            yield!
+                                current
+                                |> List.sortBy Citizen.name
+                                |> List.map (fun it ->
+                                    option [ _value (CitizenId.toString it.Id) ] [
+                                        str (Citizen.name it); txt " ("; str it.Email; txt ")"
+                                    ])
+                        ]
+                        label [ _for "current" ] [ txt "Current User" ]
+                    ]
+                ]
+            else p [] [ txt "There are no current accounts to which legacy accounts can be migrated" ]
+        ]
+        table [ _class "table table-sm table-hover" ] [
             thead [] [
                 tr [] [
-                    th [ _scope "col" ] [ txt "Action" ]
+                    th [ _scope "col" ] [ txt "Select" ]
                     th [ _scope "col" ] [ txt "NAS Profile" ]
                 ]
             ]
-            m |> List.map (fun it ->
+            legacy |> List.map (fun it ->
+                let theId = CitizenId.toString it.Id
                 tr [] [
-                    td [] [ a [ _href $"/citizen/legacy/{CitizenId.toString it.Id}/associate" ] [ txt "Migrate" ] ]
-                    td [] [ str it.Email ]
+                    td [] [
+                        if canProcess then
+                            input [ _type "radio"; _id $"legacy_{theId}"; _name "LegacyId"; _value theId ]
+                        else txt "&nbsp;"
+                    ]
+                    td [] [ label [ _for $"legacy_{theId}" ] [ str it.Email ] ]
                 ])
             |> tbody []
         ]
+        submitButton "save" "Migrate Account"
     ]
+    |> List.singleton
     |> pageWithTitle "Migrate Legacy Account"
