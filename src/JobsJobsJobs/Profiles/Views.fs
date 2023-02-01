@@ -354,8 +354,8 @@ let editHistory (history : EmploymentHistory list) idx csrf =
 // ~~~ PROFILE SEARCH ~~~ //
 
 /// The search form
-let private searchForm (m : ProfileSearchForm) continents =
-    collapsePanel "Search Criteria" [
+let private searchForm (m : ProfileSearchForm) continents isShown =
+    collapsePanel "Search Criteria" isShown [
         form [ _class "container"; _method "GET"; _action "/profile/search" ] [
             input [ _type "hidden"; _name "searched"; _value "true" ]
             div [ _class "row" ] [
@@ -474,7 +474,7 @@ let search m continents tz (results : ProfileForView list option) isPublic =
                 if isPublic then txt "publicly searchable or viewable "
                 txt "profiles."
             ]
-        searchForm m continents
+        searchForm m continents (List.isEmpty (defaultArg results []))
         match results with
         | Some r when List.isEmpty r -> p [ _class "pt-3" ] [ txt "No results found for the specified criteria" ]
         | Some r -> if isPublic then yield! publicResults r else privateResults r tz

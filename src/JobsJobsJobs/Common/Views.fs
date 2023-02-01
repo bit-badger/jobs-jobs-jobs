@@ -100,16 +100,16 @@ let markdownEditor attrs name value editorLabel isHtmx =
     ]
 
 /// Wrap content in a collapsing panel
-let collapsePanel header content =
+let collapsePanel header isShown content =
+    let showClass = if isShown then " show" else ""
     div [ _class "card" ] [
-        div [ _class "card-body" ] [
-            h6 [ _class "card-title" ] [
-                // TODO: toggle collapse
-                //a [ _href "#"; _class "{ 'cp-c': collapsed, 'cp-o': !collapsed }"; @click.prevent="toggle">{{headerText}} ]
-                txt header
+        div [ _class "card-header" ] [
+            h6 [ _class "mb-0 card-title" ] [
+                a [ _href "#jjjCollapse"; _data "bs-toggle" "collapse"; _roleButton; _ariaControls "#jjjCollapse"
+                    _ariaExpanded (isShown.ToString().ToLowerInvariant ()) ] [ txt header ]
             ]
-            yield! content
         ]
+        div [ _id "jjjCollapse"; _class $"card-body collapse{showClass}" ] content
     ]
 
 /// "Yes" or "No" based on a boolean value
@@ -242,7 +242,7 @@ module Layout =
             if ctx.IsLoggedOn then
                 navLink "/citizen/dashboard" "view-dashboard-variant"             "Dashboard"
                 navLink "/help-wanted"       "newspaper-variant-multiple-outline" "Help Wanted!"
-                navLink "/profile/search"    "view-list-outline"                  "Employment Profiles"
+                navLink "/profile/search"    "view-list-outline"                  "Job Seekers"
                 navLink "/success-stories"   "thumb-up"                           "Success Stories"
                 div [ _class "separator" ] []
                 navLink "/citizen/account" "account-edit" "My Account"
@@ -252,7 +252,7 @@ module Layout =
                 navLink "/citizen/log-off" "logout-variant" "Log Off"
             else
                 navLink "/"               "home"              "Home"
-                navLink "/profile/search" "view-list-outline" "Employment Profiles"
+                navLink "/profile/search" "view-list-outline" "Job Seekers"
                 navLink "/citizen/log-on" "login-variant"     "Log On"
             navLink "/how-it-works" "help-circle-outline" "How It Works"
         ]

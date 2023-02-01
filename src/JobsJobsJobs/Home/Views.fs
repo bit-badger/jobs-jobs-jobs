@@ -854,14 +854,15 @@ module Help =
             
             h5 [] [ txt "Search Criteria" ]
             p [] [
-                txt "The employment profile search form is the same whether there is a user logged on or not; however, "
-                txt "the results are different. There are three sections to the search form. "
-                strong [] [ txt "Continent" ]; txt " will select profiles from the selected continent, while "
-                strong [] [ txt "Seeking Remote Work?" ]; txt " will select profiles based whether the citizen has "
-                txt "selected remote work in their profile. "; strong [] [ txt "Text Search" ]; txt " will search "
-                txt "several aspects of the employment profile for matches; it is case-insensitive and will match "
-                txt "using English stemming rules (ex. searching for &ldquo;force&rdquo; will match words like "
-                txt "&ldquo;force&rdquo;, &ldquo;forced&rdquo;, or &ldquo;forcing&rdquo;)."
+                txt "The "; span [ linkedPage ] [ txt "Job Seekers" ]; txt " page and its search form is the same "
+                txt "whether there is a user logged on or not; however, the results are different. There are three "
+                txt "sections to the search form. "; strong [] [ txt "Continent" ]; txt " will select profiles from "
+                txt "the selected continent, while "; strong [] [ txt "Seeking Remote Work?" ]; txt " will select "
+                txt "profiles based whether the citizen has selected remote work in their profile. "
+                strong [] [ txt "Text Search" ]; txt " will search several aspects of the employment profile for "
+                txt "matches; it is case-insensitive and will match using English stemming rules (ex. searching for "
+                txt "&ldquo;force&rdquo; will match words like &ldquo;force&rdquo;, &ldquo;forced&rdquo;, or "
+                txt "&ldquo;forcing&rdquo;)."
             ]
             p [] [
                 txt "If more than one field has a value selected, profiles must match all of those selections to be "

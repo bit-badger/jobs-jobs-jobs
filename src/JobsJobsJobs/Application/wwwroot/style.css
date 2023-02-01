@@ -228,6 +228,13 @@ span.jjj-audio-clip:hover {
   border: solid 1px lightgray;
   border-radius: .5rem;
 }
+/* Collapse Panel styling */
+a[data-bs-toggle] {
+  color: var(--bs-body-color);
+}
+a[data-bs-toggle]:hover {
+  text-decoration: none;
+}
 /* Footer styling */
 footer {
   display: flex;
