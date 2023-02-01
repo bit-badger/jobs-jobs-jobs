@@ -223,34 +223,39 @@ let current () = backgroundTask {
 }
 
 let migrateLegacy currentId legacyId = backgroundTask {
-    let  curId     = CitizenId.toString currentId
-    let  legId     = CitizenId.toString legacyId
+    let  oldId     = CitizenId.toString legacyId
     let  connProps = dataSource ()
     use  conn      = Sql.createConnection connProps
     use! txn       = conn.BeginTransactionAsync ()
     try
         // Add legacy data to current user
-        let! _ =
+        let! profiles =
             conn
             |> Sql.existingConnection
-            |> Sql.query $"INSERT INTO {Table.Profile} SELECT @id, data FROM {Table.Profile} WHERE id = @oldId"
-            |> Sql.parameters [ "@id", Sql.string curId; "@oldId", Sql.string legId ]
-            |> Sql.executeNonQueryAsync
+            |> Sql.query $"SELECT * FROM {Table.Profile} WHERE id = @oldId"
+            |> Sql.parameters [ "@oldId", Sql.string oldId ]
+            |> Sql.executeAsync toDocument<Profile>
+        match List.tryHead profiles with
+        | Some profile ->
+            do! saveDocument
+                    Table.Profile (CitizenId.toString currentId) (Sql.existingConnection conn)
+                    (mkDoc { profile with Id = currentId; IsLegacy = false })
+        | None -> ()
         let! listings =
             conn
             |> Sql.existingConnection
             |> Sql.query $"SELECT * FROM {Table.Listing} WHERE data ->> 'citizenId' = @oldId"
-            |> Sql.parameters [ "@oldId", Sql.string legId ]
+            |> Sql.parameters [ "@oldId", Sql.string oldId ]
             |> Sql.executeAsync toDocument<Listing>
         for listing in listings do
-            let newListing = { listing with Id = ListingId.create (); CitizenId = currentId }
+            let newListing = { listing with Id = ListingId.create (); CitizenId = currentId; IsLegacy = false }
             do! saveDocument
                     Table.Listing (ListingId.toString newListing.Id) (Sql.existingConnection conn) (mkDoc newListing)
         let! successes =
             conn
             |> Sql.existingConnection
             |> Sql.query $"SELECT * FROM {Table.Success} WHERE data ->> 'citizenId' = @oldId"
-            |> Sql.parameters [ "@oldId", Sql.string legId ]
+            |> Sql.parameters [ "@oldId", Sql.string oldId ]
             |> Sql.executeAsync toDocument<Success>
         for success in successes do
             let newSuccess = { success with Id = SuccessId.create (); CitizenId = currentId }
@@ -264,7 +269,7 @@ let migrateLegacy currentId legacyId = backgroundTask {
                 DELETE FROM {Table.Success} WHERE data ->> 'citizenId' = @oldId;
                 DELETE FROM {Table.Listing} WHERE data ->> 'citizenId' = @oldId;
                 DELETE FROM {Table.Citizen} WHERE id = @oldId"
-            |> Sql.parameters [ "@oldId", Sql.string legId ]
+            |> Sql.parameters [ "@oldId", Sql.string oldId ]
             |> Sql.executeNonQueryAsync
         do! txn.CommitAsync ()
         return Ok ""

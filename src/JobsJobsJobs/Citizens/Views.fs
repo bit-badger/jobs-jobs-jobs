@@ -418,27 +418,29 @@ let legacy (current : Citizen list) (legacy : Citizen list) csrf =
                     ]
                 ]
             else p [] [ txt "There are no current accounts to which legacy accounts can be migrated" ]
-        ]
-        table [ _class "table table-sm table-hover" ] [
-            thead [] [
-                tr [] [
-                    th [ _scope "col" ] [ txt "Select" ]
-                    th [ _scope "col" ] [ txt "NAS Profile" ]
+            div [ _class "col-12 col-lg-6 offset-xxl-2"] [
+                table [ _class "table table-sm table-hover" ] [
+                    thead [] [
+                        tr [] [
+                            th [ _scope "col" ] [ txt "Select" ]
+                            th [ _scope "col" ] [ txt "NAS Profile" ]
+                        ]
+                    ]
+                    legacy |> List.map (fun it ->
+                        let theId = CitizenId.toString it.Id
+                        tr [] [
+                            td [] [
+                                if canProcess then
+                                    input [ _type "radio"; _id $"legacy_{theId}"; _name "LegacyId"; _value theId ]
+                                else txt "&nbsp;"
+                            ]
+                            td [] [ label [ _for $"legacy_{theId}" ] [ str it.Email ] ]
+                        ])
+                    |> tbody []
                 ]
             ]
-            legacy |> List.map (fun it ->
-                let theId = CitizenId.toString it.Id
-                tr [] [
-                    td [] [
-                        if canProcess then
-                            input [ _type "radio"; _id $"legacy_{theId}"; _name "LegacyId"; _value theId ]
-                        else txt "&nbsp;"
-                    ]
-                    td [] [ label [ _for $"legacy_{theId}" ] [ str it.Email ] ]
-                ])
-            |> tbody []
         ]
-        submitButton "save" "Migrate Account"
+        submitButton "content-save-outline" "Migrate Account"
     ]
     |> List.singleton
     |> pageWithTitle "Migrate Legacy Account"

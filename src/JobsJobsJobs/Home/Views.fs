@@ -860,8 +860,8 @@ module Help =
                 strong [] [ txt "Seeking Remote Work?" ]; txt " will select profiles based whether the citizen has "
                 txt "selected remote work in their profile. "; strong [] [ txt "Text Search" ]; txt " will search "
                 txt "several aspects of the employment profile for matches; it is case-insensitive and will match "
-                txt "partial words (ex. searching for &ldquo;ing&rdquo; will match &ldquo;working&rdquo;, "
-                txt "&ldquo;BEING&rdquo;, or &ldquo;singsong&rdquo;)."
+                txt "using English stemming rules (ex. searching for &ldquo;force&rdquo; will match words like "
+                txt "&ldquo;force&rdquo;, &ldquo;forced&rdquo;, or &ldquo;forcing&rdquo;)."
             ]
             p [] [
                 txt "If more than one field has a value selected, profiles must match all of those selections to be "

@@ -64,18 +64,7 @@ let search (search : ProfileSearchForm) isPublic = backgroundTask {
         if search.RemoteWork <> "" then
             "p.data ->> 'isRemote' = @remote", [ "@remote", jsonBool (search.RemoteWork = "yes") ]
         if search.Text <> "" then
-            "(  p.data ->> 'region'     ILIKE @text
-             OR p.data ->> 'biography'  ILIKE @text
-             OR p.data ->> 'experience' ILIKE @text
-             OR EXISTS (
-                    SELECT 1 FROM jsonb_array_elements(p.data['skills']) x(elt)
-                     WHERE x ->> 'description' ILIKE @text)
-             OR EXISTS (
-                    SELECT 1 FROM jsonb_array_elements(p.data['history']) x(elt)
-                     WHERE x ->> 'employer'    ILIKE @text
-                        OR x ->> 'position'    ILIKE @text
-                        OR x ->> 'description' ILIKE @text))",
-            [ "@text", like search.Text ]
+            "p.text_search @@ plainto_tsquery(@text_search)", [ "@text_search", Sql.string search.Text ]
     ]
     let vizSql =
         if isPublic then
