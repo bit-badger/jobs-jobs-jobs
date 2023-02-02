@@ -1,7 +1,9 @@
 .ionide
 .fake
+.idea
 src/**/bin
 src/**/obj
 src/**/appsettings.*.json
 src/.vs
 src/.idea
+src/JobsJobsJobs/JobsJobsJobs.V3Migration/appsettings.json

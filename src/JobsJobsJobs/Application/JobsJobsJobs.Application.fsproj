@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>false</SelfContained>
+    <WarnOn>3390;$(WarnOn)</WarnOn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="ApiHandlers.fs" />
+    <Compile Include="App.fs" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Folder Include=".\wwwroot" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <ProjectReference Include="..\Citizens\JobsJobsJobs.Citizens.fsproj" />
+    <ProjectReference Include="..\Common\JobsJobsJobs.Common.fsproj" />
+    <ProjectReference Include="..\Home\JobsJobsJobs.Home.fsproj" />
+    <ProjectReference Include="..\Listings\JobsJobsJobs.Listings.fsproj" />
+    <ProjectReference Include="..\Profiles\JobsJobsJobs.Profiles.fsproj" />
+    <ProjectReference Include="..\SuccessStories\JobsJobsJobs.SuccessStories.fsproj" />
+  </ItemGroup>
+
+</Project>
