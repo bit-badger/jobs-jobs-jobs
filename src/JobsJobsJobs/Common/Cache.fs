@@ -59,6 +59,9 @@ open System.Threading
 open JobsJobsJobs.Common.Data
 open Microsoft.Extensions.Caching.Distributed
 
+// getEntry isn't resumable
+#nowarn "3511"
+
 /// A distributed cache implementation in PostgreSQL used to handle sessions for Jobs, Jobs, Jobs
 type DistributedCache () =
     

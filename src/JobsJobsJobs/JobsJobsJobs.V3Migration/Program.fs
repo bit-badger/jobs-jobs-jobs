@@ -62,7 +62,7 @@ let getInstant (doc : JObject) name =
 
 task {
     // Establish database connections
-    let cfg = ConfigurationBuilder().AddJsonFile("appsettings.json").Build ()
+    let cfg = ConfigurationBuilder().AddJsonFile("appsettings.Migration.json").Build ()
     use rethinkConn = Rethink.Startup.createConnection (cfg.GetConnectionString "RethinkDB")
     do! setUp cfg
     let pgConn = dataSource ()

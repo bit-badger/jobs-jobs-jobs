@@ -189,6 +189,7 @@ let register next ctx =
     |> render "Register" next ctx
 
 // POST: /citizen/register
+#nowarn "3511"
 let doRegistration : HttpHandler = validateCsrf >=> fun next ctx -> task {
     let! form  = ctx.BindFormAsync<RegisterForm> ()
     let  qAndA = Auth.questions ctx

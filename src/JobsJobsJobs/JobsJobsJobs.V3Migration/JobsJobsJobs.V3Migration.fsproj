@@ -1,21 +1,23 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
-        <OutputType>Exe</OutputType>
-    </PropertyGroup>
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>false</SelfContained>
+  </PropertyGroup>
 
-    <ItemGroup>
-        <Compile Include="Program.fs" />
-        <Content Include="appsettings.json" CopyToOutputDirectory="Always" />
-    </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Program.fs" />
+    <Content Include="appsettings.Migration.json" CopyToOutputDirectory="Always" />
+  </ItemGroup>
 
-    <ItemGroup>
-      <PackageReference Include="NodaTime.Serialization.JsonNet" Version="3.0.0" />
-      <PackageReference Include="RethinkDb.Driver.FSharp" Version="0.9.0-beta-07" />
-    </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="NodaTime.Serialization.JsonNet" Version="3.0.0" />
+    <PackageReference Include="RethinkDb.Driver.FSharp" Version="0.9.0-beta-07" />
+  </ItemGroup>
 
-    <ItemGroup>
-      <ProjectReference Include="..\Application\JobsJobsJobs.Application.fsproj" />
-    </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Application\JobsJobsJobs.Application.fsproj" />
+  </ItemGroup>
 
 </Project>
