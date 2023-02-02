@@ -61,11 +61,9 @@ module private Auth =
 
     /// Require an administrative user (used for legacy migration endpoints)
     let requireAdmin : HttpHandler = requireUser >=> fun next ctx -> task {
-        // let adminUser = (config ctx)["AdminUser"]
-        // if adminUser = defaultArg (tryUser ctx) "" then return! next ctx
-        // else return! Error.notAuthorized next ctx
-        // TODO: uncomment the above, remove the line below
-        return! next ctx
+        let adminUser = (config ctx)["AdminUser"]
+        if adminUser = defaultArg (tryUser ctx) "" then return! next ctx
+        else return! Error.notAuthorized next ctx
     }
 
 

@@ -20,8 +20,8 @@ module private Helpers =
     /// Create a message with to, from, and subject completed
     let createMessage citizen subject =
         let msg = new MimeMessage ()
-        msg.From.Add (MailboxAddress ("Jobs, Jobs, Jobs", (* "daniel@bitbadger.solutions" *) "summersd@localhost"))
-        msg.To.Add (MailboxAddress (Citizen.name citizen, (* citizen.Email *) "summersd@localhost"))
+        msg.From.Add (MailboxAddress ("Jobs, Jobs, Jobs", "daniel@bitbadger.solutions"))
+        msg.To.Add (MailboxAddress (Citizen.name citizen, citizen.Email))
         msg.Subject <- subject
         msg
 
