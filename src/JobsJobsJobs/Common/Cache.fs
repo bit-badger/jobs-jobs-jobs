@@ -74,14 +74,14 @@ type DistributedCache () =
                 dataSource
                 |> Sql.query $"
                     SELECT EXISTS
-                        (SELECT 1 FROM pg_tables WHERE schemaname = 'public' AND tablename = 'session')
+                        (SELECT 1 FROM pg_tables WHERE schemaname = 'jjj' AND tablename = 'session')
                       AS does_exist"
                 |> Sql.executeRowAsync (fun row -> row.bool "does_exist")
             if not exists then
                 let! _ =
                     dataSource
                     |> Sql.query
-                        "CREATE TABLE session (
+                        "CREATE TABLE jjj.session (
                             id                  TEXT        NOT NULL PRIMARY KEY,
                             payload             BYTEA       NOT NULL,
                             expire_at           TIMESTAMPTZ NOT NULL,
@@ -100,7 +100,7 @@ type DistributedCache () =
         let idParam = "@id", Sql.string key
         let! tryEntry =
             dataSource
-            |> Sql.query "SELECT * FROM session WHERE id = @id"
+            |> Sql.query "SELECT * FROM jjj.session WHERE id = @id"
             |> Sql.parameters [ idParam ]
             |> Sql.executeAsync (fun row ->
                 {   Id                 = row.string                     "id"
@@ -123,7 +123,7 @@ type DistributedCache () =
             if needsRefresh then
                 let! _ =
                     dataSource
-                    |> Sql.query "UPDATE session SET expire_at = @expireAt WHERE id = @id"
+                    |> Sql.query "UPDATE jjj.session SET expire_at = @expireAt WHERE id = @id"
                     |> Sql.parameters [ expireParam item.ExpireAt; idParam ]
                     |> Sql.executeNonQueryAsync
                 ()
@@ -140,7 +140,7 @@ type DistributedCache () =
         if lastPurge.Plus (Duration.FromMinutes 30L) < now then
             let! _ =
                 dataSource ()
-                |> Sql.query "DELETE FROM session WHERE expire_at < @expireAt"
+                |> Sql.query "DELETE FROM jjj.session WHERE expire_at < @expireAt"
                 |> Sql.parameters [ expireParam now ]
                 |> Sql.executeNonQueryAsync
             lastPurge <- now
@@ -150,7 +150,7 @@ type DistributedCache () =
     let removeEntry key = backgroundTask {
         let! _ =
             dataSource ()
-            |> Sql.query "DELETE FROM session WHERE id = @id"
+            |> Sql.query "DELETE FROM jjj.session WHERE id = @id"
             |> Sql.parameters [ "@id", Sql.string key ]
             |> Sql.executeNonQueryAsync
         ()
@@ -176,7 +176,7 @@ type DistributedCache () =
         let! _ =
             dataSource ()
             |> Sql.query
-                "INSERT INTO session (
+                "INSERT INTO jjj.session (
                     id, payload, expire_at, sliding_expiration, absolute_expiration
                 ) VALUES (
                     @id, @payload, @expireAt, @slideExp, @absExp
