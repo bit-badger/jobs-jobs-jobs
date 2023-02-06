@@ -87,7 +87,7 @@ type DistributedCache () =
                             expire_at           TIMESTAMPTZ NOT NULL,
                             sliding_expiration  INTERVAL,
                             absolute_expiration TIMESTAMPTZ);
-                        CREATE INDEX idx_session_expiration ON session (expire_at)"
+                        CREATE INDEX idx_session_expiration ON jjj.session (expire_at)"
                     |> Sql.executeNonQueryAsync
                 ()
         } |> sync

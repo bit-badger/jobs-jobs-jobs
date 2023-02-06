@@ -22,8 +22,9 @@ let private toListingForView row =
 /// Find all job listings posted by the given citizen
 let findByCitizen citizenId =
     dataSource ()
-    |> Sql.query $"{viewSql} WHERE l.data ->> 'citizenId' = @citizenId AND l.data ->> 'isLegacy' = 'false'"
-    |> Sql.parameters [ "@citizenId", Sql.string (CitizenId.toString citizenId) ]
+    |> Sql.query $"{viewSql} WHERE l.data @> @criteria"
+    |> Sql.parameters
+        [ "@criteria", Sql.jsonb (mkDoc {| citizenId = CitizenId.toString citizenId; isLegacy = false |}) ]
     |> Sql.executeAsync toListingForView
 
 /// Find a listing by its ID
@@ -38,7 +39,7 @@ let findById listingId = backgroundTask {
 let findByIdForView listingId = backgroundTask {
     let! tryListing =
         dataSource ()
-        |> Sql.query $"{viewSql} WHERE l.id = @id AND l.data ->> 'isLegacy' = 'false'"
+        |> Sql.query $"""{viewSql} WHERE l.id = @id AND l.data @> '{{ "isLegacy": false }}'::jsonb"""
         |> Sql.parameters [ "@id", Sql.string (ListingId.toString listingId) ]
         |> Sql.executeAsync toListingForView
     return List.tryHead tryListing
@@ -52,18 +53,18 @@ let save (listing : Listing) =
 let search (search : ListingSearchForm) =
     let searches = [
         if search.ContinentId <> "" then
-            "l.data ->> 'continentId' = @continentId", [ "@continentId", Sql.string search.ContinentId ]
+            "l.data @> @continent", [ "@continent", Sql.jsonb (mkDoc {| continentId = search.ContinentId |}) ]
         if search.Region <> "" then
             "l.data ->> 'region' ILIKE @region", [ "@region", like search.Region ]
         if search.RemoteWork <> "" then
-            "l.data ->> 'isRemote' = @remote", [ "@remote", jsonBool (search.RemoteWork = "yes") ]
+            "l.data @> @remote", [ "@remote", Sql.jsonb (mkDoc {| isRemote = search.RemoteWork = "yes" |}) ]
         if search.Text <> "" then
             "l.data ->> 'text' ILIKE @text", [ "@text", like search.Text ]
     ]
     dataSource ()
-    |> Sql.query $"
+    |> Sql.query $"""
         {viewSql}
-            WHERE l.data ->> 'isExpired' = 'false' AND l.data ->> 'isLegacy' = 'false'
-            {searchSql searches}"
+         WHERE l.data @> '{{ "isExpired": false, "isLegacy": false }}'::jsonb
+           {searchSql searches}"""
     |> Sql.parameters (searches |> List.collect snd)
     |> Sql.executeAsync toListingForView

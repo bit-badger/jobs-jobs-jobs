@@ -28,7 +28,7 @@ let privacyPolicy =
     let appName = txt "Jobs, Jobs, Jobs"
     article [] [
         h3 [] [ txt "Privacy Policy" ]
-        p [ _class "fst-italic" ] [ txt "(as of December 27<sup>th</sup>, 2022)" ]
+        p [ _class "fst-italic" ] [ txt "(as of February 2<sup>nd</sup>, 2023)" ]
 
         p [] [
             appName; txt " (&ldquo;we,&rdquo; &ldquo;our,&rdquo; or &ldquo;us&rdquo;) is committed to protecting your "
@@ -477,7 +477,7 @@ let privacyPolicy =
 
         hr []
 
-        p [ _class "fst-italic" ] [ txt "Changes for "; appName; txt " v3 (December 27<sup>th</sup>, 2022)" ]
+        p [ _class "fst-italic" ] [ txt "Changes for "; appName; txt " v3 (February 2<sup>nd</sup>, 2023)" ]
         ul [] [
             li [ _class "fst-italic" ] [ txt "Removed references to Mastodon" ]
             li [ _class "fst-italic" ] [ txt "Added references to job listings" ]
@@ -494,7 +494,7 @@ let privacyPolicy =
 let termsOfService =
     article [] [
         h3 [] [ txt "Terms of Service" ]
-        p [ _class "fst-italic" ] [ txt "(as of August 30<sup>th</sup>, 2022)" ]
+        p [ _class "fst-italic" ] [ txt "(as of February 2<sup>nd</sup>, 2023)" ]
         h4 [] [ txt "Acceptance of Terms" ]
         p [] [
             txt "By accessing this web site, you are agreeing to be bound by these Terms and Conditions, and that you "
@@ -528,7 +528,7 @@ let termsOfService =
         ]
         hr []
         p [ _class "fst-italic" ] [
-            txt "Change on August 30<sup>th</sup>, 2022 &ndash; added references to job listings, removed references "
+            txt "Change on February 2<sup>nd</sup>, 2023 &ndash; added references to job listings, removed references "
             txt "to Mastodon instances."
         ]
         p [ _class "fst-italic" ] [
@@ -945,7 +945,7 @@ module Help =
     let index =
         article [] [
             h3 [ _class "mb-0" ] [ txt "How It Works" ]
-            h6 [ _class "mb-3 text-muted fst-italic" ] [ txt "Last Updated January 22<sup>nd</sup>, 2023" ]
+            h6 [ _class "mb-3 text-muted fst-italic" ] [ txt "Last Updated February 2<sup>nd</sup>, 2023" ]
             
             p [ _class "fst-italic" ] [
                 txt "Show me how to "; a [ _href "/how-it-works/listings#searching" ] [ txt "find a job" ]

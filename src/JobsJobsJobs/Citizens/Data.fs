@@ -13,13 +13,14 @@ let private locker = obj ()
 
 /// Delete a citizen by their ID using the given connection properties
 let private doDeleteById citizenId connProps = backgroundTask {
+    let citId = CitizenId.toString citizenId
     let! _ =
         connProps
         |> Sql.query $"
-            DELETE FROM {Table.Success} WHERE data ->> 'citizenId' = @id;
-            DELETE FROM {Table.Listing} WHERE data ->> 'citizenId' = @id;
-            DELETE FROM {Table.Citizen} WHERE id                   = @id"
-        |> Sql.parameters [ "@id", Sql.string (CitizenId.toString citizenId) ]
+            DELETE FROM {Table.Success} WHERE data @> @criteria;
+            DELETE FROM {Table.Listing} WHERE data @> @criteria;
+            DELETE FROM {Table.Citizen} WHERE id    = @id"
+        |> Sql.parameters [ "@criteria", Sql.jsonb (mkDoc {| citizenId = citId |}); "@id", Sql.string citId ]
         |> Sql.executeNonQueryAsync
     ()
 }
@@ -89,15 +90,11 @@ let register citizen (security : SecurityInfo) = backgroundTask {
 }
 
 /// Try to find the security information matching a confirmation token
-let private tryConfirmToken token connProps = backgroundTask {
+let private tryConfirmToken (token : string) connProps = backgroundTask {
     let! tryInfo =
         connProps
-        |> Sql.query $"
-            SELECT *
-              FROM {Table.SecurityInfo}
-             WHERE data ->> 'token'      = @token
-               AND data ->> 'tokenUsage' = 'confirm'"
-        |> Sql.parameters [ "@token", Sql.string token ]
+        |> Sql.query $" SELECT * FROM {Table.SecurityInfo} WHERE data @> @criteria"
+        |> Sql.parameters [ "criteria", Sql.jsonb (mkDoc {| token = token; tokenUsage = "confirm" |}) ]
         |> Sql.executeAsync toDocument<SecurityInfo>
     return List.tryHead tryInfo
 }
@@ -132,12 +129,8 @@ let tryLogOn email password (pwVerify : Citizen -> string -> bool option) (pwHas
     let  connProps  = dataSource ()
     let! tryCitizen =
         connProps
-        |> Sql.query $"
-            SELECT *
-              FROM {Table.Citizen}
-             WHERE data ->> 'email'    = @email
-               AND data ->> 'isLegacy' = 'false'"
-        |> Sql.parameters [ "@email", Sql.string email ]
+        |> Sql.query $"SELECT * FROM {Table.Citizen} WHERE data @> @criteria"
+        |> Sql.parameters [ "@criteria", Sql.jsonb (mkDoc {| email = email; isLegacy = false |}) ]
         |> Sql.executeAsync toDocument<Citizen>
     match List.tryHead tryCitizen with
     | Some citizen ->
@@ -176,8 +169,8 @@ let tryByEmailWithSecurity email = backgroundTask {
             SELECT c.*, s.data AS sec_data
               FROM {Table.Citizen} c
                    INNER JOIN {Table.SecurityInfo} s ON s.id = c.id
-             WHERE c.data ->> 'email' = @email"
-        |> Sql.parameters [ "@email", Sql.string email ]
+             WHERE c.data @> @criteria"
+        |> Sql.parameters [ "@criteria", Sql.jsonb (mkDoc {| email = email |}) ]
         |> Sql.executeAsync toCitizenSecurityPair
     return List.tryHead results
 }
@@ -188,12 +181,12 @@ let saveSecurityInfo security = backgroundTask {
 }
 
 /// Try to retrieve security information by the given token
-let trySecurityByToken token = backgroundTask {
+let trySecurityByToken (token : string) = backgroundTask {
     do! checkForPurge false
     let! results =
         dataSource ()
-        |> Sql.query $"SELECT * FROM {Table.SecurityInfo} WHERE data ->> 'token' = @token"
-        |> Sql.parameters [ "@token", Sql.string token ]
+        |> Sql.query $"SELECT * FROM {Table.SecurityInfo} WHERE data @> @criteria"
+        |> Sql.parameters [ "@criteria", Sql.jsonb (mkDoc {| token = token |}) ]
         |> Sql.executeAsync toDocument<SecurityInfo>
     return List.tryHead results
 }
@@ -204,7 +197,11 @@ let trySecurityByToken token = backgroundTask {
 let legacy () = backgroundTask {
     return!
         dataSource ()
-        |> Sql.query $"SELECT * FROM {Table.Citizen} WHERE data ->> 'isLegacy' = 'true' ORDER BY data ->> 'firstName'"
+        |> Sql.query $"""
+            SELECT *
+              FROM {Table.Citizen}
+             WHERE data @> '{{ "isLegacy": true }}'::jsonb
+             ORDER BY data ->> 'firstName'"""
         |> Sql.executeAsync toDocument<Citizen>
 }
 
@@ -212,13 +209,13 @@ let legacy () = backgroundTask {
 let current () = backgroundTask {
     return!
         dataSource ()
-        |> Sql.query $"
+        |> Sql.query $"""
             SELECT c.*
               FROM {Table.Citizen} c
                    INNER JOIN {Table.SecurityInfo} si ON si.id = c.id
-             WHERE c.data  ->> 'isLegacy'      = 'false'
-               AND si.data ->> 'accountLocked' = 'false'
-               AND NOT EXISTS (SELECT 1 FROM {Table.Profile} p WHERE p.id = c.id)"
+             WHERE c.data  @> '{{ "isLegacy": false }}'::jsonb
+               AND si.data @> '{{ "accountLocked": false }}'::jsonb
+               AND NOT EXISTS (SELECT 1 FROM {Table.Profile} p WHERE p.id = c.id)"""
         |> Sql.executeAsync toDocument<Citizen>
 }
 
@@ -241,11 +238,12 @@ let migrateLegacy currentId legacyId = backgroundTask {
                     Table.Profile (CitizenId.toString currentId) (Sql.existingConnection conn)
                     (mkDoc { profile with Id = currentId; IsLegacy = false })
         | None -> ()
-        let! listings =
+        let  oldCriteria = mkDoc {| citizenId = oldId |}
+        let! listings    =
             conn
             |> Sql.existingConnection
-            |> Sql.query $"SELECT * FROM {Table.Listing} WHERE data ->> 'citizenId' = @oldId"
-            |> Sql.parameters [ "@oldId", Sql.string oldId ]
+            |> Sql.query $"SELECT * FROM {Table.Listing} WHERE data @> @criteria"
+            |> Sql.parameters [ "@criteria", Sql.jsonb oldCriteria ]
             |> Sql.executeAsync toDocument<Listing>
         for listing in listings do
             let newListing = { listing with Id = ListingId.create (); CitizenId = currentId; IsLegacy = false }
@@ -254,8 +252,8 @@ let migrateLegacy currentId legacyId = backgroundTask {
         let! successes =
             conn
             |> Sql.existingConnection
-            |> Sql.query $"SELECT * FROM {Table.Success} WHERE data ->> 'citizenId' = @oldId"
-            |> Sql.parameters [ "@oldId", Sql.string oldId ]
+            |> Sql.query $"SELECT * FROM {Table.Success} WHERE data @> @criteria"
+            |> Sql.parameters [ "@criteria", Sql.string oldCriteria ]
             |> Sql.executeAsync toDocument<Success>
         for success in successes do
             let newSuccess = { success with Id = SuccessId.create (); CitizenId = currentId }
@@ -266,10 +264,10 @@ let migrateLegacy currentId legacyId = backgroundTask {
             conn
             |> Sql.existingConnection
             |> Sql.query $"
-                DELETE FROM {Table.Success} WHERE data ->> 'citizenId' = @oldId;
-                DELETE FROM {Table.Listing} WHERE data ->> 'citizenId' = @oldId;
-                DELETE FROM {Table.Citizen} WHERE id = @oldId"
-            |> Sql.parameters [ "@oldId", Sql.string oldId ]
+                DELETE FROM {Table.Success} WHERE data @> @criteria;
+                DELETE FROM {Table.Listing} WHERE data @> @criteria;
+                DELETE FROM {Table.Citizen} WHERE id    = @oldId"
+            |> Sql.parameters [ "@criteria", Sql.jsonb oldCriteria; "@oldId", Sql.string oldId ]
             |> Sql.executeNonQueryAsync
         do! txn.CommitAsync ()
         return Ok ""

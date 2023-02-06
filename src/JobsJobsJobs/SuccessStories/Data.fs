@@ -30,4 +30,4 @@ let findById successId =
 
 /// Save a success story
 let save (success : Success) =
-    dataSource () |> saveDocument Table.Success (SuccessId.toString success.Id) <| mkDoc success
+    (dataSource (), mkDoc success) ||> saveDocument Table.Success (SuccessId.toString success.Id)

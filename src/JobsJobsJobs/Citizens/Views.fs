@@ -189,7 +189,7 @@ let dashboard (citizen : Citizen) (profile : Profile option) profileCount tz =
         emptyP
         p [] [
             txt "To see how this application works, check out &ldquo;How It Works&rdquo; in the sidebar (last updated "
-            txt "August 29<sup>th</sup>, 2021)."
+            txt "February 2<sup>nd</sup>, 2023)."
         ]
     ]
 

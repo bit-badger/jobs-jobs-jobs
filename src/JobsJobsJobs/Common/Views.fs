@@ -297,7 +297,7 @@ module Layout =
         let version =
             seq {
                 string v.Major
-                if v.Minor > 0 then
+                if v.Minor > 0 || v.Build > 0 then
                     "."; string v.Minor
                     if v.Build > 0 then
                         "."; string v.Build

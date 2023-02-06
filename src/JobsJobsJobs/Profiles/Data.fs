@@ -8,7 +8,8 @@ open Npgsql.FSharp
 /// Count the current profiles
 let count () =
     dataSource ()
-    |> Sql.query $"SELECT COUNT(id) AS the_count FROM {Table.Profile} WHERE data ->> 'isLegacy' = 'false'"
+    |> Sql.query
+        $"""SELECT COUNT(id) AS the_count FROM {Table.Profile} WHERE data @> '{{ "isLegacy": false }}'::jsonb"""
     |> Sql.executeRowAsync (fun row -> row.int64 "the_count")
 
 /// Delete a profile by its ID
@@ -40,13 +41,13 @@ let private toProfileForView row =
 let findByIdForView citizenId = backgroundTask {
     let! tryCitizen =
         dataSource ()
-        |> Sql.query $"
+        |> Sql.query $"""
             SELECT p.*, c.data AS cit_data, o.data AS cont_data
-                FROM {Table.Profile} p
-                    INNER JOIN {Table.Citizen}   c ON c.id = p.id
-                    INNER JOIN {Table.Continent} o ON o.id = p.data ->> 'continentId'
-                WHERE p.id                  = @id
-                AND p.data ->> 'isLegacy' = 'false'"
+              FROM {Table.Profile} p
+                   INNER JOIN {Table.Citizen}   c ON c.id = p.id
+                   INNER JOIN {Table.Continent} o ON o.id = p.data ->> 'continentId'
+             WHERE p.id    = @id
+               AND p.data @> '{{ "isLegacy": false }}'::jsonb"""
         |> Sql.parameters [ "@id", Sql.string (CitizenId.toString citizenId) ]
         |> Sql.executeAsync toProfileForView
     return List.tryHead tryCitizen
@@ -60,26 +61,28 @@ let save (profile : Profile) =
 let search (search : ProfileSearchForm) isPublic = backgroundTask {
     let searches = [
         if search.ContinentId <> "" then
-            "p.data ->> 'continentId' = @continentId", [ "@continentId", Sql.string search.ContinentId ]
+            "p.data @> @continent", [ "@continent", Sql.jsonb (mkDoc {| continentId = search.ContinentId |}) ]
         if search.RemoteWork <> "" then
-            "p.data ->> 'isRemote' = @remote", [ "@remote", jsonBool (search.RemoteWork = "yes") ]
+            "p.data @> @remote", [ "@remote", Sql.jsonb (mkDoc {| isRemote = search.RemoteWork = "yes" |}) ]
         if search.Text <> "" then
             "p.text_search @@ plainto_tsquery(@text_search)", [ "@text_search", Sql.string search.Text ]
     ]
     let vizSql =
         if isPublic then
-            sprintf "IN ('%s', '%s')" (ProfileVisibility.toString Public) (ProfileVisibility.toString Anonymous)
-        else sprintf "<> '%s'" (ProfileVisibility.toString Hidden)
+            sprintf "(p.data @> '%s'::jsonb OR p.data @> '%s'::jsonb)"
+                (mkDoc {| visibility = ProfileVisibility.toString Public |})
+                (mkDoc {| visibility = ProfileVisibility.toString Anonymous |})
+        else sprintf "p.data ->> 'visibility' <> '%s'" (ProfileVisibility.toString Hidden)
     let! results =
         dataSource ()
-        |> Sql.query $"
+        |> Sql.query $"""
             SELECT p.*, c.data AS cit_data, o.data AS cont_data
-                FROM {Table.Profile} p
-                    INNER JOIN {Table.Citizen}   c ON c.id = p.id
-                    INNER JOIN {Table.Continent} o ON o.id = p.data ->> 'continentId'
-                WHERE p.data ->> 'isLegacy' = 'false'
-                  AND p.data ->> 'visibility' {vizSql}
-                {searchSql searches}"
+              FROM {Table.Profile} p
+                   INNER JOIN {Table.Citizen}   c ON c.id = p.id
+                   INNER JOIN {Table.Continent} o ON o.id = p.data ->> 'continentId'
+             WHERE p.data @> '{{ "isLegacy": false }}'::jsonb
+               AND {vizSql}
+               {searchSql searches}"""
         |> Sql.parameters (searches |> List.collect snd)
         |> Sql.executeAsync toProfileForView
     return results |> List.sortBy (fun pfv -> (Citizen.name pfv.Citizen).ToLowerInvariant ())
