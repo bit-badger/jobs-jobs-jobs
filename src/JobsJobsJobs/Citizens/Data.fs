@@ -253,7 +253,7 @@ let migrateLegacy currentId legacyId = backgroundTask {
             conn
             |> Sql.existingConnection
             |> Sql.query $"SELECT * FROM {Table.Success} WHERE data @> @criteria"
-            |> Sql.parameters [ "@criteria", Sql.string oldCriteria ]
+            |> Sql.parameters [ "@criteria", Sql.jsonb oldCriteria ]
             |> Sql.executeAsync toDocument<Success>
         for success in successes do
             let newSuccess = { success with Id = SuccessId.create (); CitizenId = currentId }
