@@ -36,72 +36,56 @@ open Npgsql.FSharp
 [<AutoOpen>]
 module DataConnection =
     
+    open System.Text.Json
+    open BitBadger.Npgsql.Documents
+    open JobsJobsJobs
     open Microsoft.Extensions.Configuration
     open Npgsql
     
-    /// Get the data source as the start of a SQL statement
-    let dataSource =
-        Configuration.dataSource >> Sql.fromDataSource
-    
     /// Create tables
     let private createTables () = backgroundTask {
-        let! _ =
-            dataSource ()
-            |> Sql.query "CREATE SCHEMA IF NOT EXISTS jjj"
-            |> Sql.executeNonQueryAsync
+        do! Custom.nonQuery "CREATE SCHEMA IF NOT EXISTS jjj" []
         do! Definition.ensureTable Table.Citizen
         do! Definition.ensureTable Table.Continent
         do! Definition.ensureTable Table.Listing
         do! Definition.ensureTable Table.Success
-        let sql = [
-            // Tables that use more than the default document configuration
-            $"CREATE TABLE IF NOT EXISTS {Table.Profile}      (id TEXT NOT NULL PRIMARY KEY, data JSONB NOT NULL,
-                                                               text_search TSVECTOR NOT NULL,
-                CONSTRAINT fk_profile_citizen       FOREIGN KEY (id) REFERENCES {Table.Citizen} (id) ON DELETE CASCADE)"
-            $"CREATE TABLE IF NOT EXISTS {Table.SecurityInfo} (id TEXT NOT NULL PRIMARY KEY, data JSONB NOT NULL,
-                CONSTRAINT fk_security_info_citizen FOREIGN KEY (id) REFERENCES {Table.Citizen} (id) ON DELETE CASCADE)"
-            // Key indexes
-            $"CREATE UNIQUE INDEX IF NOT EXISTS uk_citizen_email      ON {Table.Citizen} ((data -> 'email'))"
-            $"CREATE        INDEX IF NOT EXISTS idx_listing_citizen   ON {Table.Listing} ((data -> 'citizenId'))"
-            $"CREATE        INDEX IF NOT EXISTS idx_listing_continent ON {Table.Listing} ((data -> 'continentId'))"
-            $"CREATE        INDEX IF NOT EXISTS idx_profile_continent ON {Table.Profile} ((data -> 'continentId'))"
-            $"CREATE        INDEX IF NOT EXISTS idx_success_citizen   ON {Table.Success} ((data -> 'citizenId'))"
-            // Profile text search index
-            $"CREATE INDEX IF NOT EXISTS idx_profile_search ON {Table.Profile} USING GIN(text_search)"
-        ]
-        let! _ =
-            dataSource ()
-            |> Sql.executeTransactionAsync (sql |> List.map (fun sql -> sql, [ [] ]))
-        ()
+        // Tables that use more than the default document configuration, key indexes, and text search index
+        do! Custom.nonQuery
+                $"CREATE TABLE IF NOT EXISTS {Table.Profile}
+                    (id TEXT NOT NULL PRIMARY KEY, data JSONB NOT NULL, text_search TSVECTOR NOT NULL,
+                  CONSTRAINT fk_profile_citizen FOREIGN KEY (id) REFERENCES {Table.Citizen} (id) ON DELETE CASCADE);
+                CREATE TABLE IF NOT EXISTS {Table.SecurityInfo} (id TEXT NOT NULL PRIMARY KEY, data JSONB NOT NULL,
+                  CONSTRAINT fk_security_info_citizen
+                    FOREIGN KEY (id) REFERENCES {Table.Citizen} (id) ON DELETE CASCADE);
+                CREATE UNIQUE INDEX IF NOT EXISTS uk_citizen_email      ON {Table.Citizen} ((data -> 'email'));
+                CREATE        INDEX IF NOT EXISTS idx_listing_citizen   ON {Table.Listing} ((data -> 'citizenId'));
+                CREATE        INDEX IF NOT EXISTS idx_listing_continent ON {Table.Listing} ((data -> 'continentId'));
+                CREATE        INDEX IF NOT EXISTS idx_profile_continent ON {Table.Profile} ((data -> 'continentId'));
+                CREATE        INDEX IF NOT EXISTS idx_success_citizen   ON {Table.Success} ((data -> 'citizenId'));
+                CREATE INDEX IF NOT EXISTS idx_profile_search ON {Table.Profile} USING GIN(text_search)"
+                []
     }
 
-    /// Create functions and triggers required to 
-    let createTriggers () = backgroundTask {
+    /// Create functions and triggers required to keep the search index current
+    let private createTriggers () = backgroundTask {
         let! functions =
-            dataSource ()
-            |> Sql.query
+            Custom.list
                 "SELECT p.proname
                    FROM pg_catalog.pg_proc p
                         LEFT JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace
                   WHERE n.nspname = 'jjj'"
-            |> Sql.executeAsync (fun row -> row.string "proname")
+                [] (fun row -> row.string "proname")
         if not (functions |> List.contains "indexable_array_string") then
-            let! _ =
-                dataSource ()
-                |> Sql.query """
-                    CREATE FUNCTION jjj.indexable_array_string(target jsonb, path jsonpath) RETURNS text AS $$
+            do! Custom.nonQuery
+                    """CREATE FUNCTION jjj.indexable_array_string(target jsonb, path jsonpath) RETURNS text AS $$
                         BEGIN
                             RETURN REPLACE(REPLACE(REPLACE(REPLACE(jsonb_path_query_array(target, path)::text,
                                     '["', ''), '", "', ' '), '"]', ''), '[]', '');
                         END;
-                    $$ LANGUAGE plpgsql;"""
-                |> Sql.executeNonQueryAsync
-            ()
+                    $$ LANGUAGE plpgsql;""" []
         if not (functions |> List.contains "set_text_search") then
-            let! _ =
-                dataSource ()
-                |> Sql.query $"
-                    CREATE FUNCTION jjj.set_text_search() RETURNS trigger AS $$
+            do! Custom.nonQuery
+                    $"CREATE FUNCTION jjj.set_text_search() RETURNS trigger AS $$
                         BEGIN
                             NEW.text_search := to_tsvector('english',
                                    COALESCE(NEW.data ->> 'region',     '') || ' '
@@ -115,9 +99,7 @@ module DataConnection =
                         END;
                     $$ LANGUAGE plpgsql;
                     CREATE TRIGGER set_text_search BEFORE INSERT OR UPDATE ON {Table.Profile}
-                        FOR EACH ROW EXECUTE FUNCTION jjj.set_text_search();"
-                |> Sql.executeNonQueryAsync
-            ()
+                        FOR EACH ROW EXECUTE FUNCTION jjj.set_text_search();" []
     }
     
     /// Set up the data connection from the given configuration
@@ -125,6 +107,11 @@ module DataConnection =
         let builder = NpgsqlDataSourceBuilder (cfg.GetConnectionString "PostgreSQL")
         let _ = builder.UseNodaTime ()
         Configuration.useDataSource (builder.Build ())
+        Configuration.useSerializer
+            { new IDocumentSerializer with
+                member _.Serialize<'T>   (it : 'T)     = JsonSerializer.Serialize       (it, Json.options)
+                member _.Deserialize<'T> (it : string) = JsonSerializer.Deserialize<'T> (it, Json.options)
+            }
         do! createTables ()
         do! createTriggers ()
     }

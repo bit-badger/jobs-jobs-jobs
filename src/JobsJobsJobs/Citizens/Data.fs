@@ -33,9 +33,8 @@ let saveSecurityInfo (security : SecurityInfo) =
 /// Purge expired tokens
 let private purgeExpiredTokens now = backgroundTask {
     let! info =
-        dataSource ()
-        |> Sql.query $"{Query.selectFromTable Table.SecurityInfo} WHERE data ->> 'tokenExpires' IS NOT NULL"
-        |> Sql.executeAsync fromData<SecurityInfo>
+        Custom.list $"{Query.selectFromTable Table.SecurityInfo} WHERE data ->> 'tokenExpires' IS NOT NULL" []
+                    fromData<SecurityInfo>
     for expired in info |> List.filter (fun it -> it.TokenExpires.Value < now) do
         if expired.TokenUsage.Value = "confirm" then
             // Unconfirmed account; delete the entire thing
@@ -66,7 +65,8 @@ let save citizen =
 let register (citizen : Citizen) (security : SecurityInfo) = backgroundTask {
     try
         let! _ =
-            dataSource ()
+            Configuration.dataSource ()
+            |> Sql.fromDataSource
             |> Sql.executeTransactionAsync
                 [   Query.save Table.Citizen,      [ Query.docParameters (CitizenId.toString citizen.Id) citizen  ]
                     Query.save Table.SecurityInfo, [ Query.docParameters (CitizenId.toString citizen.Id) security ]
