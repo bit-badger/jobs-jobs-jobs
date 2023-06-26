@@ -151,14 +151,3 @@ type ResetPasswordForm =
         /// The new password for the account
         Password : string
     }
-
-// ~~~ LEGACY MIGRATION ~~ //
-
-[<CLIMutable; NoComparison; NoEquality>]
-type LegacyMigrationForm =
-    {   /// The ID of the current citizen
-        Id : string
-
-        /// The ID of the legacy citizen to be migrated
-        LegacyId : string
-    }

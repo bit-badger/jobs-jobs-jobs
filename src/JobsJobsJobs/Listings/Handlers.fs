@@ -96,7 +96,6 @@ let save : HttpHandler = requireUser >=> validateCsrf >=> fun next ctx -> task {
                         CreatedOn     = now
                         IsExpired     = false
                         WasFilledHere = None
-                        IsLegacy      = false
                     }
         | _ -> return! Data.findById (ListingId.ofString form.Id)
     }

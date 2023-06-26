@@ -30,6 +30,7 @@ type BufferedBodyMiddleware (next : RequestDelegate) =
 let main args =
     
     let builder = WebApplication.CreateBuilder args
+    let _       = builder.Configuration.AddEnvironmentVariables "JJJ_"
     let svc     = builder.Services
 
     let _ = svc.AddGiraffe ()
