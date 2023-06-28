@@ -78,10 +78,8 @@ let register (citizen : Citizen) (security : SecurityInfo) = backgroundTask {
 }
 
 /// Try to find the security information matching a confirmation token
-let private tryConfirmToken (token : string) = backgroundTask {
-    let! tryInfo = Find.byContains<SecurityInfo> Table.SecurityInfo {| token = token; tokenUsage = "confirm" |}
-    return List.tryHead tryInfo
-}
+let private tryConfirmToken (token : string) =
+    Find.firstByContains<SecurityInfo> Table.SecurityInfo {| token = token; tokenUsage = "confirm" |}
 
 /// Confirm a citizen's account
 let confirmAccount token = backgroundTask {
@@ -104,11 +102,10 @@ let denyAccount token = backgroundTask {
 }
     
 /// Attempt a user log on
-let tryLogOn email password (pwVerify : Citizen -> string -> bool option) (pwHash : Citizen -> string -> string)
-        now = backgroundTask {
+let tryLogOn (email : string) password (pwVerify : Citizen -> string -> bool option)
+        (pwHash : Citizen -> string -> string) now = backgroundTask {
     do! checkForPurge false
-    let! tryCitizen = Find.byContains<Citizen> Table.Citizen {| email = email |}
-    match List.tryHead tryCitizen with
+    match! Find.firstByContains<Citizen> Table.Citizen {| email = email |} with
     | Some citizen ->
         let citizenId = CitizenId.toString citizen.Id
         let! tryInfo = Find.byId<SecurityInfo> Table.SecurityInfo citizenId
@@ -149,6 +146,5 @@ let tryByEmailWithSecurity email =
 /// Try to retrieve security information by the given token
 let trySecurityByToken (token : string) = backgroundTask {
     do! checkForPurge false
-    let! results = Find.byContains<SecurityInfo> Table.SecurityInfo {| token = token |}
-    return List.tryHead results
+    return! Find.firstByContains<SecurityInfo> Table.SecurityInfo {| token = token |}
 }

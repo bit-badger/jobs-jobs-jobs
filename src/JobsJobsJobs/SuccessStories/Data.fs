@@ -4,7 +4,6 @@ open BitBadger.Npgsql.FSharp.Documents
 open JobsJobsJobs.Common.Data
 open JobsJobsJobs.Domain
 open JobsJobsJobs.SuccessStories.Domain
-open Npgsql.FSharp
 
 // Retrieve all success stories  
 let all () =
