@@ -35,12 +35,6 @@ module private CacheHelpers =
     /// Get the current instant
     let getNow () = SystemClock.Instance.GetCurrentInstant ()
     
-    /// Get the first result of the given query
-    let tryHead<'T> (query : Task<'T list>) = backgroundTask {
-        let! results = query
-        return List.tryHead results
-    }
-    
     /// Create a parameter for a non-standard type
     let typedParam<'T> name (it : 'T) =
         $"@%s{name}", Sql.parameter (NpgsqlParameter ($"@{name}", it))
@@ -56,6 +50,7 @@ module private CacheHelpers =
 
 
 open System.Threading
+open BitBadger.Npgsql.FSharp.Documents
 open JobsJobsJobs.Common.Data
 open Microsoft.Extensions.Caching.Distributed
 
@@ -69,46 +64,38 @@ type DistributedCache () =
     
     do
         task {
-            let dataSource = dataSource ()
             let! exists =
-                dataSource
-                |> Sql.query $"
-                    SELECT EXISTS
+                Custom.scalar
+                    $"SELECT EXISTS
                         (SELECT 1 FROM pg_tables WHERE schemaname = 'jjj' AND tablename = 'session')
                       AS does_exist"
-                |> Sql.executeRowAsync (fun row -> row.bool "does_exist")
+                    [] (fun row -> row.bool "does_exist")
             if not exists then
-                let! _ =
-                    dataSource
-                    |> Sql.query
+                do! Custom.nonQuery
                         "CREATE TABLE jjj.session (
                             id                  TEXT        NOT NULL PRIMARY KEY,
                             payload             BYTEA       NOT NULL,
                             expire_at           TIMESTAMPTZ NOT NULL,
                             sliding_expiration  INTERVAL,
                             absolute_expiration TIMESTAMPTZ);
-                        CREATE INDEX idx_session_expiration ON jjj.session (expire_at)"
-                    |> Sql.executeNonQueryAsync
-                ()
+                        CREATE INDEX idx_session_expiration ON jjj.session (expire_at)" []
         } |> sync
     
     // ~~~ SUPPORT FUNCTIONS ~~~
     
     /// Get an entry, updating it for sliding expiration
     let getEntry key = backgroundTask {
-        let dataSource = dataSource ()
         let idParam = "@id", Sql.string key
         let! tryEntry =
-            dataSource
-            |> Sql.query "SELECT * FROM jjj.session WHERE id = @id"
-            |> Sql.parameters [ idParam ]
-            |> Sql.executeAsync (fun row ->
-                {   Id                 = row.string                     "id"
-                    Payload            = row.bytea                      "payload"
-                    ExpireAt           = row.fieldValue<Instant>        "expire_at"
-                    SlidingExpiration  = row.fieldValueOrNone<Duration> "sliding_expiration"
-                    AbsoluteExpiration = row.fieldValueOrNone<Instant>  "absolute_expiration"   })
-            |> tryHead
+            Custom.single
+                "SELECT * FROM jjj.session WHERE id = @id" [ idParam ]
+                (fun row ->
+                    {   Id                 = row.string                     "id"
+                        Payload            = row.bytea                      "payload"
+                        ExpireAt           = row.fieldValue<Instant>        "expire_at"
+                        SlidingExpiration  = row.fieldValueOrNone<Duration> "sliding_expiration"
+                        AbsoluteExpiration = row.fieldValueOrNone<Instant>  "absolute_expiration"
+                    })
         match tryEntry with
         | Some entry ->
             let now      = getNow ()
@@ -121,12 +108,9 @@ type DistributedCache () =
                     true, { entry with ExpireAt = absExp }
                 else true, { entry with ExpireAt = now.Plus slideExp }
             if needsRefresh then
-                let! _ =
-                    dataSource
-                    |> Sql.query "UPDATE jjj.session SET expire_at = @expireAt WHERE id = @id"
-                    |> Sql.parameters [ expireParam item.ExpireAt; idParam ]
-                    |> Sql.executeNonQueryAsync
-                ()
+                do! Custom.nonQuery
+                        "UPDATE jjj.session SET expire_at = @expireAt WHERE id = @id"
+                        [ expireParam item.ExpireAt; idParam ]
             return if item.ExpireAt > now then Some entry else None
         | None -> return None
     }
@@ -138,23 +122,13 @@ type DistributedCache () =
     let purge () = backgroundTask {
         let now = getNow ()
         if lastPurge.Plus (Duration.FromMinutes 30L) < now then
-            let! _ =
-                dataSource ()
-                |> Sql.query "DELETE FROM jjj.session WHERE expire_at < @expireAt"
-                |> Sql.parameters [ expireParam now ]
-                |> Sql.executeNonQueryAsync
+            do! Custom.nonQuery "DELETE FROM jjj.session WHERE expire_at < @expireAt" [ expireParam now ]
             lastPurge <- now
     }
     
     /// Remove a cache entry
-    let removeEntry key = backgroundTask {
-        let! _ =
-            dataSource ()
-            |> Sql.query "DELETE FROM jjj.session WHERE id = @id"
-            |> Sql.parameters [ "@id", Sql.string key ]
-            |> Sql.executeNonQueryAsync
-        ()
-    }
+    let removeEntry key =
+        Custom.nonQuery "DELETE FROM jjj.session WHERE id = @id" [ "@id", Sql.string key ]
     
     /// Save an entry
     let saveEntry (opts : DistributedCacheEntryOptions) key payload = backgroundTask {
@@ -173,9 +147,7 @@ type DistributedCache () =
                 // Default to 1 hour sliding expiration
                 let slide = Duration.FromHours 1
                 now.Plus slide, Some slide, None
-        let! _ =
-            dataSource ()
-            |> Sql.query
+        do! Custom.nonQuery
                 "INSERT INTO jjj.session (
                     id, payload, expire_at, sliding_expiration, absolute_expiration
                 ) VALUES (
@@ -185,14 +157,11 @@ type DistributedCache () =
                     expire_at           = EXCLUDED.expire_at,
                     sliding_expiration  = EXCLUDED.sliding_expiration,
                     absolute_expiration = EXCLUDED.absolute_expiration"
-            |> Sql.parameters
                 [   "@id",      Sql.string key
                     "@payload", Sql.bytea payload
                     expireParam expireAt
                     optParam "slideExp" slideExp
                     optParam "absExp"   absExp ]
-            |> Sql.executeNonQueryAsync
-        ()
     }
         
     // ~~~ IMPLEMENTATION FUNCTIONS ~~~

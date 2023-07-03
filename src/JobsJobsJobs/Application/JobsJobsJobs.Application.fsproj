@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <PublishSingleFile>true</PublishSingleFile>
+    <PublishSingleFile>false</PublishSingleFile>
     <SelfContained>false</SelfContained>
     <WarnOn>3390;$(WarnOn)</WarnOn>
   </PropertyGroup>
@@ -23,6 +23,10 @@
     <ProjectReference Include="..\Listings\JobsJobsJobs.Listings.fsproj" />
     <ProjectReference Include="..\Profiles\JobsJobsJobs.Profiles.fsproj" />
     <ProjectReference Include="..\SuccessStories\JobsJobsJobs.SuccessStories.fsproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="FSharp.Core" Version="7.0.300" />
   </ItemGroup>
 
 </Project>

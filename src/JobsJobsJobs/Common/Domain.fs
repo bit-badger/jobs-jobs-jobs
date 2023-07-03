@@ -249,9 +249,6 @@ type Citizen =
         
         /// The other contacts for this user
         OtherContacts : OtherContact list
-        
-        /// Whether this is a legacy citizen
-        IsLegacy : bool
     }
 
 /// Support functions for citizens
@@ -268,7 +265,6 @@ module Citizen =
         PasswordHash  = ""
         DisplayName   = None
         OtherContacts = []
-        IsLegacy      = false
     }
     
     /// Get the name of the citizen (either their preferred display name or first/last names)
@@ -334,9 +330,6 @@ type Listing =
         
         /// Was this job filled as part of its appearance on Jobs, Jobs, Jobs?
         WasFilledHere : bool option
-        
-        /// Whether this is a legacy listing
-        IsLegacy : bool
     }
 
 /// Support functions for job listings
@@ -356,7 +349,6 @@ module Listing =
         Text          = Text ""
         NeededBy      = None
         WasFilledHere = None
-        IsLegacy      = false
     }
 
 
@@ -434,9 +426,6 @@ type Profile =
         
         /// When the citizen last updated their profile
         LastUpdatedOn : Instant
-        
-        /// Whether this is a legacy profile
-        IsLegacy : bool
     }
 
 /// Support functions for Profiles
@@ -456,7 +445,6 @@ module Profile =
         Experience          = None
         Visibility          = Private
         LastUpdatedOn       = Instant.MinValue
-        IsLegacy            = false
     }
 
 

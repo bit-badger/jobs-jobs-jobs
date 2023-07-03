@@ -59,13 +59,6 @@ module private Auth =
             | PasswordVerificationResult.SuccessRehashNeeded -> Some true
             | _ -> None
 
-    /// Require an administrative user (used for legacy migration endpoints)
-    let requireAdmin : HttpHandler = requireUser >=> fun next ctx -> task {
-        let adminUser = (config ctx)["AdminUser"]
-        if adminUser = defaultArg (tryUser ctx) "" then return! next ctx
-        else return! Error.notAuthorized next ctx
-    }
-
 
 // GET: /citizen/account
 let account : HttpHandler = fun next ctx -> task {
@@ -332,25 +325,6 @@ let saveAccount : HttpHandler = requireUser >=> validateCsrf >=> fun next ctx ->
 let soLong : HttpHandler = requireUser >=> fun next ctx ->
     Views.deletionOptions (csrf ctx) |> render "Account Deletion Options" next ctx
 
-// ~~~ LEGACY MIGRATION ~~~ //
-
-// GET: /citizen/legacy
-let legacy : HttpHandler = Auth.requireAdmin >=> fun next ctx -> task {
-    let! currentUsers = Data.current ()
-    let! legacyUsers  = Data.legacy ()
-    return! Views.legacy currentUsers legacyUsers (csrf ctx) |> render "Migrate Legacy Account" next ctx
-}
-
-// POST: /citizen/legacy/migrate
-let migrateLegacy : HttpHandler = Auth.requireAdmin >=> validateCsrf >=> fun next ctx -> task {
-    let! form      = ctx.BindFormAsync<LegacyMigrationForm> ()
-    let  currentId = CitizenId.ofString form.Id
-    let  legacyId  = CitizenId.ofString form.LegacyId
-    match! Data.migrateLegacy currentId legacyId with
-    | Ok _ -> do! addSuccess "Migration successful" ctx
-    | Error err -> do! addError err ctx
-    return! redirectToGet "/citizen/legacy" next ctx
-}
 
 open Giraffe.EndpointRouting
 
@@ -369,7 +343,6 @@ let endpoints =
             route  "/register"          register
             routef "/reset-password/%s" resetPassword
             route  "/so-long"           soLong
-            route  "/legacy"            legacy
         ]
         POST [
             route "/delete"          delete
@@ -378,6 +351,5 @@ let endpoints =
             route "/register"        doRegistration
             route "/reset-password"  doResetPassword
             route "/save-account"    saveAccount
-            route "/legacy/migrate"  migrateLegacy
         ]
     ]
