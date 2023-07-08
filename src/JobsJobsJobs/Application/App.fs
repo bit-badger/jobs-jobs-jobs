@@ -3,6 +3,7 @@ module JobsJobsJobs.App
 
 open System
 open System.Text
+open BitBadger.AspNetCore.CanonicalDomains
 open Giraffe
 open Giraffe.EndpointRouting
 open JobsJobsJobs.Common.Data
@@ -71,6 +72,7 @@ let main args =
     ]
 
     let _ = app.UseForwardedHeaders ()
+    let _ = app.UseCanonicalDomains ()
     let _ = app.UseCookiePolicy (CookiePolicyOptions (MinimumSameSitePolicy = SameSiteMode.Strict))
     let _ = app.UseStaticFiles ()
     let _ = app.UseRouting ()
