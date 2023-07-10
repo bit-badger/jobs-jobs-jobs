@@ -59,6 +59,9 @@ let main args =
                 opts.Cookie.HttpOnly    <- true
                 opts.Cookie.IsEssential <- true)
     
+    let emailCfg = cfg.GetSection "Email"
+    if (emailCfg.GetChildren >> Seq.isEmpty >> not) () then ConfigurationBinder.Bind(emailCfg, Email.options)
+    
     let app = builder.Build ()
 
     // Unify the endpoints from all features

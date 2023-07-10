@@ -14,6 +14,7 @@ RUN dotnet restore
 COPY . ./
 WORKDIR /jjj/JobsJobsJobs/Application
 RUN dotnet publish -c Release -r linux-x64
+RUN rm bin/Release/net7.0/linux-x64/publish/appsettings.*.json
 
 FROM  mcr.microsoft.com/dotnet/aspnet:7.0-alpine as final
 WORKDIR /app
