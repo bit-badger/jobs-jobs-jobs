@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Welcome | Jobs, Jobs, Jobs</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, avenir next, avenir, segoe ui, helvetica neue, Cantarell, Ubuntu, roboto, noto, helvetica, arial, sans-serif;
+            font-size: 1rem;
+        }
+        header {
+            display: flex;
+            flex-flow: row nowrap;
+            justify-content: space-between;
+            align-items: end;
+            padding: 1rem .5rem;
+            color: white;
+            background-color: green;
+            
+            .title {
+                font-size: 1.2rem;
+                font-weight: bold;
+            }
+            .subtitle {
+                font-size: .9rem;
+            }
+        }
+        main {
+            padding: 1rem;
+            margin: auto;
+            max-width: 60rem;
+        }
+        p, blockquote {
+            line-height: 1.3;
+        }
+        footer {
+            border-top: dotted 1px gray;
+            padding: .25rem .5rem;
+            text-align: right;
+            font-style: italic;
+            font-size: .9rem;
+        }
+        .jjj-audio-clip audio {
+            display: none;
+        }
+        span.jjj-audio-clip {
+            border-bottom: dotted 1px lightgray;
+        }
+        span.jjj-audio-clip:hover {
+            cursor: pointer;
+        }
+        .text-muted {
+            color: rgba(0, 0, 0, .6);
+        }
+    </style>
+</head>
+<body>
+<div>
+    <header>
+        <span class=title>Jobs, Jobs, Jobs</span>
+        <em class=subtitle>
+            (&hellip;and Jobs &ndash;
+            <span class=jjj-audio-clip onclick="jjj.playFile(this)">
+                <audio id=pelosi-jobs><source src=./pelosi-jobs.mp3></audio>
+                Let&rsquo;s Vote for Jobs!</span>)
+        </em>
+    </header>
+    <main>
+        <article>
+            <p>For four years, this site enabled citizens of Gitmo Nation to assist one another in finding employment.
+                While its development was driven by popular demand, the privacy required to keep such a system within
+                the community (and away from either headhunters or job spammers) was the largest driver behind the
+                site's ongoing low utilization. The site was decommissioned in May 2025.
+            <p>While this site is no longer active, No Agenda is still going strong. It&rsquo;s a click away; check out
+                <a href=https://noagendashow.net target=_blank rel=noopener>The Best Podcast in the Universe</a>
+                <em>
+                    <span class=jjj-audio-clip onclick="jjj.playFile(this)">
+                        <audio id=thats-true><source src=./thats-true.mp3></audio>
+                        (that&rsquo;s true!)
+                    </span>
+                </em> and find out what you&rsquo;re missing.
+            <h3>Where Is My Data?</h3>
+            <p>If you were a member of this site and did not retrieve your information in time, reach out to Daniel on
+                the Fediverse (daniel at fedi dot summers home dot org) and he&rsquo;d be happy to retrieve it for you.
+            <h3>But I Still Need a Job...</h3>
+            <p>See if this sounds familiar:
+            <blockquote>
+                For a r&eacute;sum&eacute; that gets results, go to
+                <a href=https://imagemakersink.com target=_blank rel=noopener>imagemakersink.com</a> &ndash;
+                that&rsquo;s image makers ink, with a &ldquo;k&rdquo;, dot com &ndash; and work with
+                <a href=https://imagemakersink.com/about.html target=_blank rel=noopener>Linda Lu</a>, Duchess of Jobs
+                and writer of r&eacute;sum&eacute;s.
+            </blockquote>
+        </article>
+    </main>
+    <footer>
+        <span class=text-muted>Jobs, Jobs, Jobs (decommissioned)</span>
+    </footer>
+</div>
+<script>
+    window.jjj = {
+        playFile(elt) {
+            elt.querySelector("audio").play()
+        }
+    }
+</script>
+</body>
+</html>
